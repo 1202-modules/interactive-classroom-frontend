@@ -1,5 +1,7 @@
 # Interactive Classroom Frontend
 
+> [Русская версия](docs/README-RU.md)
+
 Frontend application for the Interactive Classroom Platform - a web application for conducting interactive classes in university auditoriums.
 
 ## Overview
