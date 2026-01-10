@@ -1,5 +1,7 @@
 # Документация Frontend
 
+> [English version](../README.md)
+
 Frontend приложение для платформы интерактивных занятий Interactive Classroom Platform.
 
 ## Описание
@@ -22,4 +24,3 @@ Frontend приложение для платформы интерактивны
 - Современный веб-фреймворк
 - WebSocket для real-time коммуникации
 - Адаптивная верстка
-
