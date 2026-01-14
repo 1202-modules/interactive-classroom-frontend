@@ -1,4 +1,4 @@
-import {Button, PasswordInput, Text as GText, TextInput} from '@gravity-ui/uikit';
+import {Button, Text as GText, PasswordInput, TextInput} from '@gravity-ui/uikit';
 import React, {useState} from 'react';
 import styles from './Forms.module.css';
 import axios, {AxiosError} from 'axios';

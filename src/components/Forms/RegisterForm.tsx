@@ -1,11 +1,11 @@
-import {Button, PasswordInput, Text as GText, TextInput} from '@gravity-ui/uikit';
+import {Button, Text as GText, PasswordInput, TextInput} from '@gravity-ui/uikit';
 import React, {useEffect, useState} from 'react';
 import styles from './Forms.module.css';
 import axios, {AxiosError} from 'axios';
 import {Link, Navigate, useLocation, useNavigate} from 'react-router-dom';
 import {useAuth} from '@/hooks/useAuth';
 
-type RegisterForm = {
+type RegisterFormValue = {
     email: string;
     password: string;
     confirmPassword: string;
@@ -39,7 +39,7 @@ export default function RegisterForm() {
         return <Navigate to="/logout" replace state={from} />;
     }
 
-    const [form, setForm] = useState<RegisterForm>({
+    const [form, setForm] = useState<RegisterFormValue>({
         email: '',
         password: '',
         confirmPassword: '',

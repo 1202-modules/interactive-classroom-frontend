@@ -1,7 +1,7 @@
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
-import path from 'node:path'
+import path from 'node:path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,7 +9,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
-        }
+        },
     },
     optimizeDeps: {
         //workaround for the problem https://github.com/vitejs/vite/issues/7719

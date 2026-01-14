@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './Header.module.css';
-import {Button, Icon, Text as GText, Theme, User, useThemeValue} from '@gravity-ui/uikit';
+import {Button, Text as GText, Icon, Theme, User, useThemeValue} from '@gravity-ui/uikit';
 import {useUser} from '@/hooks/useUser';
 import {useAuth} from '@/hooks/useAuth';
 import {DARK, LIGHT} from '@/constants';
