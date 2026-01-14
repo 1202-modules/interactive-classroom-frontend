@@ -1,4 +1,4 @@
-import {Button, Text} from '@gravity-ui/uikit';
+import {Button, Text as GText} from '@gravity-ui/uikit';
 import React from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import styles from './Forms.module.css';
@@ -27,7 +27,7 @@ export default function LogoutForm() {
 
     return (
         <form onSubmit={handleSubmit} className={styles.formFlex}>
-            <Text variant="header-2">Confirmation</Text>
+            <GText variant="header-2">Confirmation</GText>
             <div style={{display: 'flex', gap: '10px'}}>
                 <Button type="submit" view="action" size="l" color="primary">
                     Logout

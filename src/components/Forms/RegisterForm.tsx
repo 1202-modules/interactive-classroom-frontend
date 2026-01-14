@@ -1,4 +1,4 @@
-import {Button, PasswordInput, Text, TextInput} from '@gravity-ui/uikit';
+import {Button, PasswordInput, Text as GText, TextInput} from '@gravity-ui/uikit';
 import React, {useEffect, useState} from 'react';
 import styles from './Forms.module.css';
 import axios, {AxiosError} from 'axios';
@@ -208,7 +208,7 @@ export default function RegisterForm() {
         <>
             {isCodeSent ? (
                 <form onSubmit={handleSubmitCodeConfirmation} className={styles.formFlex}>
-                    <Text variant="header-2">Verify your Email</Text>
+                    <GText variant="header-2">Verify your Email</GText>
 
                     <TextInput
                         placeholder="Code from Email"
@@ -244,21 +244,21 @@ export default function RegisterForm() {
                     </Button>
 
                     {resendError && (
-                        <Text color="danger" variant="body-2">
+                        <GText color="danger" variant="body-2">
                             {resendError}
-                        </Text>
+                        </GText>
                     )}
                     {resendSuccess && (
-                        <Text color="positive" variant="body-2">
+                        <GText color="positive" variant="body-2">
                             {resendSuccess}
-                        </Text>
+                        </GText>
                     )}
 
                     <Link to="/auth/login">Authorize</Link>
                 </form>
             ) : (
                 <form onSubmit={handleSubmit} className={styles.formFlex}>
-                    <Text variant="header-2">Registration</Text>
+                    <GText variant="header-2">Registration</GText>
 
                     <TextInput
                         placeholder="Email"

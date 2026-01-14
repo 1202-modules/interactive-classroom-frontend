@@ -15,7 +15,11 @@ export const useAuthInit = () => {
 
             try {
                 const res = await api.post('/auth/refresh'); // cookie уйдёт автоматически
-                const {access_token, user_id, email} = res.data as {
+                const {
+                    access_token: accessToken,
+                    user_id: userId,
+                    email,
+                } = res.data as {
                     access_token: string;
                     token_type: string;
                     user_id: number;
@@ -24,8 +28,8 @@ export const useAuthInit = () => {
 
                 dispatch(
                     setCredentials({
-                        accessToken: access_token,
-                        userId: user_id,
+                        accessToken,
+                        userId,
                         email,
                     }),
                 );

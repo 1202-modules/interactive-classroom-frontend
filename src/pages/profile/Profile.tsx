@@ -1,4 +1,4 @@
-import {Avatar, Button, Card, Text} from '@gravity-ui/uikit';
+import {Avatar, Button, Card, Text as GText} from '@gravity-ui/uikit';
 import {useNavigate} from 'react-router-dom';
 import {useUser} from '@/hooks/useUser';
 import styles from './Profile.module.css';
@@ -11,7 +11,7 @@ export default function Profile() {
         <div className={styles.page}>
             <Card type="container" view="raised" size="l" className={styles.card}>
                 <div className={styles.header}>
-                    <Text variant="header-2">User Profile</Text>
+                    <GText variant="header-2">User Profile</GText>
                 </div>
 
                 <div className={styles.fields}>
@@ -22,10 +22,10 @@ export default function Profile() {
                             size="xl"
                             className={styles.avatar}
                         />
-                        <Text
+                        <GText
                             variant="header-2"
                             className={styles.name}
-                        >{`${user?.first_name} ${user?.last_name}`}</Text>
+                        >{`${user?.first_name} ${user?.last_name}`}</GText>
                     </div>
                 </div>
                 <div className={styles.footer}>

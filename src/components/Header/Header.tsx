@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './Header.module.css';
-import {Button, Icon, Text, Theme, User, useThemeValue} from '@gravity-ui/uikit';
+import {Button, Icon, Text as GText, Theme, User, useThemeValue} from '@gravity-ui/uikit';
 import {useUser} from '@/hooks/useUser';
 import {useAuth} from '@/hooks/useAuth';
 import {DARK, LIGHT} from '@/constants';
@@ -20,7 +20,7 @@ const Header: React.FC<AppProps> = ({setTheme}) => {
         <div className={styles.header}>
             <div className={styles.leftside}></div>
             <div className={styles.center}>
-                <Text variant="header-1">Super Burmyash</Text>
+                <GText variant="header-1">Super Burmyash</GText>
             </div>
             <div className={styles.rightside}>
                 {loading ? (

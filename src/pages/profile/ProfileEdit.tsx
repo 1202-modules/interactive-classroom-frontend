@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Button, Card, Text, TextInput} from '@gravity-ui/uikit';
+import {Button, Card, Text as GText, TextInput} from '@gravity-ui/uikit';
 import {useNavigate} from 'react-router-dom';
 import {useUser} from '@/hooks/useUser';
 import {useDispatch} from 'react-redux';
@@ -84,15 +84,15 @@ export default function ProfileEdit() {
             <Card type="container" view="raised" size="l" className={styles.card}>
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.header}>
-                        <Text variant="header-2">Edit profile</Text>
-                        <Text variant="body-2" color="secondary">
+                        <GText variant="header-2">Edit profile</GText>
+                        <GText variant="body-2" color="secondary">
                             Update your personal information
-                        </Text>
+                        </GText>
                     </div>
 
                     <div className={styles.fields}>
                         <div className={styles.field}>
-                            <Text variant="body-2">First name *</Text>
+                            <GText variant="body-2">First name *</GText>
                             <TextInput
                                 placeholder="Enter first name"
                                 value={firstName}
@@ -103,7 +103,7 @@ export default function ProfileEdit() {
                         </div>
 
                         <div className={styles.field}>
-                            <Text variant="body-2">Last name *</Text>
+                            <GText variant="body-2">Last name *</GText>
                             <TextInput
                                 placeholder="Enter last name"
                                 value={lastName}
@@ -114,7 +114,7 @@ export default function ProfileEdit() {
                         </div>
 
                         <div className={styles.field}>
-                            <Text variant="body-2">Avatar URL</Text>
+                            <GText variant="body-2">Avatar URL</GText>
                             <TextInput
                                 placeholder="https://example.com/avatar.png"
                                 value={avatarUrl}
@@ -125,9 +125,9 @@ export default function ProfileEdit() {
                     </div>
 
                     {error && (
-                        <Text variant="body-2" color="danger" className={styles.error}>
+                        <GText variant="body-2" color="danger" className={styles.error}>
                             {error}
-                        </Text>
+                        </GText>
                     )}
 
                     <div className={styles.footer}>

@@ -1,4 +1,4 @@
-import {Button, PasswordInput, Text, TextInput} from '@gravity-ui/uikit';
+import {Button, PasswordInput, Text as GText, TextInput} from '@gravity-ui/uikit';
 import React, {useState} from 'react';
 import styles from './Forms.module.css';
 import axios, {AxiosError} from 'axios';
@@ -85,17 +85,20 @@ export default function LoginForm() {
                 password: form.password,
             });
 
-            const {access_token, user_id, email} = res.data as {
+            const {
+                access_token: accessToken,
+                user_id: userId,
+                email,
+            } = res.data as {
                 access_token: string;
-                token_type: string;
                 user_id: number;
                 email: string;
             };
 
             dispatch(
                 setCredentials({
-                    accessToken: access_token,
-                    userId: user_id,
+                    accessToken: accessToken,
+                    userId: userId,
                     email,
                 }),
             );
@@ -114,8 +117,8 @@ export default function LoginForm() {
                 localStorage.setItem(
                     'auth',
                     JSON.stringify({
-                        accessToken: access_token,
-                        userId: user_id,
+                        accessToken: accessToken,
+                        userId: userId,
                         email,
                     }),
                 );
@@ -148,7 +151,7 @@ export default function LoginForm() {
 
     return (
         <form onSubmit={handleSubmit} className={styles.formFlex}>
-            <Text variant="header-2">Authorization</Text>
+            <GText variant="header-2">Authorization</GText>
 
             <TextInput
                 placeholder="Email"
