@@ -1,11 +1,6 @@
-import React, {useEffect, useState} from 'react';
-import {Avatar, Button, Card, Text, TextInput} from '@gravity-ui/uikit';
+import {Avatar, Button, Card, Text} from '@gravity-ui/uikit';
 import {useNavigate} from 'react-router-dom';
 import {useUser} from '@/hooks/useUser';
-import {useDispatch} from 'react-redux';
-import type {AppDispatch} from '@/store/store';
-import {setUser} from '@/store/userSlice';
-import {api} from '@/api/api';
 import styles from './Profile.module.css';
 
 export default function Profile() {

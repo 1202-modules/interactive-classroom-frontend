@@ -8,7 +8,6 @@ import NotFound from './pages/NotFound';
 import Logout from './pages/auth/Logout';
 import {ProtectedRoute} from './components/Routing/ProtectedRoute';
 import {useFetchUser} from './hooks/useFetchUser';
-import {useAuthInit} from './hooks/useAuthInit';
 import ProfileEdit from './pages/profile/ProfileEdit';
 import Profile from './pages/profile/Profile';
 

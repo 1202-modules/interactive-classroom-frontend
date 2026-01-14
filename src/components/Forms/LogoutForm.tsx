@@ -1,8 +1,7 @@
 import {Button, Text} from '@gravity-ui/uikit';
 import React from 'react';
-import {Link, replace, useLocation, useNavigate} from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import styles from './Forms.module.css';
-import {useAuth} from '@/hooks/useAuth';
 import {useDispatch} from 'react-redux';
 import {AppDispatch} from '@/store/store';
 import {logout} from '@/store/authSlice';

@@ -9,7 +9,6 @@ import {setCredentials} from '@/store/authSlice';
 import {useAuth} from '@/hooks/useAuth';
 import {setUser, setUserError, setUserLoading} from '@/store/userSlice';
 import {api} from '@/api/api';
-import {useUser} from '@/hooks/useUser';
 
 type LoginFormState = {
     email: string;
