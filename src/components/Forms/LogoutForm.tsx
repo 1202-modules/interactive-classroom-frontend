@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { logout } from '@/store/authSlice';
+import { setUser } from '@/store/userSlice';
 
 export default function LogoutForm() {
     const navigate = useNavigate();
@@ -16,6 +17,8 @@ export default function LogoutForm() {
     const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         dispatch(logout())
+        dispatch(setUser(null));
+        navigate('/auth/login', { replace: true });
     }
 
     const handleCancelButton = (e: React.MouseEvent<HTMLButtonElement>) => {

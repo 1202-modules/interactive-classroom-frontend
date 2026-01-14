@@ -47,6 +47,14 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.userId = action.payload.userId;
       state.email = action.payload.email;
+      localStorage.setItem(
+        'auth',
+        JSON.stringify({
+          accessToken: state.accessToken,
+          userId: state.userId,
+          email: state.email,
+        }),
+      );
     },
     logout(state) {
       state.accessToken = null;

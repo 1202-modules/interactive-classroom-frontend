@@ -1,0 +1,58 @@
+.page {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 16px;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 520px;
+    padding: 10px 20px;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .error {
+    margin-top: -8px;
+  }
+  
+  .footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .avatar {
+    --g-avatar-size: 180px;
+    align-self: center;
+  }
+  
+  .name {
+    align-self: center;
+    margin-top: 10px;
+  }
