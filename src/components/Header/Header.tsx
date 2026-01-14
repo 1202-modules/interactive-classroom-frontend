@@ -1,28 +1,26 @@
-import React from 'react'
-import styles from './Header.module.css'
-import { Button, Icon, Text, Theme, User, useThemeValue } from '@gravity-ui/uikit';
-import { useUser } from '@/hooks/useUser';
-import { useAuth } from '@/hooks/useAuth';
-import { DARK, LIGHT } from '@/constants';
-import { Link } from 'react-router-dom';
-import { Moon, Sun } from '@gravity-ui/icons';
+import React from 'react';
+import styles from './Header.module.css';
+import {Button, Icon, Text, Theme, User, useThemeValue} from '@gravity-ui/uikit';
+import {useUser} from '@/hooks/useUser';
+import {useAuth} from '@/hooks/useAuth';
+import {DARK, LIGHT} from '@/constants';
+import {Link} from 'react-router-dom';
+import {Moon, Sun} from '@gravity-ui/icons';
 
 export type AppProps = {
     setTheme: (theme: Theme) => void;
 };
 
-const Header: React.FC<AppProps> =  ({ setTheme }) => {
+const Header: React.FC<AppProps> = ({setTheme}) => {
     const theme = useThemeValue();
-    const { data, loading, error } = useUser();
-    const { accessToken } = useAuth();
+    const {data, loading, error} = useUser();
+    const {accessToken} = useAuth();
     const isDark = theme === DARK;
     return (
         <div className={styles.header}>
-            <div className={styles.leftside}>
-
-            </div>
+            <div className={styles.leftside}></div>
             <div className={styles.center}>
-                <Text variant='header-1'>Super Burmyash</Text>
+                <Text variant="header-1">Super Burmyash</Text>
             </div>
             <div className={styles.rightside}>
                 {loading ? (
@@ -58,7 +56,7 @@ const Header: React.FC<AppProps> =  ({ setTheme }) => {
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Header
+export default Header;

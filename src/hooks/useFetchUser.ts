@@ -1,9 +1,9 @@
-import { AppDispatch } from '@/store/store';
-import { useDispatch, useSelector } from 'react-redux';
-import { useApi } from './useApi';
-import { useEffect } from 'react';
-import { setUser, setUserError, setUserLoading } from '@/store/userSlice';
-import type { RootState } from '@/store/store';
+import {AppDispatch} from '@/store/store';
+import {useDispatch, useSelector} from 'react-redux';
+import {useApi} from './useApi';
+import {useEffect} from 'react';
+import {setUser, setUserError, setUserLoading} from '@/store/userSlice';
+import type {RootState} from '@/store/store';
 
 export const useFetchUser = () => {
     const dispatch = useDispatch<AppDispatch>();
