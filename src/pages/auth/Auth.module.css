@@ -1,0 +1,13 @@
+.card {
+    background: var(--g-color-base-generic);
+    border-radius: var(--g-border-radius-m);
+}
+
+.container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
