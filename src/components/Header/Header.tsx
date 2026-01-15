@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './Header.module.css';
-import {Button, Text as GText, Icon, Theme, User, useThemeValue} from '@gravity-ui/uikit';
+import {Avatar, Button, Text as GText, Icon, Theme, User, useThemeValue} from '@gravity-ui/uikit';
 import {useUser} from '@/hooks/useUser';
 import {useAuth} from '@/hooks/useAuth';
 import {DARK, LIGHT} from '@/constants';
@@ -18,7 +18,9 @@ const Header: React.FC<AppProps> = ({setTheme}) => {
     const isDark = theme === DARK;
     return (
         <div className={styles.header}>
-            <div className={styles.leftside}></div>
+            <div className={styles.leftside}>
+                <Avatar text="1202" imgUrl='https://1202.tatardev.tech/logo.png' theme="brand" size="xl" className={styles.avatar}/>
+            </div>
             <div className={styles.center}>
                 <GText variant="header-1">Super Burmyash</GText>
             </div>

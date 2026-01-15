@@ -1,0 +1,106 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 40%;
+    margin-top: 30px;
+}
+
+.table {
+    margin-top: 20px;
+    background: var(--g-color-base-generic-ultralight);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--g-color-line-generic-solid);
+}
+
+.tableHeader {
+    background: var(--g-color-base-background);
+    padding: 20px 20px;
+    border-bottom: 1px solid var(--g-color-line-generic-solid);
+}
+
+.tableBody {
+    padding: 10px 20px;
+}
+
+.actionPanel {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    gap: 5px;
+    justify-content: start;
+}
+
+.searchInput {
+    width: 200px;
+    max-width: 100%;
+}
+
+.workspaces {
+    width: 100%;
+    margin-top: 20px;
+    display: flex;
+    min-height: 200px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.workspace {
+    flex: 0 0 calc(33.333% - 8px);
+    box-sizing: border-box;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 100px;
+    background: var(--g-color-base-background);
+    border-radius: 15px;
+    border: 1px solid var(--g-color-line-generic-solid);
+    padding: 10px 15px;
+    box-sizing: border-box;
+    height: 150px;
+    /* или конкретная высота, например 140px */
+    overflow: hidden;
+}
+
+.cardHeader {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.cardBody {
+    margin-top: 15px;
+    font-size: 12px;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: end;
+}
+
+.loader {
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.notFound {
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    gap: 5px;
+}
+
+.dialogBody {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}

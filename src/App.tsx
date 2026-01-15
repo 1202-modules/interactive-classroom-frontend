@@ -10,6 +10,7 @@ import {ProtectedRoute} from './components/Routing/ProtectedRoute';
 import {useFetchUser} from './hooks/useFetchUser';
 import ProfileEdit from './pages/profile/ProfileEdit';
 import Profile from './pages/profile/Profile';
+import Workspaces from './pages/workspaces/Workspaces';
 
 const App = () => {
     // useAuthInit();
@@ -44,6 +45,14 @@ const App = () => {
                         element={
                             <ProtectedRoute>
                                 <ProfileEdit />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/workspaces"
+                        element={
+                            <ProtectedRoute>
+                                <Workspaces />
                             </ProtectedRoute>
                         }
                     />
