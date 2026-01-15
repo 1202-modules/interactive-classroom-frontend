@@ -37,6 +37,7 @@ export default function Profile() {
                     >
                         Edit profile
                     </Button>
+                    <Button view='normal' onClick={() => navigate('/logout')}>Logout</Button>
                 </div>
             </Card>
         </div>
