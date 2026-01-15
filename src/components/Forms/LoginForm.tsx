@@ -27,8 +27,7 @@ type BackendError = {
     detail?: string | ValidationDetail[];
 };
 
-// Get API URL from environment variable (set during build)
-const baseUrl = import.meta.env.VITE_API_URL || 'https://api-icplatform.cloudpub.ru';
+const baseUrl = 'https://api-icplatform.cloudpub.ru';
 
 export default function LoginForm() {
     const navigate = useNavigate();

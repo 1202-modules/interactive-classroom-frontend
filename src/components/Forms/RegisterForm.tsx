@@ -24,8 +24,7 @@ type BackendError = {
     detail?: string | ValidationDetail[];
 };
 
-// Get API URL from environment variable (set during build)
-const baseUrl = import.meta.env.VITE_API_URL || 'https://api-icplatform.cloudpub.ru';
+const baseUrl = 'https://api-icplatform.cloudpub.ru';
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function RegisterForm() {
