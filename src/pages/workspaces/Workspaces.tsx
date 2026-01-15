@@ -4,15 +4,23 @@ import { useCreateWorkspace, useWorkspaces, Workspace } from "./queries";
 import { ChangeEvent, useEffect, useState } from "react";
 import { FileLetterX, Plus } from '@gravity-ui/icons';
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "@/api/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 type WorkspaceStatus = 'active' | 'archive' | 'null';
 
 const Workspaces = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [status, setStatus] = useState<WorkspaceStatus[]>(['null']);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [filteredData, setFilteredData] = useState<Workspace[] | undefined>([]);
     const [open, setOpen] = useState<boolean>(false);
+    const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
+    const [archiveOpen, setArchiveOpen] = useState<boolean>(false);
+
+    const [archiveId, setArchiveId] = useState<number | null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const {
         data,
@@ -51,6 +59,45 @@ const Workspaces = () => {
             session_settings: {},
         });
     };
+
+    const handleArchive = (id: number) => {
+        setArchiveId(id);
+        setArchiveOpen(true);
+    }
+
+    const archiveWorkspace = async () => {
+        if (!archiveId) return;
+        const res = await api.post(`/workspaces/${archiveId}/archive`);
+        setArchiveOpen(false);
+        setArchiveId(null);
+
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
+        return res;
+    }
+
+    const handleUnarhive = async (id: number) => {
+        if (!id) return;
+        const res = await api.post(`/workspaces/${id}/unarchive`);
+
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
+        return res;
+    }
+
+    const handleDelete = (id: number) => {
+        setDeleteId(id);
+        setDeleteOpen(true);
+    }
+
+    const deleteWorkspace = async () => {
+        if (!deleteId) return;
+        const res = await api.delete(`/workspaces/${deleteId}`);
+
+        setDeleteOpen(false);
+        setDeleteId(null);
+
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
+        return res;
+    }
 
 
     return (
@@ -96,19 +143,20 @@ const Workspaces = () => {
                                                 {w.description}
                                             </div>
                                             <div className={styles.cardFooter}>
+                                                <span>{w.participant_count} participitions</span>
                                                 <DropdownMenu items={[
                                                     {
                                                         text: "Edit",
                                                         action: () => navigate(`/workspaces/${w.id}/edit`),
                                                     },
                                                     {
-                                                        text: "Archive",
-                                                        action: () => navigate(`/workspaces/${w.id}/edit`)
+                                                        text: w.status === "active" ? "Archive" : "Unarhive",
+                                                        action: w.status === "active" ? () => handleArchive(w.id) : () => handleUnarhive(w.id)
                                                     },
                                                     {
                                                         text: "Delete",
                                                         theme: "danger",
-                                                        action: () => navigate(`/workspaces/${w.id}/delete`)
+                                                        action: () => handleDelete(w.id)
                                                     },
 
                                                 ]}></DropdownMenu>
@@ -130,6 +178,7 @@ const Workspaces = () => {
                 open={open}
                 onEscapeKeyDown={() => setOpen(false)}
                 disableOutsideClick={true}
+                disableBodyScrollLock={true}
             >
                 <Dialog.Body className={styles.dialogBody}>
                     <Text variant="subheader-3">Name of Workspace *</Text>
@@ -146,6 +195,46 @@ const Workspaces = () => {
                     onClickButtonApply={() => handleSubmit()}
                     textButtonApply="Add"
                     textButtonCancel="Cancel"
+                />
+            </Dialog>
+            <Dialog
+                onClose={() => setArchiveOpen(false)}
+                open={archiveOpen}
+                onEscapeKeyDown={() => setArchiveOpen(false)}
+                disableOutsideClick={true}
+                hasCloseButton={false}
+            >
+                <Dialog.Body className={styles.dialogBody}>
+                    <Text variant="subheader-3">Do you want to archive this workspace</Text>
+                </Dialog.Body>
+                <Dialog.Footer
+                    onClickButtonCancel={() => {
+                        setArchiveOpen(false)
+                    }}
+                    onClickButtonApply={async () => await archiveWorkspace()}
+                    textButtonApply="Archive"
+                    textButtonCancel="Cancel"
+                    className={styles.archiveDialogFooter}
+                />
+            </Dialog>
+            <Dialog
+                onClose={() => setDeleteOpen(false)}
+                open={deleteOpen}
+                onEscapeKeyDown={() => setDeleteOpen(false)}
+                disableOutsideClick={true}
+                hasCloseButton={false}
+            >
+                <Dialog.Body className={styles.dialogBody}>
+                    <Text variant="subheader-3">Do you want to archive this workspace</Text>
+                </Dialog.Body>
+                <Dialog.Footer
+                    onClickButtonCancel={() => {
+                        setDeleteOpen(false)
+                    }}
+                    onClickButtonApply={async () => await deleteWorkspace()}
+                    textButtonApply="Delete"
+                    textButtonCancel="Cancel"
+                    className={styles.deleteDialogFooter}
                 />
             </Dialog>
         </div>
