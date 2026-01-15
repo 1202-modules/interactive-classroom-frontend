@@ -3,21 +3,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files first for better layer caching
+# Copy package files
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --only=production=false
+RUN npm install
 
 # Copy source files
 COPY . .
 
 # Build the app with API URL
-# VITE_API_URL should be provided as build argument
 ARG VITE_API_URL=https://api-icplatform.cloudpub.ru
 ENV VITE_API_URL=$VITE_API_URL
-
-# Run type checking and build
 RUN npm run build
 
 # Production stage
