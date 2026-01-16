@@ -28,14 +28,15 @@ const Header: React.FC<AppProps> = ({ setTheme }) => {
                 {loading ? (
                     'loading...'
                 ) : !accessToken || error || !data ? (
-                    <Link to="/auth/login">Log in</Link>
+                    <Link style={{color: 'var(--g-color-text-primary)'}} to="/auth/login">Log in</Link>
                 ) : (
-                    <Link to='/profile'>
+                    <Link to='/profile' style={{textDecoration: "none", color: "var(--g-color-text-primary)"}}>
                         <User
                             avatar={{
                                 text: `${data.first_name} ${data.last_name}`,
                                 imgUrl: data.avatar_url,
-                                theme: 'brand',
+                                backgroundColor: "var(--g-color-text-misc-heavy)",
+                                color: "var(--g-color-text-primary)"
                             }}
                             name={
                                 data.first_name && data.last_name
