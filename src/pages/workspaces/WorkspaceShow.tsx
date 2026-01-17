@@ -15,6 +15,7 @@ import {
 } from '@gravity-ui/uikit';
 import styles from './WorkspaceShow.module.css';
 import { useParams } from 'react-router-dom';
+import NotFound from '@/components/NotFound/NotFound';
 import { useWorkspace, useSessions, useCreateSession, useArchiveSession, useUnarchiveSession, useDeleteSession } from './queries';
 import { useState } from 'react';
 import { Persons, Plus } from '@gravity-ui/icons';
@@ -31,6 +32,7 @@ const WorkspaceShow = () => {
         data: dataWorkspace,
         isLoading: isWorkspaceLoading,
         isError: isWorkspaceError,
+        error: workspaceError,
     } = useWorkspace(wid);
 
     const [activeTab, setActiveTab] = useState<SessionStatus>('active');
@@ -40,6 +42,9 @@ const WorkspaceShow = () => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
 
+    const shouldLoadSessions =
+        isValidId && !isWorkspaceLoading && !isWorkspaceError && !!dataWorkspace;
+
     const {
         data: sessionsData,
         isLoading: isSessionsLoading,
@@ -48,6 +53,8 @@ const WorkspaceShow = () => {
         wid,
         activeTab === 'trash' ? undefined : activeTab,
         activeTab === 'trash',
+        undefined,
+        shouldLoadSessions,
     );
 
     const createSessionMutation = useCreateSession(isValidId ? wid : 0);
@@ -143,11 +150,12 @@ const WorkspaceShow = () => {
 
     if (isWorkspaceError) {
         return (
-            <div className={styles.container}>
-                <Text variant="body-2" color="danger">
-                    Failed to load workspace
-                </Text>
-            </div>
+            <NotFound
+                title="Workspace Not Found"
+                description="The workspace you're looking for doesn't exist or has been deleted."
+                showBackButton
+                showHomeButton
+            />
         );
     }
 

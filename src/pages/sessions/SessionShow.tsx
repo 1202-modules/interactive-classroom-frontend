@@ -2,6 +2,7 @@ import { Card, Loader, Text, Button } from '@gravity-ui/uikit';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './SessionShow.module.css';
 import { useSession } from './queries';
+import NotFound from '@/components/NotFound/NotFound';
 
 const SessionShow = () => {
     const { sessionId } = useParams<string>();
@@ -27,11 +28,12 @@ const SessionShow = () => {
 
     if (isError || !data) {
         return (
-            <div className={styles.page}>
-                <Text variant="body-2" color="danger">
-                    Failed to load session
-                </Text>
-            </div>
+            <NotFound
+                title="Session Not Found"
+                description="The session you're looking for doesn't exist or has been deleted."
+                showBackButton
+                showHomeButton
+            />
         );
     }
 

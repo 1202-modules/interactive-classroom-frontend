@@ -4,6 +4,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/hooks/useApi';
 import type { Session } from '../workspaces/queries';
 
+const isNotFound = (error: unknown) => {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    return status === 404;
+};
+
 const fetchSession = async (apiClient: AxiosInstance, sessionId: number): Promise<Session> => {
     const res = await apiClient.get<Session>(`/sessions/${sessionId}`);
     return res.data;
@@ -16,6 +21,7 @@ export const useSession = (sessionId: number) => {
         queryKey: ['session', { sessionId }],
         queryFn: () => fetchSession(apiClient, sessionId),
         enabled: Number.isFinite(sessionId),
+        retry: (failureCount, error) => !isNotFound(error) && failureCount < 3,
     });
 };
 

@@ -3,6 +3,11 @@ import type { AxiosInstance } from 'axios';
 import { Dispatch, SetStateAction } from 'react';
 import { useApi } from '@/hooks/useApi';
 
+const isNotFound = (error: unknown) => {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    return status === 404;
+};
+
 export type Workspace = {
     id: number;
     user_id: number;
@@ -60,6 +65,7 @@ export const useWorkspace = (id: number) => {
         queryKey: ['workspace', { id }],
         queryFn: () => fetchWorkspace(apiClient, id),
         enabled: Number.isFinite(id),
+        retry: (failureCount, error) => !isNotFound(error) && failureCount < 3,
     });
 };
 
@@ -139,13 +145,14 @@ export const useSessions = (
     status?: 'active' | 'archive',
     includeDeleted = false,
     fields?: string,
+    enabled = true,
 ) => {
     const apiClient = useApi();
 
     return useQuery({
         queryKey: ['sessions', { workspaceId, status, includeDeleted, fields }],
         queryFn: () => fetchSessions(apiClient, workspaceId, status, includeDeleted, fields),
-        enabled: !!workspaceId,
+        enabled: !!workspaceId && enabled,
     });
 };
 
