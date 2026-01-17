@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Card, Text as GText, TextInput } from '@gravity-ui/uikit';
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '@/hooks/useUser';
-import { useDispatch } from 'react-redux';
-import type { AppDispatch } from '@/store/store';
-import { setUser } from '@/store/userSlice';
-import { useApi } from '@/hooks/useApi';
+import React, {useEffect, useState} from 'react';
+import {Button, Card, Text as GText, TextInput} from '@gravity-ui/uikit';
+import {useNavigate} from 'react-router-dom';
+import {useUser} from '@/hooks/useUser';
+import {useDispatch} from 'react-redux';
+import type {AppDispatch} from '@/store/store';
+import {setUser} from '@/store/userSlice';
+import {useApi} from '@/hooks/useApi';
 import styles from './Profile.module.css';
 
 type ValidationDetail = {
@@ -31,7 +31,7 @@ const parseBackendError = (data: BackendError | string | undefined, fallback: st
 export default function ProfileEdit() {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
-    const { data: user } = useUser();
+    const {data: user} = useUser();
     const api = useApi();
 
     const [firstName, setFirstName] = useState(user?.first_name || '');
@@ -60,7 +60,7 @@ export default function ProfileEdit() {
         setIsLoading(true);
 
         try {
-            const payload: { first_name: string; last_name: string; avatar_url?: string } = {
+            const payload: {first_name: string; last_name: string; avatar_url?: string} = {
                 first_name: firstName.trim(),
                 last_name: lastName.trim(),
             };
@@ -71,11 +71,11 @@ export default function ProfileEdit() {
 
             const fields = 'id,email,first_name,last_name,avatar_url,updated_at';
 
-            let nextUser = (await api.put('/users/me', payload, { params: { fields } })).data;
+            let nextUser = (await api.put('/users/me', payload, {params: {fields}})).data;
 
             // Some backends return empty body on update without fields; refetch to ensure state is fresh.
             if (!nextUser || typeof nextUser !== 'object' || !('first_name' in nextUser)) {
-                nextUser = (await api.get('/users/me', { params: { fields } })).data;
+                nextUser = (await api.get('/users/me', {params: {fields}})).data;
             }
 
             dispatch(setUser(nextUser));

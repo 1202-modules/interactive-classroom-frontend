@@ -1,11 +1,11 @@
 // src/hooks/useApi.ts
-import { useEffect } from 'react';
-import { useAuth } from './useAuth';
-import { api } from '../api/api';
+import {useEffect} from 'react';
+import {useAuth} from './useAuth';
+import {api} from '../api/api';
 
 // Returns a shared axios instance with an Authorization header wired to the current token.
 export const useApi = () => {
-    const { accessToken } = useAuth();
+    const {accessToken} = useAuth();
 
     useEffect(() => {
         if (accessToken) {

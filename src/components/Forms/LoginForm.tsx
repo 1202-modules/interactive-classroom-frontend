@@ -1,14 +1,14 @@
-import { Button, Text as GText, PasswordInput, TextInput } from '@gravity-ui/uikit';
-import React, { useState } from 'react';
+import {Button, Text as GText, PasswordInput, TextInput} from '@gravity-ui/uikit';
+import React, {useState} from 'react';
 import styles from './Forms.module.css';
-import { AxiosError } from 'axios';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
-import { setCredentials } from '@/store/authSlice';
-import { useAuth } from '@/hooks/useAuth';
-import { setUser, setUserError, setUserLoading } from '@/store/userSlice';
-import { api } from '@/api/api';
+import {AxiosError} from 'axios';
+import {Link, Navigate, useLocation, useNavigate} from 'react-router-dom';
+import {useDispatch} from 'react-redux';
+import {AppDispatch} from '@/store/store';
+import {setCredentials} from '@/store/authSlice';
+import {useAuth} from '@/hooks/useAuth';
+import {setUser, setUserError, setUserLoading} from '@/store/userSlice';
+import {api} from '@/api/api';
 
 type LoginFormState = {
     email: string;
@@ -31,9 +31,9 @@ export default function LoginForm() {
     const navigate = useNavigate();
 
     const location = useLocation();
-    const from = (location.state as { from?: string })?.from || '/workspaces';
+    const from = (location.state as {from?: string})?.from || '/workspaces';
 
-    const { accessToken } = useAuth();
+    const {accessToken} = useAuth();
 
     const dispatch = useDispatch<AppDispatch>();
 
@@ -46,7 +46,7 @@ export default function LoginForm() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setForm((prev) => ({
             ...prev,
             [name]: value,
@@ -119,14 +119,14 @@ export default function LoginForm() {
                 setIsLoading(false);
 
                 if (!profile.first_name || !profile.last_name) {
-                    navigate('/profile/edit', { replace: true });
+                    navigate('/profile/edit', {replace: true});
                 } else {
-                    navigate(from, { replace: true });
+                    navigate(from, {replace: true});
                 }
             } catch {
                 dispatch(setUserError('Failed to load user'));
                 setIsLoading(false);
-                navigate(from, { replace: true }); // fallback
+                navigate(from, {replace: true}); // fallback
             } finally {
                 dispatch(setUserLoading(false));
             }

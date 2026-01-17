@@ -1,11 +1,24 @@
-import { Button, Dialog, Divider, DropdownMenu, Icon, Label, Loader, Select, text, Text, TextArea, TextInput } from "@gravity-ui/uikit";
-import styles from "./Workspaces.module.css"
-import { useCreateWorkspace, useWorkspaces, Workspace } from "./queries";
-import { ChangeEvent, useEffect, useState } from "react";
-import { FileLetterX, Plus } from '@gravity-ui/icons';
-import { Link, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { useApi } from "@/hooks/useApi";
+import {
+    Button,
+    Dialog,
+    Divider,
+    DropdownMenu,
+    Icon,
+    Label,
+    Loader,
+    Select,
+    Text,
+    TextArea,
+    TextInput,
+    text,
+} from '@gravity-ui/uikit';
+import styles from './Workspaces.module.css';
+import {Workspace, useCreateWorkspace, useWorkspaces} from './queries';
+import {ChangeEvent, useEffect, useState} from 'react';
+import {FileLetterX, Plus} from '@gravity-ui/icons';
+import {Link, useNavigate} from 'react-router-dom';
+import {useQueryClient} from '@tanstack/react-query';
+import {useApi} from '@/hooks/useApi';
 
 type WorkspaceStatus = 'active' | 'archive' | 'null';
 
@@ -23,13 +36,7 @@ const Workspaces = () => {
     const [archiveId, setArchiveId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    const {
-        data,
-        isLoading,
-        isError,
-        error,
-        refetch,
-    } = useWorkspaces(status[0]);
+    const {data, isLoading, isError, error, refetch} = useWorkspaces(status[0]);
 
     useEffect(() => {
         if (!data) {
@@ -41,15 +48,18 @@ const Workspaces = () => {
         const base = data.workspaces;
 
         setFilteredData(
-            normalized
-                ? base.filter((w) => w.name.toLowerCase().includes(normalized))
-                : base,
+            normalized ? base.filter((w) => w.name.toLowerCase().includes(normalized)) : base,
         );
     }, [data, searchQuery]);
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const { mutate, isPending, isError: isMutateError, error: mutateError } = useCreateWorkspace(setOpen, setName, setDescription);
+    const {
+        mutate,
+        isPending,
+        isError: isMutateError,
+        error: mutateError,
+    } = useCreateWorkspace(setOpen, setName, setDescription);
 
     const handleSubmit = () => {
         if (!name.trim()) return;
@@ -64,7 +74,7 @@ const Workspaces = () => {
     const handleArchive = (id: number) => {
         setArchiveId(id);
         setArchiveOpen(true);
-    }
+    };
 
     const archiveWorkspace = async () => {
         if (!archiveId) return;
@@ -72,22 +82,22 @@ const Workspaces = () => {
         setArchiveOpen(false);
         setArchiveId(null);
 
-        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
         return res;
-    }
+    };
 
     const handleUnarhive = async (id: number) => {
         if (!id) return;
         const res = await api.post(`/workspaces/${id}/unarchive`);
 
-        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
         return res;
-    }
+    };
 
     const handleDelete = (id: number) => {
         setDeleteId(id);
         setDeleteOpen(true);
-    }
+    };
 
     const deleteWorkspace = async () => {
         if (!deleteId) return;
@@ -96,10 +106,9 @@ const Workspaces = () => {
         setDeleteOpen(false);
         setDeleteId(null);
 
-        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
         return res;
-    }
-
+    };
 
     return (
         <div className={styles.container}>
@@ -121,56 +130,73 @@ const Workspaces = () => {
                             <Select.Option value="archive">Archive</Select.Option>
                         </Select>
                         <div className={styles.searchInput}>
-                            <TextInput placeholder="Search..."
+                            <TextInput
+                                placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                     setSearchQuery(e.target.value)
                                 }
-                                size="xl" />
+                                size="xl"
+                            />
                         </div>
-                        <Button view="action" size="xl" onClick={() => setOpen(true)}>Add new <Icon data={Plus} /></Button>
+                        <Button view="action" size="xl" onClick={() => setOpen(true)}>
+                            Add new <Icon data={Plus} />
+                        </Button>
                     </div>
                     <div className={styles.workspaces}>
-                        {isLoading ? <Loader className={styles.loader} /> :
-                            filteredData?.length ?
-                                filteredData.map((w, ind) =>
-                                    <div key={w.id} className={styles.workspace}>
-                                        <div className={styles.card}>
-                                            <div className={styles.cardHeader}>
-                                                <Link to={`/workspaces/${w.id}`}><Text variant="subheader-3">{w.name}</Text></Link>
-                                                {w.status === "active" ? <Label theme="success">Active</Label> : <Label theme="unknown">{w.status}</Label>}
-                                            </div>
-                                            <div className={styles.cardBody}>
-                                                {w.description}
-                                            </div>
-                                            <div className={styles.cardFooter}>
-                                                <span>{w.participant_count} participitions</span>
-                                                <DropdownMenu items={[
+                        {isLoading ? (
+                            <Loader className={styles.loader} />
+                        ) : filteredData?.length ? (
+                            filteredData.map((w, ind) => (
+                                <div key={w.id} className={styles.workspace}>
+                                    <div className={styles.card}>
+                                        <div className={styles.cardHeader}>
+                                            <Link to={`/workspaces/${w.id}`}>
+                                                <Text variant="subheader-3">{w.name}</Text>
+                                            </Link>
+                                            {w.status === 'active' ? (
+                                                <Label theme="success">Active</Label>
+                                            ) : (
+                                                <Label theme="unknown">{w.status}</Label>
+                                            )}
+                                        </div>
+                                        <div className={styles.cardBody}>{w.description}</div>
+                                        <div className={styles.cardFooter}>
+                                            <span>{w.participant_count} participitions</span>
+                                            <DropdownMenu
+                                                items={[
                                                     {
-                                                        text: "Edit",
-                                                        action: () => navigate(`/workspaces/${w.id}/edit`),
+                                                        text: 'Edit',
+                                                        action: () =>
+                                                            navigate(`/workspaces/${w.id}/edit`),
                                                     },
                                                     {
-                                                        text: w.status === "active" ? "Archive" : "Unarhive",
-                                                        action: w.status === "active" ? () => handleArchive(w.id) : () => handleUnarhive(w.id)
+                                                        text:
+                                                            w.status === 'active'
+                                                                ? 'Archive'
+                                                                : 'Unarhive',
+                                                        action:
+                                                            w.status === 'active'
+                                                                ? () => handleArchive(w.id)
+                                                                : () => handleUnarhive(w.id),
                                                     },
                                                     {
-                                                        text: "Delete",
-                                                        theme: "danger",
-                                                        action: () => handleDelete(w.id)
+                                                        text: 'Delete',
+                                                        theme: 'danger',
+                                                        action: () => handleDelete(w.id),
                                                     },
-
-                                                ]}></DropdownMenu>
-                                            </div>
+                                                ]}
+                                            ></DropdownMenu>
                                         </div>
                                     </div>
-                                )
-                                :
-                                <div className={styles.notFound}>
-                                    <Icon data={FileLetterX} />
-                                    <Text variant="subheader-1">There is no available Workspaces</Text>
                                 </div>
-                        }
+                            ))
+                        ) : (
+                            <div className={styles.notFound}>
+                                <Icon data={FileLetterX} />
+                                <Text variant="subheader-1">There is no available Workspaces</Text>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -184,12 +210,24 @@ const Workspaces = () => {
                 <Dialog.Body className={styles.dialogBody}>
                     <Text variant="subheader-3">Name of Workspace *</Text>
                     <div className={styles.searchInput}>
-                        <TextInput size="l" validationState={isMutateError ? 'invalid' : undefined} value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
+                        <TextInput
+                            size="l"
+                            validationState={isMutateError ? 'invalid' : undefined}
+                            value={name}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setName(e.target.value)
+                            }
+                        />
                     </div>
                     <Text variant="subheader-3">Workspace's description</Text>
-                    <TextArea minRows={3} maxRows={7} validationState={isMutateError ? 'invalid' : undefined} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setDescription(e.target.value)
-                    } />
+                    <TextArea
+                        minRows={3}
+                        maxRows={7}
+                        validationState={isMutateError ? 'invalid' : undefined}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                            setDescription(e.target.value)
+                        }
+                    />
                 </Dialog.Body>
                 <Dialog.Footer
                     onClickButtonCancel={() => setOpen(false)}
@@ -210,7 +248,7 @@ const Workspaces = () => {
                 </Dialog.Body>
                 <Dialog.Footer
                     onClickButtonCancel={() => {
-                        setArchiveOpen(false)
+                        setArchiveOpen(false);
                     }}
                     onClickButtonApply={async () => await archiveWorkspace()}
                     textButtonApply="Archive"
@@ -230,7 +268,7 @@ const Workspaces = () => {
                 </Dialog.Body>
                 <Dialog.Footer
                     onClickButtonCancel={() => {
-                        setDeleteOpen(false)
+                        setDeleteOpen(false);
                     }}
                     onClickButtonApply={async () => await deleteWorkspace()}
                     textButtonApply="Delete"
@@ -239,7 +277,7 @@ const Workspaces = () => {
                 />
             </Dialog>
         </div>
-    )
-}
+    );
+};
 
 export default Workspaces;

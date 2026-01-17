@@ -1,30 +1,36 @@
 import {
+    Alert,
     Button,
+    Dialog,
+    DropdownMenu,
     Icon,
+    Label,
     Loader,
     Tab,
     TabList,
     TabProvider,
     Text,
-    TextInput,
-    Dialog,
     TextArea,
-    Label,
-    DropdownMenu,
-    Alert,
+    TextInput,
 } from '@gravity-ui/uikit';
 import styles from './WorkspaceShow.module.css';
-import { useParams } from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import NotFound from '@/components/NotFound/NotFound';
-import { useWorkspace, useSessions, useCreateSession, useArchiveSession, useUnarchiveSession, useDeleteSession } from './queries';
-import { useState } from 'react';
-import { Persons, Plus } from '@gravity-ui/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+    useArchiveSession,
+    useCreateSession,
+    useDeleteSession,
+    useSessions,
+    useUnarchiveSession,
+    useWorkspace,
+} from './queries';
+import {useState} from 'react';
+import {Persons, Plus} from '@gravity-ui/icons';
 
 type SessionStatus = 'active' | 'archive' | 'trash';
 
 const WorkspaceShow = () => {
-    const { workspaceId } = useParams<string>();
+    const {workspaceId} = useParams<string>();
     const wid = Number(workspaceId);
     const isValidId = Number.isFinite(wid) && wid > 0;
 
@@ -43,7 +49,7 @@ const WorkspaceShow = () => {
     const [description, setDescription] = useState('');
 
     const shouldLoadSessions =
-        isValidId && !isWorkspaceLoading && !isWorkspaceError && !!dataWorkspace;
+        isValidId && !isWorkspaceLoading && !isWorkspaceError && Boolean(dataWorkspace);
 
     const {
         data: sessionsData,
@@ -82,7 +88,7 @@ const WorkspaceShow = () => {
         if (!name.trim()) return;
 
         createSessionMutation.mutate(
-            { name: name.trim(), description: description.trim() || undefined },
+            {name: name.trim(), description: description.trim() || undefined},
             {
                 onSuccess: () => {
                     setCreateDialogOpen(false);
@@ -162,9 +168,9 @@ const WorkspaceShow = () => {
     return (
         <div className={styles.container}>
             <Text variant="header-2">Workspace: {dataWorkspace?.name}</Text>
-            <Text variant="body-2" style={{ marginTop: '10px' }}>
-                Add a sessions to kickstart your events, meetings, workshops, etc with
-                better engagement
+            <Text variant="body-2" style={{marginTop: '10px'}}>
+                Add a sessions to kickstart your events, meetings, workshops, etc with better
+                engagement
             </Text>
 
             <div className={styles.sessionsTabs}>
@@ -210,30 +216,45 @@ const WorkspaceShow = () => {
                                 <th className={styles.tableStatus}>Status</th>
                                 <th className={styles.tableDate}>Date</th>
                                 <th className={styles.tableParticipants}>Participants</th>
-                                <th className={styles.tableUpdate} colSpan={2}>Last Edited</th>
+                                <th className={styles.tableUpdate} colSpan={2}>
+                                    Last Edited
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {(sessionsData?.sessions || [])
+                                .filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
                                 .filter((s) =>
                                     activeTab === 'trash'
                                         ? s.status === 'trash' || s.status === 'deleted'
                                         : true,
                                 )
                                 .map((s) => {
-                                    const isDeleted = s.status === 'trash' || s.status === 'deleted';
+                                    const isDeleted =
+                                        s.status === 'trash' || s.status === 'deleted';
                                     return (
                                         <tr className={styles.sessionsTr} key={s.id}>
                                             <td className={styles.tableName}>
                                                 <div className={styles.sessionNameBlock}>
-                                                    <Text color='secondary'>{s.id}</Text>
-                                                    <Link to={`/sessions/${s.id}`} style={{ textDecoration: 'none' }}>
-                                                        <Text variant='subheader-3'>{s.name}</Text>
+                                                    <Text color="secondary">{s.id}</Text>
+                                                    <Link
+                                                        to={`/sessions/${s.id}`}
+                                                        style={{textDecoration: 'none'}}
+                                                    >
+                                                        <Text variant="subheader-3">{s.name}</Text>
                                                     </Link>
                                                 </div>
                                             </td>
                                             <td className={styles.tableStatus}>
-                                                <Label theme={isDeleted ? 'danger' : s.status === 'active' ? 'success' : 'normal'}>
+                                                <Label
+                                                    theme={
+                                                        isDeleted
+                                                            ? 'danger'
+                                                            : s.status === 'active'
+                                                              ? 'success'
+                                                              : 'normal'
+                                                    }
+                                                >
                                                     {isDeleted ? 'Deleted' : s.status}
                                                 </Label>
                                             </td>
@@ -242,30 +263,38 @@ const WorkspaceShow = () => {
                                             </td>
                                             <td className={styles.tableParticipants}>
                                                 <div className={styles.tableParticipantsBlock}>
-                                                    <Icon data={Persons} />{s.stopped_participant_count}
+                                                    <Icon data={Persons} />
+                                                    {s.stopped_participant_count}
                                                 </div>
                                             </td>
                                             <td className={styles.tableUpdate}>
                                                 {formatUpdatedAgo(s.updated_at)}
                                             </td>
                                             <td className={styles.tableActions}>
-                                                <DropdownMenu items={[
-                                                    {
-                                                        action: () => navigate(`/sessions/${s.id}/edit`),
-                                                        text: 'Edit',
-                                                    },
-                                                    {
-                                                        action: () => s.status === 'active'
-                                                            ? handleArchiveSession(s.id)
-                                                            : handleUnarchiveSession(s.id),
-                                                        text: s.status === 'active' ? 'Archive' : 'Unarchive',
-                                                    },
-                                                    {
-                                                        action: () => handleDeleteClick(s.id),
-                                                        text: 'Delete',
-                                                        theme: 'danger',
-                                                    },
-                                                ]} />
+                                                <DropdownMenu
+                                                    items={[
+                                                        {
+                                                            action: () =>
+                                                                navigate(`/sessions/${s.id}/edit`),
+                                                            text: 'Edit',
+                                                        },
+                                                        {
+                                                            action: () =>
+                                                                s.status === 'active'
+                                                                    ? handleArchiveSession(s.id)
+                                                                    : handleUnarchiveSession(s.id),
+                                                            text:
+                                                                s.status === 'active'
+                                                                    ? 'Archive'
+                                                                    : 'Unarchive',
+                                                        },
+                                                        {
+                                                            action: () => handleDeleteClick(s.id),
+                                                            text: 'Delete',
+                                                            theme: 'danger',
+                                                        },
+                                                    ]}
+                                                />
                                             </td>
                                         </tr>
                                     );
@@ -308,9 +337,7 @@ const WorkspaceShow = () => {
                 <Dialog.Footer
                     onClickButtonCancel={() => setCreateDialogOpen(false)}
                     onClickButtonApply={handleSubmit}
-                    textButtonApply={
-                        createSessionMutation.isPending ? 'Creating…' : 'Add'
-                    }
+                    textButtonApply={createSessionMutation.isPending ? 'Creating…' : 'Add'}
                     textButtonCancel="Cancel"
                 />
             </Dialog>
@@ -328,7 +355,7 @@ const WorkspaceShow = () => {
                             theme="danger"
                             title="Error"
                             message={actionError}
-                            style={{ marginTop: '10px' }}
+                            style={{marginTop: '10px'}}
                         />
                     )}
                 </Dialog.Body>

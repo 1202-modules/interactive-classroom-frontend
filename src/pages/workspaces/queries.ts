@@ -1,10 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AxiosInstance } from 'axios';
-import { Dispatch, SetStateAction } from 'react';
-import { useApi } from '@/hooks/useApi';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import type {AxiosInstance} from 'axios';
+import {Dispatch, SetStateAction} from 'react';
+import {useApi} from '@/hooks/useApi';
 
 const isNotFound = (error: unknown) => {
-    const status = (error as { response?: { status?: number } })?.response?.status;
+    const status = (error as {response?: {status?: number}})?.response?.status;
     return status === 404;
 };
 
@@ -41,14 +41,11 @@ const fetchWorkspaces = async (
     return res.data;
 };
 
-export const useWorkspaces = (
-    status?: 'active' | 'archive' | 'null',
-    includeDeleted = false,
-) => {
+export const useWorkspaces = (status?: 'active' | 'archive' | 'null', includeDeleted = false) => {
     const apiClient = useApi();
 
     return useQuery({
-        queryKey: ['workspaces', { status, includeDeleted }],
+        queryKey: ['workspaces', {status, includeDeleted}],
         queryFn: () => fetchWorkspaces(apiClient, status, includeDeleted),
     });
 };
@@ -62,13 +59,12 @@ export const useWorkspace = (id: number) => {
     const apiClient = useApi();
 
     return useQuery({
-        queryKey: ['workspace', { id }],
+        queryKey: ['workspace', {id}],
         queryFn: () => fetchWorkspace(apiClient, id),
         enabled: Number.isFinite(id),
         retry: (failureCount, error) => !isNotFound(error) && failureCount < 3,
     });
 };
-
 
 type CreateWorkspaceDto = {
     name: string;
@@ -90,7 +86,7 @@ export const useCreateWorkspace = (
             return res.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+            queryClient.invalidateQueries({queryKey: ['workspaces']});
             setOpen(false);
             setName('');
             setDescription('');
@@ -126,16 +122,13 @@ const fetchSessions = async (
     includeDeleted = false,
     fields?: string,
 ): Promise<SessionsResponse> => {
-    const res = await apiClient.get<SessionsResponse>(
-        `/workspaces/${workspaceId}/sessions`,
-        {
-            params: {
-                status,
-                include_deleted: includeDeleted,
-                fields,
-            },
+    const res = await apiClient.get<SessionsResponse>(`/workspaces/${workspaceId}/sessions`, {
+        params: {
+            status,
+            include_deleted: includeDeleted,
+            fields,
         },
-    );
+    });
     return res.data;
 };
 
@@ -150,9 +143,9 @@ export const useSessions = (
     const apiClient = useApi();
 
     return useQuery({
-        queryKey: ['sessions', { workspaceId, status, includeDeleted, fields }],
+        queryKey: ['sessions', {workspaceId, status, includeDeleted, fields}],
         queryFn: () => fetchSessions(apiClient, workspaceId, status, includeDeleted, fields),
-        enabled: !!workspaceId && enabled,
+        enabled: Boolean(workspaceId) && enabled,
     });
 };
 
@@ -167,11 +160,9 @@ const createSession = async (
     payload: CreateSessionDto,
     fields?: string,
 ): Promise<Session> => {
-    const res = await apiClient.post<Session>(
-        `/workspaces/${workspaceId}/sessions`,
-        payload,
-        { params: { fields } },
-    );
+    const res = await apiClient.post<Session>(`/workspaces/${workspaceId}/sessions`, payload, {
+        params: {fields},
+    });
     return res.data;
 };
 
@@ -180,11 +171,10 @@ export const useCreateSession = (workspaceId: number) => {
     const apiClient = useApi();
 
     return useMutation({
-        mutationFn: (payload: CreateSessionDto) =>
-            createSession(apiClient, workspaceId, payload),
+        mutationFn: (payload: CreateSessionDto) => createSession(apiClient, workspaceId, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ['sessions', { workspaceId }],
+                queryKey: ['sessions', {workspaceId}],
             });
         },
     });
@@ -197,7 +187,7 @@ export const useArchiveSession = (workspaceId: number) => {
     return useMutation({
         mutationFn: (sessionId: number) => apiClient.post(`/sessions/${sessionId}/archive`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['sessions', { workspaceId }] });
+            queryClient.invalidateQueries({queryKey: ['sessions', {workspaceId}]});
         },
     });
 };
@@ -209,7 +199,7 @@ export const useUnarchiveSession = (workspaceId: number) => {
     return useMutation({
         mutationFn: (sessionId: number) => apiClient.post(`/sessions/${sessionId}/unarchive`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['sessions', { workspaceId }] });
+            queryClient.invalidateQueries({queryKey: ['sessions', {workspaceId}]});
         },
     });
 };
@@ -221,7 +211,7 @@ export const useDeleteSession = (workspaceId: number) => {
     return useMutation({
         mutationFn: (sessionId: number) => apiClient.delete(`/sessions/${sessionId}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['sessions', { workspaceId }] });
+            queryClient.invalidateQueries({queryKey: ['sessions', {workspaceId}]});
         },
     });
 };

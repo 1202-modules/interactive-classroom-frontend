@@ -1,10 +1,10 @@
-import { Button, Text as GText, PasswordInput, TextInput } from '@gravity-ui/uikit';
-import React, { useEffect, useState } from 'react';
+import {Button, Text as GText, PasswordInput, TextInput} from '@gravity-ui/uikit';
+import React, {useEffect, useState} from 'react';
 import styles from './Forms.module.css';
-import { AxiosError } from 'axios';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/api/api';
+import {AxiosError} from 'axios';
+import {Link, Navigate, useLocation, useNavigate} from 'react-router-dom';
+import {useAuth} from '@/hooks/useAuth';
+import {api} from '@/api/api';
 
 type RegisterFormValue = {
     email: string;
@@ -31,9 +31,9 @@ export default function RegisterForm() {
     const navigate = useNavigate();
 
     const location = useLocation();
-    const from = (location.state as { from?: string })?.from || '/';
+    const from = (location.state as {from?: string})?.from || '/';
 
-    const { accessToken } = useAuth();
+    const {accessToken} = useAuth();
 
     if (accessToken) {
         return <Navigate to="/logout" replace state={from} />;
@@ -58,7 +58,7 @@ export default function RegisterForm() {
     const [resendCooldown, setResendCooldown] = useState<number>(0);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setForm((prev) => ({
             ...prev,
             [name]: value,
