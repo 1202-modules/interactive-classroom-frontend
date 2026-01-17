@@ -3,18 +3,17 @@ import {
     Dialog,
     Divider,
     DropdownMenu,
+    Text as GText,
     Icon,
     Label,
     Loader,
     Select,
-    Text,
     TextArea,
     TextInput,
-    text,
 } from '@gravity-ui/uikit';
 import styles from './Workspaces.module.css';
 import {Workspace, useCreateWorkspace, useWorkspaces} from './queries';
-import {ChangeEvent, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {FileLetterX, Plus} from '@gravity-ui/icons';
 import {Link, useNavigate} from 'react-router-dom';
 import {useQueryClient} from '@tanstack/react-query';
@@ -36,7 +35,7 @@ const Workspaces = () => {
     const [archiveId, setArchiveId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    const {data, isLoading, isError, error, refetch} = useWorkspaces(status[0]);
+    const {data, isLoading} = useWorkspaces(status[0]);
 
     useEffect(() => {
         if (!data) {
@@ -54,12 +53,7 @@ const Workspaces = () => {
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const {
-        mutate,
-        isPending,
-        isError: isMutateError,
-        error: mutateError,
-    } = useCreateWorkspace(setOpen, setName, setDescription);
+    const {mutate, isError: isMutateError} = useCreateWorkspace(setOpen, setName, setDescription);
 
     const handleSubmit = () => {
         if (!name.trim()) return;
@@ -112,10 +106,10 @@ const Workspaces = () => {
 
     return (
         <div className={styles.container}>
-            <Text variant="header-2">My Workspaces</Text>
+            <GText variant="header-2">My Workspaces</GText>
             <div className={styles.table}>
                 <div className={styles.tableHeader}>
-                    <Text variant="header-1">Workspaces overview</Text>
+                    <GText variant="header-1">Workspaces overview</GText>
                 </div>
                 <div className={styles.tableBody}>
                     <Divider />
@@ -147,12 +141,12 @@ const Workspaces = () => {
                         {isLoading ? (
                             <Loader className={styles.loader} />
                         ) : filteredData?.length ? (
-                            filteredData.map((w, ind) => (
+                            filteredData.map((w) => (
                                 <div key={w.id} className={styles.workspace}>
                                     <div className={styles.card}>
                                         <div className={styles.cardHeader}>
                                             <Link to={`/workspaces/${w.id}`}>
-                                                <Text variant="subheader-3">{w.name}</Text>
+                                                <GText variant="subheader-3">{w.name}</GText>
                                             </Link>
                                             {w.status === 'active' ? (
                                                 <Label theme="success">Active</Label>
@@ -194,7 +188,9 @@ const Workspaces = () => {
                         ) : (
                             <div className={styles.notFound}>
                                 <Icon data={FileLetterX} />
-                                <Text variant="subheader-1">There is no available Workspaces</Text>
+                                <GText variant="subheader-1">
+                                    There is no available Workspaces
+                                </GText>
                             </div>
                         )}
                     </div>
@@ -208,7 +204,7 @@ const Workspaces = () => {
                 disableBodyScrollLock={true}
             >
                 <Dialog.Body className={styles.dialogBody}>
-                    <Text variant="subheader-3">Name of Workspace *</Text>
+                    <GText variant="subheader-3">Name of Workspace *</GText>
                     <div className={styles.searchInput}>
                         <TextInput
                             size="l"
@@ -219,7 +215,7 @@ const Workspaces = () => {
                             }
                         />
                     </div>
-                    <Text variant="subheader-3">Workspace's description</Text>
+                    <GText variant="subheader-3">Workspace's description</GText>
                     <TextArea
                         minRows={3}
                         maxRows={7}

@@ -1,4 +1,4 @@
-import {Button, Card, Loader, Text, TextArea, TextInput} from '@gravity-ui/uikit';
+import {Button, Card, Text as GText, Loader, TextArea, TextInput} from '@gravity-ui/uikit';
 import {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import styles from './SessionEdit.module.css';
@@ -27,9 +27,9 @@ const SessionEdit = () => {
     if (!isValidId) {
         return (
             <div className={styles.page}>
-                <Text variant="body-2" color="danger">
+                <GText variant="body-2" color="danger">
                     Invalid session id
-                </Text>
+                </GText>
             </div>
         );
     }
@@ -41,9 +41,9 @@ const SessionEdit = () => {
     if (isError || !data) {
         return (
             <div className={styles.page}>
-                <Text variant="body-2" color="danger">
+                <GText variant="body-2" color="danger">
                     Failed to load session
-                </Text>
+                </GText>
             </div>
         );
     }
@@ -73,10 +73,10 @@ const SessionEdit = () => {
         <div className={styles.page}>
             <Card type="container" view="raised" className={styles.card}>
                 <div className={styles.header}>
-                    <Text variant="header-2">Edit session</Text>
-                    <Text variant="body-2" color="secondary">
+                    <GText variant="header-2">Edit session</GText>
+                    <GText variant="body-2" color="secondary">
                         Update session name and description
-                    </Text>
+                    </GText>
                 </div>
 
                 <form className={styles.form} onSubmit={handleSubmit}>
@@ -98,9 +98,9 @@ const SessionEdit = () => {
                     />
 
                     {error && (
-                        <Text variant="body-2" color="danger">
+                        <GText variant="body-2" color="danger">
                             {error}
-                        </Text>
+                        </GText>
                     )}
 
                     <div className={styles.footer}>

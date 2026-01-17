@@ -1,4 +1,4 @@
-import {Button, Card, Text} from '@gravity-ui/uikit';
+import {Button, Card, Text as GText} from '@gravity-ui/uikit';
 import {useNavigate} from 'react-router-dom';
 import styles from './NotFound.module.css';
 
@@ -22,12 +22,12 @@ const NotFound = ({
             <Card type="container" view="raised" className={styles.card}>
                 <div className={styles.content}>
                     <div className={styles.errorCode}>404</div>
-                    <Text variant="header-1" color="secondary" className={styles.title}>
+                    <GText variant="header-1" color="secondary" className={styles.title}>
                         {title}
-                    </Text>
-                    <Text variant="body-2" color="secondary" className={styles.description}>
+                    </GText>
+                    <GText variant="body-2" color="secondary" className={styles.description}>
                         {description}
-                    </Text>
+                    </GText>
                     <div className={styles.actions}>
                         {showBackButton && (
                             <Button onClick={() => navigate(-1)} view="action">

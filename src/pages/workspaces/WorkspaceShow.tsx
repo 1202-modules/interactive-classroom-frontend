@@ -3,13 +3,13 @@ import {
     Button,
     Dialog,
     DropdownMenu,
+    Text as GText,
     Icon,
     Label,
     Loader,
     Tab,
     TabList,
     TabProvider,
-    Text,
     TextArea,
     TextInput,
 } from '@gravity-ui/uikit';
@@ -38,7 +38,6 @@ const WorkspaceShow = () => {
         data: dataWorkspace,
         isLoading: isWorkspaceLoading,
         isError: isWorkspaceError,
-        error: workspaceError,
     } = useWorkspace(wid);
 
     const [activeTab, setActiveTab] = useState<SessionStatus>('active');
@@ -143,9 +142,9 @@ const WorkspaceShow = () => {
     if (!isValidId) {
         return (
             <div className={styles.container}>
-                <Text variant="body-2" color="danger">
+                <GText variant="body-2" color="danger">
                     Invalid workspace id
-                </Text>
+                </GText>
             </div>
         );
     }
@@ -167,11 +166,11 @@ const WorkspaceShow = () => {
 
     return (
         <div className={styles.container}>
-            <Text variant="header-2">Workspace: {dataWorkspace?.name}</Text>
-            <Text variant="body-2" style={{marginTop: '10px'}}>
+            <GText variant="header-2">Workspace: {dataWorkspace?.name}</GText>
+            <GText variant="body-2" style={{marginTop: '10px'}}>
                 Add a sessions to kickstart your events, meetings, workshops, etc with better
                 engagement
-            </Text>
+            </GText>
 
             <div className={styles.sessionsTabs}>
                 <TabProvider
@@ -205,9 +204,9 @@ const WorkspaceShow = () => {
                 {isSessionsLoading ? (
                     <Loader className={styles.loader} />
                 ) : isSessionsError ? (
-                    <Text variant="body-2" color="danger">
+                    <GText variant="body-2" color="danger">
                         Failed to load sessions
-                    </Text>
+                    </GText>
                 ) : (
                     <table className={styles.table}>
                         <thead className={styles.tableHead}>

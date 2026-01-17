@@ -1,4 +1,4 @@
-import {Button, Card, Loader, Text} from '@gravity-ui/uikit';
+import {Button, Card, Text as GText, Loader} from '@gravity-ui/uikit';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import styles from './SessionShow.module.css';
 import {useSession} from './queries';
@@ -15,9 +15,9 @@ const SessionShow = () => {
     if (!isValidId) {
         return (
             <div className={styles.page}>
-                <Text variant="body-2" color="danger">
+                <GText variant="body-2" color="danger">
                     Invalid session id
-                </Text>
+                </GText>
             </div>
         );
     }
@@ -41,12 +41,12 @@ const SessionShow = () => {
         <div className={styles.page}>
             <Card type="container" view="raised" className={styles.card}>
                 <div className={styles.header}>
-                    <Text variant="header-2">{data.name}</Text>
+                    <GText variant="header-2">{data.name}</GText>
                 </div>
                 <div className={styles.body}>
-                    <Text variant="body-2" color="secondary">
+                    <GText variant="body-2" color="secondary">
                         {data.description || 'No description provided'}
-                    </Text>
+                    </GText>
                 </div>
                 <div className={styles.footer}>
                     <Button view="action" onClick={() => navigate(-1)}>
