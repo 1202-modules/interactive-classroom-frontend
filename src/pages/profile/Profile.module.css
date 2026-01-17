@@ -56,3 +56,18 @@
   align-self: center;
   margin-top: 10px;
 }
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 12px;
+  }
+
+  .card {
+    padding: 10px 16px;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

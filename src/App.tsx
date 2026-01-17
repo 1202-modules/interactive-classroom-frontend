@@ -1,17 +1,19 @@
 import React from 'react';
-import {Theme, ThemeProvider} from '@gravity-ui/uikit';
-import {Wrapper} from './components/Wrapper';
-import {DEFAULT_THEME} from './constants';
-import {Link, Route, Routes} from 'react-router-dom';
+import { Theme, ThemeProvider } from '@gravity-ui/uikit';
+import { Wrapper } from './components/Wrapper';
+import { DEFAULT_THEME } from './constants';
+import { Link, Route, Routes } from 'react-router-dom';
 import Auth from './pages/auth/Auth';
 import NotFound from './pages/NotFound';
 import Logout from './pages/auth/Logout';
-import {ProtectedRoute} from './components/Routing/ProtectedRoute';
-import {useFetchUser} from './hooks/useFetchUser';
+import { ProtectedRoute } from './components/Routing/ProtectedRoute';
+import { useFetchUser } from './hooks/useFetchUser';
 import ProfileEdit from './pages/profile/ProfileEdit';
 import Profile from './pages/profile/Profile';
 import Workspaces from './pages/workspaces/Workspaces';
 import WorkspaceShow from './pages/workspaces/WorkspaceShow';
+import SessionShow from './pages/sessions/SessionShow';
+import SessionEdit from './pages/sessions/SessionEdit';
 
 const App = () => {
     // useAuthInit();
@@ -62,6 +64,22 @@ const App = () => {
                         element={
                             <ProtectedRoute>
                                 <WorkspaceShow />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/sessions/:sessionId"
+                        element={
+                            <ProtectedRoute>
+                                <SessionShow />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/sessions/:sessionId/edit"
+                        element={
+                            <ProtectedRoute>
+                                <SessionEdit />
                             </ProtectedRoute>
                         }
                     />

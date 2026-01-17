@@ -1,9 +1,10 @@
-import {Button, Text as GText, PasswordInput, TextInput} from '@gravity-ui/uikit';
-import React, {useEffect, useState} from 'react';
+import { Button, Text as GText, PasswordInput, TextInput } from '@gravity-ui/uikit';
+import React, { useEffect, useState } from 'react';
 import styles from './Forms.module.css';
-import axios, {AxiosError} from 'axios';
-import {Link, Navigate, useLocation, useNavigate} from 'react-router-dom';
-import {useAuth} from '@/hooks/useAuth';
+import { AxiosError } from 'axios';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/api/api';
 
 type RegisterFormValue = {
     email: string;
@@ -24,16 +25,15 @@ type BackendError = {
     detail?: string | ValidationDetail[];
 };
 
-const baseUrl = 'https://api-icplatform.cloudpub.ru';
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function RegisterForm() {
     const navigate = useNavigate();
 
     const location = useLocation();
-    const from = (location.state as {from?: string})?.from || '/';
+    const from = (location.state as { from?: string })?.from || '/';
 
-    const {accessToken} = useAuth();
+    const { accessToken } = useAuth();
 
     if (accessToken) {
         return <Navigate to="/logout" replace state={from} />;
@@ -58,7 +58,7 @@ export default function RegisterForm() {
     const [resendCooldown, setResendCooldown] = useState<number>(0);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const {name, value} = e.target;
+        const { name, value } = e.target;
         setForm((prev) => ({
             ...prev,
             [name]: value,
@@ -104,7 +104,7 @@ export default function RegisterForm() {
 
     const registerRequest = async () => {
         try {
-            const res = await axios.post(`${baseUrl}/api/v1/auth/register`, {
+            const res = await api.post('/auth/register', {
                 email: form.email,
                 password: form.password,
                 confirmPassword: form.confirmPassword,
@@ -135,7 +135,7 @@ export default function RegisterForm() {
 
     const verifyEmailRequest = async () => {
         try {
-            const res = await axios.post(`${baseUrl}/api/v1/auth/verify-email`, {
+            const res = await api.post('/auth/verify-email', {
                 email: form.email,
                 code: form.code,
             });
@@ -154,7 +154,7 @@ export default function RegisterForm() {
 
     const resendCodeRequest = async () => {
         try {
-            const res = await axios.post(`${baseUrl}/api/v1/auth/resend-code`, {
+            const res = await api.post('/auth/resend-code', {
                 email: form.email,
             });
 

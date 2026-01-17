@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/api/api';
+import type { AxiosInstance } from 'axios';
 import { Dispatch, SetStateAction } from 'react';
+import { useApi } from '@/hooks/useApi';
 
 export type Workspace = {
     id: number;
@@ -22,10 +23,11 @@ type WorkspacesResponse = {
 };
 
 const fetchWorkspaces = async (
+    apiClient: AxiosInstance,
     status?: 'active' | 'archive' | 'null',
     includeDeleted?: boolean,
 ): Promise<WorkspacesResponse> => {
-    const res = await api.get<WorkspacesResponse>('/workspaces', {
+    const res = await apiClient.get<WorkspacesResponse>('/workspaces', {
         params: {
             status: status === 'null' ? null : status,
             include_deleted: includeDeleted,
@@ -37,23 +39,29 @@ const fetchWorkspaces = async (
 export const useWorkspaces = (
     status?: 'active' | 'archive' | 'null',
     includeDeleted = false,
-) =>
-    useQuery({
+) => {
+    const apiClient = useApi();
+
+    return useQuery({
         queryKey: ['workspaces', { status, includeDeleted }],
-        queryFn: () => fetchWorkspaces(status, includeDeleted),
+        queryFn: () => fetchWorkspaces(apiClient, status, includeDeleted),
     });
+};
 
-
-const fetchWorkspace = async (id: number): Promise<Workspace> => {
-    const res = await api.get<Workspace>(`/workspaces/${id}`);
+const fetchWorkspace = async (apiClient: AxiosInstance, id: number): Promise<Workspace> => {
+    const res = await apiClient.get<Workspace>(`/workspaces/${id}`);
     return res.data;
-}
+};
 
-export const useWorkspace = (id: number) =>
-    useQuery({
+export const useWorkspace = (id: number) => {
+    const apiClient = useApi();
+
+    return useQuery({
         queryKey: ['workspace', { id }],
-        queryFn: () => fetchWorkspace(id),
+        queryFn: () => fetchWorkspace(apiClient, id),
+        enabled: Number.isFinite(id),
     });
+};
 
 
 type CreateWorkspaceDto = {
@@ -62,19 +70,24 @@ type CreateWorkspaceDto = {
     session_settings?: Record<string, unknown>;
 };
 
-export const useCreateWorkspace = (setOpen: Dispatch<SetStateAction<boolean>>, setName: React.Dispatch<React.SetStateAction<string>>, setDescription: React.Dispatch<React.SetStateAction<string>>) => {
+export const useCreateWorkspace = (
+    setOpen: Dispatch<SetStateAction<boolean>>,
+    setName: React.Dispatch<React.SetStateAction<string>>,
+    setDescription: React.Dispatch<React.SetStateAction<string>>,
+) => {
     const queryClient = useQueryClient();
+    const apiClient = useApi();
 
     return useMutation({
         mutationFn: async (payload: CreateWorkspaceDto): Promise<Workspace> => {
-            const res = await api.post<Workspace>('/workspaces', payload);
+            const res = await apiClient.post<Workspace>('/workspaces', payload);
             return res.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workspaces'] });
             setOpen(false);
             setName('');
-            setDescription('')
+            setDescription('');
         },
     });
 };
@@ -101,12 +114,13 @@ type SessionsResponse = {
 
 // api
 const fetchSessions = async (
+    apiClient: AxiosInstance,
     workspaceId: number,
     status?: 'active' | 'archive',
     includeDeleted = false,
     fields?: string,
 ): Promise<SessionsResponse> => {
-    const res = await api.get<SessionsResponse>(
+    const res = await apiClient.get<SessionsResponse>(
         `/workspaces/${workspaceId}/sessions`,
         {
             params: {
@@ -125,12 +139,15 @@ export const useSessions = (
     status?: 'active' | 'archive',
     includeDeleted = false,
     fields?: string,
-) =>
-    useQuery({
+) => {
+    const apiClient = useApi();
+
+    return useQuery({
         queryKey: ['sessions', { workspaceId, status, includeDeleted, fields }],
-        queryFn: () => fetchSessions(workspaceId, status, includeDeleted, fields),
+        queryFn: () => fetchSessions(apiClient, workspaceId, status, includeDeleted, fields),
         enabled: !!workspaceId,
     });
+};
 
 export type CreateSessionDto = {
     name: string;
@@ -138,11 +155,12 @@ export type CreateSessionDto = {
 };
 
 const createSession = async (
+    apiClient: AxiosInstance,
     workspaceId: number,
     payload: CreateSessionDto,
     fields?: string,
 ): Promise<Session> => {
-    const res = await api.post<Session>(
+    const res = await apiClient.post<Session>(
         `/workspaces/${workspaceId}/sessions`,
         payload,
         { params: { fields } },
@@ -152,14 +170,51 @@ const createSession = async (
 
 export const useCreateSession = (workspaceId: number) => {
     const queryClient = useQueryClient();
+    const apiClient = useApi();
 
     return useMutation({
         mutationFn: (payload: CreateSessionDto) =>
-            createSession(workspaceId, payload),
+            createSession(apiClient, workspaceId, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: ['sessions', { workspaceId }],
             });
+        },
+    });
+};
+
+export const useArchiveSession = (workspaceId: number) => {
+    const queryClient = useQueryClient();
+    const apiClient = useApi();
+
+    return useMutation({
+        mutationFn: (sessionId: number) => apiClient.post(`/sessions/${sessionId}/archive`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sessions', { workspaceId }] });
+        },
+    });
+};
+
+export const useUnarchiveSession = (workspaceId: number) => {
+    const queryClient = useQueryClient();
+    const apiClient = useApi();
+
+    return useMutation({
+        mutationFn: (sessionId: number) => apiClient.post(`/sessions/${sessionId}/unarchive`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sessions', { workspaceId }] });
+        },
+    });
+};
+
+export const useDeleteSession = (workspaceId: number) => {
+    const queryClient = useQueryClient();
+    const apiClient = useApi();
+
+    return useMutation({
+        mutationFn: (sessionId: number) => apiClient.delete(`/sessions/${sessionId}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sessions', { workspaceId }] });
         },
     });
 };

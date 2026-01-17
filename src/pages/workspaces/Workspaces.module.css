@@ -111,9 +111,11 @@
     display: flex;
     justify-content: center;
     flex-direction: row-reverse;
+
     :global(.g-dialog-footer__children) {
         display: none;
     }
+
     :global(.g-dialog-footer__bts-wrapper) {
         flex-direction: row-reverse;
         justify-content: center;
@@ -124,16 +126,69 @@
     display: flex;
     justify-content: center;
     flex-direction: row-reverse;
+
     :global(.g-dialog-footer__children) {
         display: none;
     }
+
     :global(.g-dialog-footer__bts-wrapper) {
         flex-direction: row-reverse;
         justify-content: center;
     }
+
     :global(.g-dialog-footer__button-apply) {
         background: var(--g-color-text-danger);
         --_--background-color: var(--g-color-text-danger);
         --_--background-color-hover: var(--g-color-text-danger-heavy);
+    }
+}
+
+@media (max-width: 1024px) {
+    .container {
+        width: 90%;
+        max-width: 90%;
+    }
+
+    .workspace {
+        flex: 0 0 calc(50% - 8px);
+    }
+
+    .actionPanel {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 12px;
+    }
+
+    .tableBody {
+        padding: 10px 12px;
+    }
+
+    .actionPanel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .searchInput,
+    .actionPanel :global(.g-select) {
+        width: 100%;
+    }
+
+    .workspaces {
+        flex-direction: column;
+    }
+
+    .workspace {
+        flex: 1 1 100%;
+    }
+
+    .card {
+        height: auto;
     }
 }

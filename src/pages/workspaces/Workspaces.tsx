@@ -4,14 +4,15 @@ import { useCreateWorkspace, useWorkspaces, Workspace } from "./queries";
 import { ChangeEvent, useEffect, useState } from "react";
 import { FileLetterX, Plus } from '@gravity-ui/icons';
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "@/api/api";
 import { useQueryClient } from "@tanstack/react-query";
+import { useApi } from "@/hooks/useApi";
 
 type WorkspaceStatus = 'active' | 'archive' | 'null';
 
 const Workspaces = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const api = useApi();
     const [status, setStatus] = useState<WorkspaceStatus[]>(['null']);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [filteredData, setFilteredData] = useState<Workspace[] | undefined>([]);
@@ -71,7 +72,7 @@ const Workspaces = () => {
         setArchiveOpen(false);
         setArchiveId(null);
 
-        queryClient.invalidateQueries({queryKey: ['workspaces']});
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
         return res;
     }
 
@@ -79,7 +80,7 @@ const Workspaces = () => {
         if (!id) return;
         const res = await api.post(`/workspaces/${id}/unarchive`);
 
-        queryClient.invalidateQueries({queryKey: ['workspaces']});
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
         return res;
     }
 
@@ -95,7 +96,7 @@ const Workspaces = () => {
         setDeleteOpen(false);
         setDeleteId(null);
 
-        queryClient.invalidateQueries({queryKey: ['workspaces']});
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
         return res;
     }
 

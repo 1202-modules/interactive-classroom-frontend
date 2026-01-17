@@ -1,17 +1,19 @@
 // src/hooks/useApi.ts
-import {useAuth} from './useAuth';
-import {api} from '../api/api';
+import { useEffect } from 'react';
+import { useAuth } from './useAuth';
+import { api } from '../api/api';
 
+// Returns a shared axios instance with an Authorization header wired to the current token.
 export const useApi = () => {
-    const {accessToken} = useAuth();
+    const { accessToken } = useAuth();
 
-    api.interceptors.request.use((config) => {
+    useEffect(() => {
         if (accessToken) {
-            config.headers = config.headers ?? {};
-            config.headers.Authorization = `Bearer ${accessToken}`;
+            api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+        } else {
+            delete api.defaults.headers.common.Authorization;
         }
-        return config;
-    });
+    }, [accessToken]);
 
     return api;
 };
