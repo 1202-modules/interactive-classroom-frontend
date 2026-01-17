@@ -1,16 +1,16 @@
-import {Button, Card, Text as GText, Loader, TextArea, TextInput} from '@gravity-ui/uikit';
-import {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import { Button, Card, Text as GText, Loader, TextArea, TextInput } from '@gravity-ui/uikit';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import styles from './SessionEdit.module.css';
-import {useSession, useUpdateSession} from './queries';
+import { useSession, useUpdateSession } from './queries';
 
 const SessionEdit = () => {
-    const {sessionId} = useParams<string>();
+    const { sessionId } = useParams<string>();
     const navigate = useNavigate();
     const sid = Number(sessionId);
     const isValidId = Number.isFinite(sid) && sid > 0;
 
-    const {data, isLoading, isError} = useSession(sid);
+    const { data, isLoading, isError } = useSession(sid);
     const updateSession = useUpdateSession();
 
     const [name, setName] = useState('');
@@ -58,7 +58,7 @@ const SessionEdit = () => {
         }
 
         updateSession.mutate(
-            {sessionId: sid, payload: {name: name.trim(), description: description.trim() || null}},
+            { sessionId: sid, payload: { name: name.trim(), description: description.trim() || null } },
             {
                 onSuccess: () => navigate(`/sessions/${sid}`),
                 onError: (err: any) => {

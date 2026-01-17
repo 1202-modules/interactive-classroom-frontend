@@ -240,7 +240,7 @@ const Workspaces = () => {
                 hasCloseButton={false}
             >
                 <Dialog.Body className={styles.dialogBody}>
-                    <Text variant="subheader-3">Do you want to archive this workspace</Text>
+                    <GText variant="subheader-3">Do you want to archive this workspace</GText>
                 </Dialog.Body>
                 <Dialog.Footer
                     onClickButtonCancel={() => {
@@ -260,7 +260,7 @@ const Workspaces = () => {
                 hasCloseButton={false}
             >
                 <Dialog.Body className={styles.dialogBody}>
-                    <Text variant="subheader-3">Do you want to archive this workspace</Text>
+                    <GText variant="subheader-3">Do you want to archive this workspace</GText>
                 </Dialog.Body>
                 <Dialog.Footer
                     onClickButtonCancel={() => {

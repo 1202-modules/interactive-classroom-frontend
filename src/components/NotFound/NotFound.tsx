@@ -1,5 +1,5 @@
-import {Button, Card, Text as GText} from '@gravity-ui/uikit';
-import {useNavigate} from 'react-router-dom';
+import { Button, Card, Text as GText } from '@gravity-ui/uikit';
+import { useNavigate } from 'react-router-dom';
 import styles from './NotFound.module.css';
 
 interface NotFoundProps {

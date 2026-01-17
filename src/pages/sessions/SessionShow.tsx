@@ -1,16 +1,16 @@
-import {Button, Card, Text as GText, Loader} from '@gravity-ui/uikit';
-import {Link, useNavigate, useParams} from 'react-router-dom';
+import { Button, Card, Text as GText, Loader } from '@gravity-ui/uikit';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './SessionShow.module.css';
-import {useSession} from './queries';
+import { useSession } from './queries';
 import NotFound from '@/components/NotFound/NotFound';
 
 const SessionShow = () => {
-    const {sessionId} = useParams<string>();
+    const { sessionId } = useParams<string>();
     const navigate = useNavigate();
     const sid = Number(sessionId);
     const isValidId = Number.isFinite(sid) && sid > 0;
 
-    const {data, isLoading, isError} = useSession(sid);
+    const { data, isLoading, isError } = useSession(sid);
 
     if (!isValidId) {
         return (
@@ -52,10 +52,10 @@ const SessionShow = () => {
                     <Button view="action" onClick={() => navigate(-1)}>
                         Back
                     </Button>
-                    <Link to={`/workspaces/${data.workspace_id}`} style={{textDecoration: 'none'}}>
+                    <Link to={`/workspaces/${data.workspace_id}`} style={{ textDecoration: 'none' }}>
                         <Button view="flat">To workspace</Button>
                     </Link>
-                    <Link to={`/sessions/${data.id}/edit`} style={{textDecoration: 'none'}}>
+                    <Link to={`/sessions/${data.id}/edit`} style={{ textDecoration: 'none' }}>
                         <Button view="outlined">Edit</Button>
                     </Link>
                 </div>
