@@ -13,8 +13,9 @@ export type AppProps = {
 
 const Header: React.FC<AppProps> = ({setTheme}) => {
     const theme = useThemeValue();
-    const {data, loading, error} = useUser();
+    const {data, loading} = useUser();
     const {accessToken} = useAuth();
+    const isAuthenticated = Boolean(accessToken);
     const isDark = theme === DARK;
     return (
         <div className={styles.header}>
@@ -31,12 +32,12 @@ const Header: React.FC<AppProps> = ({setTheme}) => {
                 <GText variant="header-1">Super Burmyash</GText>
             </div>
             <div className={styles.rightside}>
-                {loading ? (
-                    'loading...'
-                ) : !accessToken || error || !data ? (
+                {!isAuthenticated ? (
                     <Link style={{color: 'var(--g-color-text-primary)'}} to="/auth/login">
                         Log in
                     </Link>
+                ) : loading ? (
+                    'loading...'
                 ) : (
                     <Link
                         to="/profile"
@@ -44,17 +45,17 @@ const Header: React.FC<AppProps> = ({setTheme}) => {
                     >
                         <User
                             avatar={{
-                                text: `${data.first_name} ${data.last_name}`,
-                                imgUrl: data.avatar_url,
+                                text: `${data?.first_name || ''} ${data?.last_name || ''}`.trim(),
+                                imgUrl: data?.avatar_url,
                                 backgroundColor: 'var(--g-color-text-misc-heavy)',
                                 color: 'var(--g-color-text-primary)',
                             }}
                             name={
-                                data.first_name && data.last_name
+                                data?.first_name && data?.last_name
                                     ? `${data.first_name} ${data.last_name}`
-                                    : ''
+                                    : data?.email || ''
                             }
-                            description={data.email}
+                            description={data?.email || ''}
                             size="l"
                         />
                     </Link>

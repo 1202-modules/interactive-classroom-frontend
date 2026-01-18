@@ -139,7 +139,7 @@ export default function LoginForm() {
     };
 
     if (accessToken) {
-        return <Navigate to="/logout" replace state={from} />;
+        return <Navigate to={from || '/workspaces'} replace />;
     }
 
     return (
