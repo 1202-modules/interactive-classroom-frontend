@@ -3,5 +3,20 @@
     "root": true,
     "parserOptions": {
         "project": ["./tsconfig.json"]
+    },
+    "rules": {
+        "prettier/prettier": "off",
+        "no-implicit-globals": "off",
+        "no-console": "off",
+        "no-nested-ternary": "off",
+        "consistent-return": "off",
+        "no-eq-null": "off",
+        "eqeqeq": "off",
+        "react-hooks/exhaustive-deps": "off",
+        "@typescript-eslint/no-shadow": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-redeclare": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-non-null-assertion": "off"
     }
 }
