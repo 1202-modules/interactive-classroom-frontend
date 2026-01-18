@@ -1,6 +1,7 @@
 {
     "extends": ["@gravity-ui/eslint-config", "@gravity-ui/eslint-config/prettier"],
     "root": true,
+    "plugins": ["react-hooks"],
     "parserOptions": {
         "project": ["./tsconfig.json"]
     },
