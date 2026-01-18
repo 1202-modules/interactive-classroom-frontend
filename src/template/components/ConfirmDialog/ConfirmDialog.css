@@ -1,0 +1,12 @@
+.confirm-dialog {
+  /* smaller than default 480px but responsive */
+  --g-dialog-width: 360px;
+  max-width: calc(100vw - 40px);
+}
+
+/* We pass footer buttons via children -> they live in __children container */
+.confirm-dialog .g-dialog-footer__children {
+  gap: var(--g-spacing-3);
+}
+
+

@@ -88,14 +88,17 @@ const SessionEdit = () => {
                         validationState={error && !name.trim() ? 'invalid' : undefined}
                     />
 
-                    <TextArea
-                        label="Description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        minRows={3}
-                        maxRows={8}
-                        size="l"
-                    />
+                    <div>
+                        <label htmlFor="description-input">Description</label>
+                        <TextArea
+                            id="description-input"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            minRows={3}
+                            maxRows={8}
+                            size="l"
+                        />
+                    </div>
 
                     {error && (
                         <GText variant="body-2" color="danger">
