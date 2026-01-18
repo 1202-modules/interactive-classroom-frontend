@@ -22,15 +22,11 @@
     "jsx": "react-jsx",
     "incremental": true,
     "allowSyntheticDefaultImports": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
     "paths": {
       "@/*": [
         "./src/*"
       ]
-    },
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    }
   },
   "include": [
     "**/*.ts",
