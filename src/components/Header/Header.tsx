@@ -1,20 +1,20 @@
 import React from 'react';
 import styles from './Header.module.css';
-import {Avatar, Button, Text as GText, Icon, Theme, User, useThemeValue} from '@gravity-ui/uikit';
-import {useUser} from '@/hooks/useUser';
-import {useAuth} from '@/hooks/useAuth';
-import {DARK, LIGHT} from '@/constants';
-import {Link} from 'react-router-dom';
-import {Moon, Sun} from '@gravity-ui/icons';
+import { Avatar, Button, Text as GText, Icon, Theme, User, useThemeValue } from '@gravity-ui/uikit';
+import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
+import { DARK, LIGHT } from '@/constants';
+import { Link } from 'react-router-dom';
+import { Moon, Sun } from '@gravity-ui/icons';
 
 export type AppProps = {
     setTheme: (theme: Theme) => void;
 };
 
-const Header: React.FC<AppProps> = ({setTheme}) => {
+const Header: React.FC<AppProps> = ({ setTheme }) => {
     const theme = useThemeValue();
-    const {data, loading} = useUser();
-    const {accessToken} = useAuth();
+    const { data, loading, error } = useUser();
+    const { accessToken } = useAuth();
     const isAuthenticated = Boolean(accessToken);
     const isDark = theme === DARK;
     return (
@@ -32,8 +32,8 @@ const Header: React.FC<AppProps> = ({setTheme}) => {
                 <GText variant="header-1">Super Burmyash</GText>
             </div>
             <div className={styles.rightside}>
-                {!isAuthenticated ? (
-                    <Link style={{color: 'var(--g-color-text-primary)'}} to="/auth/login">
+                {!isAuthenticated || error || !data ? (
+                    <Link style={{ color: 'var(--g-color-text-primary)' }} to="/auth/login">
                         Log in
                     </Link>
                 ) : loading ? (
@@ -41,7 +41,7 @@ const Header: React.FC<AppProps> = ({setTheme}) => {
                 ) : (
                     <Link
                         to="/profile"
-                        style={{textDecoration: 'none', color: 'var(--g-color-text-primary)'}}
+                        style={{ textDecoration: 'none', color: 'var(--g-color-text-primary)' }}
                     >
                         <User
                             avatar={{

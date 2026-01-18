@@ -14,7 +14,7 @@ import {
     TextInput,
 } from '@gravity-ui/uikit';
 import styles from './WorkspaceShow.module.css';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import NotFound from '@/components/NotFound/NotFound';
 import {
     useArchiveSession,
@@ -24,13 +24,13 @@ import {
     useUnarchiveSession,
     useWorkspace,
 } from './queries';
-import { useState } from 'react';
-import { Persons, Plus } from '@gravity-ui/icons';
+import {useState} from 'react';
+import {Persons, Plus} from '@gravity-ui/icons';
 
 type SessionStatus = 'active' | 'archive' | 'trash';
 
 const WorkspaceShow = () => {
-    const { workspaceId } = useParams<string>();
+    const {workspaceId} = useParams<string>();
     const wid = Number(workspaceId);
     const isValidId = Number.isFinite(wid) && wid > 0;
 
@@ -87,7 +87,7 @@ const WorkspaceShow = () => {
         if (!name.trim()) return;
 
         createSessionMutation.mutate(
-            { name: name.trim(), description: description.trim() || undefined },
+            {name: name.trim(), description: description.trim() || undefined},
             {
                 onSuccess: () => {
                     setCreateDialogOpen(false);
@@ -167,7 +167,7 @@ const WorkspaceShow = () => {
     return (
         <div className={styles.container}>
             <GText variant="header-2">Workspace: {dataWorkspace?.name}</GText>
-            <GText variant="body-2" style={{ marginTop: '10px' }}>
+            <GText variant="body-2" style={{marginTop: '10px'}}>
                 Add a sessions to kickstart your events, meetings, workshops, etc with better
                 engagement
             </GText>
@@ -238,9 +238,11 @@ const WorkspaceShow = () => {
                                                     <GText color="secondary">{s.id}</GText>
                                                     <Link
                                                         to={`/sessions/${s.id}`}
-                                                        style={{ textDecoration: 'none' }}
+                                                        style={{textDecoration: 'none'}}
                                                     >
-                                                        <GText variant="subheader-3">{s.name}</GText>
+                                                        <GText variant="subheader-3">
+                                                            {s.name}
+                                                        </GText>
                                                     </Link>
                                                 </div>
                                             </td>
@@ -250,8 +252,8 @@ const WorkspaceShow = () => {
                                                         isDeleted
                                                             ? 'danger'
                                                             : s.status === 'active'
-                                                                ? 'success'
-                                                                : 'normal'
+                                                              ? 'success'
+                                                              : 'normal'
                                                     }
                                                 >
                                                     {isDeleted ? 'Deleted' : s.status}
@@ -354,7 +356,7 @@ const WorkspaceShow = () => {
                             theme="danger"
                             title="Error"
                             message={actionError}
-                            style={{ marginTop: '10px' }}
+                            style={{marginTop: '10px'}}
                         />
                     )}
                 </Dialog.Body>

@@ -1,54 +1,43 @@
+import { api } from '@/api/api';
+import type { Workspace } from '../types/workspace';
+
 /**
- * WorkspaceActions - Business logic for workspace actions
- * TODO: When integrating with API, these methods should become async and call API endpoints:
- * - moveToArchive -> PATCH /workspaces/{id}/archive
- * - moveToTrash -> PATCH /workspaces/{id}/trash
- * - restoreFromArchive -> PATCH /workspaces/{id}/restore
- * - restoreFromTrash -> PATCH /workspaces/{id}/restore
- * - deletePermanently -> DELETE /workspaces/{id}
+ * WorkspaceActions - Business logic for workspace actions hooked to real API endpoints
  */
 export class WorkspaceActions {
-  /**
-   * Move workspace to archive
-   * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/archive
-   */
-  moveToArchive(_workspaceId: number) {
-    // TODO: replace with API call
-  }
+    /** Archive workspace: POST /workspaces/{id}/archive */
+    async moveToArchive(workspaceId: number, fields?: string) {
+        const res = await api.post<Workspace>(`/workspaces/${workspaceId}/archive`, undefined, {
+            params: { fields },
+        });
+        return res.data;
+    }
 
-  /**
-   * Move workspace to trash
-   * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/trash
-   */
-  moveToTrash(_workspaceId: number) {
-    // TODO: replace with API call
-  }
+    /** Soft delete (move to trash): DELETE /workspaces/{id} */
+    async moveToTrash(workspaceId: number) {
+        await api.delete(`/workspaces/${workspaceId}`);
+    }
 
-  /**
-   * Restore workspace from archive
-   * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/restore
-   */
-  restoreFromArchive(_workspaceId: number) {
-    // TODO: replace with API call
-  }
+    /** Restore from archive (unarchive): POST /workspaces/{id}/unarchive */
+    async restoreFromArchive(workspaceId: number, fields?: string) {
+        const res = await api.post<Workspace>(`/workspaces/${workspaceId}/unarchive`, undefined, {
+            params: { fields },
+        });
+        return res.data;
+    }
 
-  /**
-   * Restore workspace from trash
-   * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/restore
-   */
-  restoreFromTrash(_workspaceId: number) {
-    // TODO: replace with API call
-  }
+    /** Restore workspace from trash (stub) */
+    async restoreFromTrash(workspaceId: number, fields?: string) {
+        const res = await api.post<Workspace>(`/workspaces/${workspaceId}/restore`, undefined, {
+            params: { fields },
+        });
+        return res.data;
+    }
 
-  /**
-   * Delete workspace permanently
-   * TODO: Make async and call API: DELETE /workspaces/{workspaceId}
-   */
-  deletePermanently(_workspaceId: number) {
-    // TODO: replace with API call
-  }
+    /** Permanently delete workspace (stub) */
+    async deletePermanently(workspaceId: number) {
+        await api.delete(`/workspaces/${workspaceId}/permanent`);
+    }
 }
 
 export const workspaceActions = new WorkspaceActions();
-
-

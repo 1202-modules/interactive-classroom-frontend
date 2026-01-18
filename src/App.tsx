@@ -1,13 +1,14 @@
 import React from 'react';
-import {Theme, ThemeProvider} from '@gravity-ui/uikit';
-import {Wrapper} from './components/Wrapper';
-import {DEFAULT_THEME} from './constants';
-import {Link, Route, Routes} from 'react-router-dom';
+import { Theme, ThemeProvider } from '@gravity-ui/uikit';
+import { Wrapper } from './components/Wrapper';
+import { DEFAULT_THEME } from './constants';
+import { Link, Route, Routes } from 'react-router-dom';
 import Auth from './pages/auth/Auth';
 import NotFound from './pages/NotFound';
 import Logout from './pages/auth/Logout';
-import {ProtectedRoute} from './components/Routing/ProtectedRoute';
-import {useFetchUser} from './hooks/useFetchUser';
+import { ProtectedRoute } from './components/Routing/ProtectedRoute';
+import { useFetchUser } from './hooks/useFetchUser';
+import { useAuthInit } from './hooks/useAuthInit';
 import ProfileEdit from './pages/profile/ProfileEdit';
 import Profile from './pages/profile/Profile';
 import Workspaces from './pages/workspaces/Workspaces';
@@ -18,7 +19,7 @@ import TemplateApp from './template/TemplateApp';
 
 const MainApp = () => {
     const [, setTheme] = React.useState<Theme>(DEFAULT_THEME);
-    
+
     return (
         <Wrapper setTheme={setTheme}>
             <Routes>
@@ -87,7 +88,7 @@ const MainApp = () => {
 };
 
 const App = () => {
-    // useAuthInit();
+    useAuthInit();
     useFetchUser();
 
     return (
