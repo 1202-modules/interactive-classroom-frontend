@@ -1,4 +1,4 @@
-import { Button, Card, Icon, SegmentedRadioGroup, Text, TextInput } from '@gravity-ui/uikit';
+import { Button, Card, Icon, SegmentedRadioGroup, TextInput } from '@gravity-ui/uikit';
 import { Magnifier } from '@gravity-ui/icons';
 import type { SessionStatus } from '../../../types/session';
 

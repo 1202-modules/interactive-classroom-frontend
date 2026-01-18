@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import type { WorkspaceActivityModule, ActivityModuleType } from '../types/workspace';
 import { moduleService } from '../services/moduleService';
 // TODO: Replace with API call - import { getWorkspaceModules } from '../api/modules';
@@ -74,7 +74,7 @@ const getMockModules = (): WorkspaceActivityModule[] => [
   },
 ];
 
-export function useWorkspaceModules(workspaceId?: number) {
+export function useWorkspaceModules(_workspaceId?: number) {
   // TODO: Replace with API call - const [modules, setModules] = useState<WorkspaceActivityModule[]>([]);
   // TODO: useEffect(() => { getWorkspaceModules(workspaceId).then(setModules); }, [workspaceId]);
   const [modules, setModules] = useState<WorkspaceActivityModule[]>(() => getMockModules());

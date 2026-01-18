@@ -1,4 +1,4 @@
-import { Checkbox, Divider, Icon, Label, SegmentedRadioGroup, Switch, Text, TextInput } from '@gravity-ui/uikit';
+import { Divider, Icon, Label, SegmentedRadioGroup, Switch, Text, TextInput } from '@gravity-ui/uikit';
 import { Clock } from '@gravity-ui/icons';
 import type { WeekDay } from '../../../types/workspace';
 import { SettingsCard } from '../SettingsCard/SettingsCard';
@@ -49,12 +49,12 @@ export function SessionDefaults({
   onAutoExpireEnabledChange,
   autostartEnabled,
   onAutostartEnabledChange,
-  autostartSchedule,
-  onSetDay,
+  autostartSchedule: _autostartSchedule,
+  onSetDay: _onSetDay,
   parseIntSafe,
   clamp,
-  timeOptions,
-  weekDays,
+  timeOptions: _timeOptions,
+  weekDays: _weekDays,
 }: SessionDefaultsProps) {
   return (
     <SettingsCard

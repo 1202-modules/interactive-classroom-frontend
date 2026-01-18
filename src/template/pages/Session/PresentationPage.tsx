@@ -40,7 +40,7 @@ const mockChatMessages = [
 ];
 
 export default function PresentationPage() {
-  const { workspaceId, sessionId } = useParams();
+  const { workspaceId: _workspaceId, sessionId: _sessionId } = useParams();
   const [sessionDetail] = useState<SessionDetail>(mockSessionDetail);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [chatMessages, setChatMessages] = useState<typeof mockChatMessages>([]);

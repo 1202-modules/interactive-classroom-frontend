@@ -12,7 +12,7 @@ export class WorkspaceActions {
    * Move workspace to archive
    * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/archive
    */
-  moveToArchive(workspaceId: number) {
+  moveToArchive(_workspaceId: number) {
     // TODO: replace with API call
   }
 
@@ -20,7 +20,7 @@ export class WorkspaceActions {
    * Move workspace to trash
    * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/trash
    */
-  moveToTrash(workspaceId: number) {
+  moveToTrash(_workspaceId: number) {
     // TODO: replace with API call
   }
 
@@ -28,7 +28,7 @@ export class WorkspaceActions {
    * Restore workspace from archive
    * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/restore
    */
-  restoreFromArchive(workspaceId: number) {
+  restoreFromArchive(_workspaceId: number) {
     // TODO: replace with API call
   }
 
@@ -36,7 +36,7 @@ export class WorkspaceActions {
    * Restore workspace from trash
    * TODO: Make async and call API: PATCH /workspaces/{workspaceId}/restore
    */
-  restoreFromTrash(workspaceId: number) {
+  restoreFromTrash(_workspaceId: number) {
     // TODO: replace with API call
   }
 
@@ -44,7 +44,7 @@ export class WorkspaceActions {
    * Delete workspace permanently
    * TODO: Make async and call API: DELETE /workspaces/{workspaceId}
    */
-  deletePermanently(workspaceId: number) {
+  deletePermanently(_workspaceId: number) {
     // TODO: replace with API call
   }
 }

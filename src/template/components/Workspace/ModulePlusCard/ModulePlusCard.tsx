@@ -8,7 +8,7 @@ interface ModulePlusCardProps {
   onClick: () => void;
 }
 
-export function ModulePlusCard({ type, title, onClick }: ModulePlusCardProps) {
+export function ModulePlusCard({ type: _type, title, onClick }: ModulePlusCardProps) {
   return (
     <div
       className="workspace-page__module-plus-wrap"

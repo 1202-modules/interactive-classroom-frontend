@@ -17,7 +17,7 @@ import SessionEdit from './pages/sessions/SessionEdit';
 import TemplateApp from './template/TemplateApp';
 
 const MainApp = () => {
-    const [theme, setTheme] = React.useState<Theme>(DEFAULT_THEME);
+    const [, setTheme] = React.useState<Theme>(DEFAULT_THEME);
     
     return (
         <Wrapper setTheme={setTheme}>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Avatar,
   Button,
@@ -23,7 +22,6 @@ import {
 import './Profile.css';
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
 
   // Basic info state
   const [firstName, setFirstName] = useState('John');

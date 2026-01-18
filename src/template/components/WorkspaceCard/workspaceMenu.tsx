@@ -1,4 +1,3 @@
-import React from 'react';
 import type { DropdownMenuItem } from '@gravity-ui/uikit';
 import { Icon } from '@gravity-ui/uikit';
 import { Archive, TrashBin, ArrowRotateLeft, Xmark } from '@gravity-ui/icons';
