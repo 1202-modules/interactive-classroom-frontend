@@ -46,11 +46,7 @@ export function useWorkspaceSessions(workspaceId: number) {
         if (nextStatus === sessionStatus) return;
         setHasUserChangedStatus(true);
         setSessionStatus(nextStatus);
-        setIsSessionsLoading(true);
-        window.setTimeout(() => {
-            setDisplayedSessionStatus(nextStatus);
-            setIsSessionsLoading(false);
-        }, 200);
+        setDisplayedSessionStatus(nextStatus);
     };
 
     useEffect(() => {

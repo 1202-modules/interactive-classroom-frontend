@@ -192,7 +192,7 @@ export default function WorkspacePage() {
             closeCreateSession();
             await workspaceSessions.refetch();
             if (newSessionId) {
-                navigate(`/template/workspace/${workspaceId}/session/${newSessionId}`);
+                navigate(`/workspace/${workspaceId}/session/${newSessionId}`);
             }
         } catch (err: any) {
             const message = parseBackendError(
@@ -210,7 +210,7 @@ export default function WorkspacePage() {
             <div className="workspace-page">
                 <div className="workspace-page__top">
                     <Breadcrumbs>
-                        <Breadcrumbs.Item onClick={() => navigate('/template/dashboard')}>
+                        <Breadcrumbs.Item onClick={() => navigate('/dashboard')}>
                             Dashboard
                         </Breadcrumbs.Item>
                         <Breadcrumbs.Item>Workspace</Breadcrumbs.Item>
@@ -223,7 +223,7 @@ export default function WorkspacePage() {
                     message={workspaceError || 'This workspace does not exist (or isn’t available).'}
                 />
                 <div className="workspace-page__notfound-actions">
-                    <Button view="action" size="l" onClick={() => navigate('/template/dashboard')}>
+                    <Button view="action" size="l" onClick={() => navigate('/dashboard')}>
                         <Icon data={ArrowLeft} size={18} />
                         Back to dashboard
                     </Button>
@@ -237,7 +237,7 @@ export default function WorkspacePage() {
             <div className="workspace-page">
                 <div className="workspace-page__top">
                     <Breadcrumbs>
-                        <Breadcrumbs.Item onClick={() => navigate('/template/dashboard')}>
+                        <Breadcrumbs.Item onClick={() => navigate('/dashboard')}>
                             Dashboard
                         </Breadcrumbs.Item>
                         <Breadcrumbs.Item>Workspace</Breadcrumbs.Item>
@@ -256,7 +256,7 @@ export default function WorkspacePage() {
             <div className="workspace-page__top">
                 <div className="workspace-page__breadcrumbs">
                     <Breadcrumbs>
-                        <Breadcrumbs.Item onClick={() => navigate('/template/dashboard')}>
+                        <Breadcrumbs.Item onClick={() => navigate('/dashboard')}>
                             Dashboard
                         </Breadcrumbs.Item>
                         <Breadcrumbs.Item>{workspace.name}</Breadcrumbs.Item>
@@ -268,7 +268,7 @@ export default function WorkspacePage() {
                         <Button
                             view="flat"
                             size="l"
-                            onClick={() => navigate('/template/dashboard')}
+                            onClick={() => navigate('/dashboard')}
                             className="workspace-page__back-button"
                         >
                             <Icon data={ArrowLeft} size={16} />
@@ -379,7 +379,7 @@ export default function WorkspacePage() {
                                     session={s}
                                     workspaceId={workspaceId}
                                     onNavigate={(wId, sId) =>
-                                        navigate(`/template/workspace/${wId}/session/${sId}`)
+                                        navigate(`/workspace/${wId}/session/${sId}`)
                                     }
                                     onToggleStartStop={workspaceSessions.toggleStartStop}
                                     onMoveSession={workspaceSessions.moveSession}

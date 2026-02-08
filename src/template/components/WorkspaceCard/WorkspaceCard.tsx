@@ -32,11 +32,11 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({ workspace, currentTab, on
         ) {
             return;
         }
-        navigate(`/template/workspace/${workspace.id}`);
+        navigate(`/workspace/${workspace.id}`);
     };
 
     const handleEdit = () => {
-        navigate(`/template/workspace/${workspace.id}?tab=settings`);
+        navigate(`/workspace/${workspace.id}?tab=settings`);
     };
 
     const handleDeletePermanently = () => {

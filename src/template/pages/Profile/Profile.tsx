@@ -96,7 +96,7 @@ export default function ProfilePage() {
             const message = parseBackendError(err?.response?.data, 'Could not load profile');
             setProfileError(message);
             if (status === 401 || status === 403) {
-                navigate('/template/login', { replace: true });
+                navigate('/login', { replace: true });
             }
         } finally {
             setProfileLoading(false);
@@ -131,7 +131,7 @@ export default function ProfilePage() {
             const message = parseBackendError(err?.response?.data, 'Could not update profile');
             setSaveError(message);
             if (status === 401 || status === 403) {
-                navigate('/template/login', { replace: true });
+                navigate('/login', { replace: true });
             }
         } finally {
             setSaveLoading(false);
@@ -144,7 +144,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (!accessToken) {
-            navigate('/template/login', { replace: true });
+            navigate('/login', { replace: true });
             return;
         }
         loadProfile();

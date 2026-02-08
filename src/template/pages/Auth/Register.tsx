@@ -140,7 +140,7 @@ export default function RegisterPage() {
             .then(() => {
                 setConfirmError('');
                 setIsCodeLoading(false);
-                navigate('/template/login');
+                navigate('/login');
             })
             .catch((err: AxiosError<BackendError | string>) => {
                 const message = parseBackendError(err.response?.data, 'Error');

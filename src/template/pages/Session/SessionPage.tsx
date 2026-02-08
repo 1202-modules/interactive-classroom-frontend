@@ -238,11 +238,11 @@ export default function SessionPage() {
     };
 
     const handleOpenPresentation = () => {
-        navigate(`/template/workspace/${workspaceId}/session/${sessionId}/presentation`);
+        navigate(`/workspace/${workspaceId}/session/${sessionId}/presentation`);
     };
 
     const handleBackToWorkspace = () => {
-        navigate(`/template/workspace/${workspaceId}`);
+        navigate(`/workspace/${workspaceId}`);
     };
 
     const handleActivateModule = (moduleId: string) => {

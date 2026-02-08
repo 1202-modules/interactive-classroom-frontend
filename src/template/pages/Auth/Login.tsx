@@ -192,7 +192,7 @@ export default function LoginPage() {
                         view="flat"
                         size="s"
                         className="auth-page__link"
-                        onClick={() => navigate('/template/register')}
+                        onClick={() => navigate('/register')}
                     >
                         Create an account
                     </Button>

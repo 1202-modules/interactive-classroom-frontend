@@ -24,7 +24,6 @@ const Dashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'active' | 'archive' | 'trash'>('active');
     const [displayedTab, setDisplayedTab] = useState<'active' | 'archive' | 'trash'>('active');
-    const [isLoading, setIsLoading] = useState(false);
     const [dataLoading, setDataLoading] = useState(false);
     const [error, setError] = useState('');
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -49,14 +48,8 @@ const Dashboard: React.FC = () => {
 
     const startTabTransition = (tabId: 'active' | 'archive' | 'trash') => {
         if (tabId === activeTab) return;
-
         setActiveTab(tabId);
-        setIsLoading(true);
-
-        window.setTimeout(() => {
-            setDisplayedTab(tabId);
-            setIsLoading(false);
-        }, 200);
+        setDisplayedTab(tabId);
     };
 
     const fetchWorkspaces = useCallback(async (tab: 'active' | 'archive' | 'trash') => {
@@ -93,7 +86,7 @@ const Dashboard: React.FC = () => {
     }, [fetchWorkspaces, activeTab]);
 
     const skeletonCount = 5;
-    const isGridLoading = isLoading || dataLoading;
+    const isGridLoading = dataLoading;
 
     return (
         <div className="dashboard">
@@ -131,7 +124,7 @@ const Dashboard: React.FC = () => {
                                 <Button
                                     view="action"
                                     size="l"
-                                    onClick={() => navigate('/template/workspace/create')}
+                                    onClick={() => navigate('/workspace/create')}
                                     className="dashboard__create-button"
                                 >
                                     <Icon data={Plus} size={18} />

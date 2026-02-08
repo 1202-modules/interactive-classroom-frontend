@@ -23,8 +23,8 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
     const { accessToken } = useAuth();
     const { data: user, loading: userLoading } = useUser();
     const dispatch = useDispatch<AppDispatch>();
-    const cleanPath = location.pathname.replace(/^\/template/, '');
-    const isAuthRoute = cleanPath.startsWith('/login') || cleanPath.startsWith('/register');
+    const isAuthRoute =
+        location.pathname.startsWith('/login') || location.pathname.startsWith('/register');
 
     useEffect(() => {
         // Simulate page load for 0.2 seconds on every route change
@@ -38,25 +38,23 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
 
     const getPageTitle = (): string => {
         const path = location.pathname;
-        // Remove /template prefix for path matching
-        const cleanPath = path.replace(/^\/template/, '');
-        if (cleanPath.startsWith('/login')) return 'Login';
-        if (cleanPath.startsWith('/register')) return 'Register';
-        if (cleanPath.startsWith('/profile')) return 'Profile';
-        if (cleanPath.startsWith('/settings')) return 'Settings';
-        if (cleanPath.startsWith('/workspace/create')) return 'Create Workspace';
-        if (cleanPath.includes('/session/') && cleanPath.includes('/presentation'))
+        if (path.startsWith('/login')) return 'Login';
+        if (path.startsWith('/register')) return 'Register';
+        if (path.startsWith('/profile')) return 'Profile';
+        if (path.startsWith('/settings')) return 'Settings';
+        if (path.startsWith('/workspace/create')) return 'Create Workspace';
+        if (path.includes('/session/') && path.includes('/presentation'))
             return 'Presentation';
-        if (cleanPath.includes('/session/')) return 'Session';
-        if (cleanPath.startsWith('/workspace/')) return 'Workspace';
-        if (cleanPath.startsWith('/dashboard')) return 'Dashboard';
+        if (path.includes('/session/')) return 'Session';
+        if (path.startsWith('/workspace/')) return 'Workspace';
+        if (path.startsWith('/dashboard')) return 'Dashboard';
         return 'Dashboard';
     };
 
     const handleLogout = () => {
         dispatch(logout());
         dispatch(setUser(null));
-        navigate('/template/login', { replace: true });
+        navigate('/login', { replace: true });
     };
 
     const userDisplayName = useMemo(() => {
@@ -89,12 +87,12 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
             {
                 text: 'Profile',
                 iconStart: <Icon data={Person} size={16} />,
-                action: () => navigate('/template/profile'),
+                action: () => navigate('/profile'),
             },
             {
                 text: 'Settings',
                 iconStart: <Icon data={Gear} size={16} />,
-                action: () => navigate('/template/settings'),
+                action: () => navigate('/settings'),
             },
             {
                 text: 'Log out',
@@ -114,7 +112,7 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                             view="flat"
                             size="m"
                             onClick={() =>
-                                navigate(isAuthRoute ? '/template/login' : '/template/dashboard')
+                                navigate(isAuthRoute ? '/login' : '/dashboard')
                             }
                             className="layout-header__logo"
                         >
@@ -181,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                                 )}
                             />
                         ) : (
-                            <Button view="flat" size="l" onClick={() => navigate('/template/login')}>
+                            <Button view="flat" size="l" onClick={() => navigate('/login')}>
                                 <Text variant="body-1">Log in</Text>
                             </Button>
                         )}
@@ -205,17 +203,17 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                         © 2026 Interactive Classroom Platform. All rights reserved.
                     </Text>
                     <div className="layout-footer__links">
-                        <Button view="flat" size="s" onClick={() => navigate('/template/terms')}>
+                            <Button view="flat" size="s" onClick={() => navigate('/terms')}>
                             <Text variant="body-2" color="secondary">
                                 Terms
                             </Text>
                         </Button>
-                        <Button view="flat" size="s" onClick={() => navigate('/template/privacy')}>
+                            <Button view="flat" size="s" onClick={() => navigate('/privacy')}>
                             <Text variant="body-2" color="secondary">
                                 Privacy
                             </Text>
                         </Button>
-                        <Button view="flat" size="s" onClick={() => navigate('/template/support')}>
+                            <Button view="flat" size="s" onClick={() => navigate('/support')}>
                             <Text variant="body-2" color="secondary">
                                 Support
                             </Text>

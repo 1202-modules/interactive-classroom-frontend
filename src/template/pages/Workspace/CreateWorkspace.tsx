@@ -122,9 +122,9 @@ export default function CreateWorkspacePage() {
 
             const newId = res?.data?.id;
             if (newId) {
-                navigate(`/template/workspace/${newId}?tab=settings`, { replace: true });
+                navigate(`/workspace/${newId}?tab=settings`, { replace: true });
             } else {
-                navigate('/template/dashboard', { replace: true });
+                navigate('/dashboard', { replace: true });
             }
         } catch (err: any) {
             const message = parseBackendError(
@@ -141,7 +141,7 @@ export default function CreateWorkspacePage() {
         <div className="workspace-page">
             <div className="workspace-page__top">
                 <Breadcrumbs>
-                    <Breadcrumbs.Item onClick={() => navigate('/template/dashboard')}>
+                    <Breadcrumbs.Item onClick={() => navigate('/dashboard')}>
                         Dashboard
                     </Breadcrumbs.Item>
                     <Breadcrumbs.Item>Create workspace</Breadcrumbs.Item>
@@ -152,7 +152,7 @@ export default function CreateWorkspacePage() {
                         <Button
                             view="flat"
                             size="l"
-                            onClick={() => navigate('/template/dashboard')}
+                            onClick={() => navigate('/dashboard')}
                             className="workspace-page__back-button"
                         >
                             <Icon data={ArrowLeft} size={16} />
