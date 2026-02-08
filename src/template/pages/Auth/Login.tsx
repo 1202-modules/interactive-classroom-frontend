@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Checkbox, Text, TextInput } from '@gravity-ui/uikit';
 import { AxiosError } from 'axios';
 import { useDispatch } from 'react-redux';

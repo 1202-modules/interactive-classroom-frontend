@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Checkbox, Divider, Text, TextInput } from '@gravity-ui/uikit';
 import { AxiosError } from 'axios';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,25 +79,6 @@ export default function RegisterPage() {
             const error = err as AxiosError<BackendError | string>;
             const message = parseBackendError(error.response?.data, 'Ошибка регистрации');
             setRegError(message);
-            return error;
-        }
-    };
-
-    const verifyEmailRequest = async () => {
-        try {
-            const res = await api.post('/auth/verify-email', {
-                email: email.trim(),
-                code: confirmError ? confirmError : confirmPassword,
-            });
-            setConfirmError('');
-            setIsCodeLoading(false);
-            navigate('/auth/login');
-            return res;
-        } catch (err) {
-            const error = err as AxiosError<BackendError | string>;
-            const message = parseBackendError(error.response?.data, 'Error');
-            setConfirmError(message);
-            setIsCodeLoading(false);
             return error;
         }
     };

@@ -50,9 +50,11 @@ export class SessionService {
         const q = query.trim().toLowerCase();
         return sessions
             .filter((s) => s.status === status)
-            .filter((s) =>
-                q ? s.name.toLowerCase().includes(q) || s.passcode.toLowerCase().includes(q) : true,
-            )
+            .filter((s) => {
+                if (!q) return true;
+                const passcode = s.passcode ?? '';
+                return s.name.toLowerCase().includes(q) || passcode.toLowerCase().includes(q);
+            })
             .sort((a, b) => {
                 // First: running sessions (is_stopped=false) come first
                 if (a.is_stopped !== b.is_stopped) {
