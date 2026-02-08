@@ -33,6 +33,18 @@ import { SessionDefaults } from '../../components/Workspace/SessionDefaults/Sess
 import { AutoStartSchedule } from '../../components/Workspace/AutoStartSchedule/AutoStartSchedule';
 import './Workspace.css';
 
+type ValidationDetail = {
+    type: string;
+    loc: (string | number)[];
+    msg: string;
+    input: unknown;
+    ctx?: Record<string, unknown>;
+};
+
+type BackendError = {
+    detail?: string | ValidationDetail[];
+};
+
 function getTabFromSearchParams(params: URLSearchParams): WorkspaceTab {
     const tab = params.get('tab');
     if (tab === 'settings') return 'settings';
@@ -45,6 +57,18 @@ export default function WorkspacePage() {
     const { id } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
     const api = useApi();
+
+    const nameInputId = 'create-session-name';
+    const descriptionInputId = 'create-session-description';
+    const focusField = (fieldId: string) => {
+        window.requestAnimationFrame(() => {
+            const el = document.getElementById(fieldId) as
+                | HTMLInputElement
+                | HTMLTextAreaElement
+                | null;
+            el?.focus();
+        });
+    };
 
     const workspaceId = Number(id);
     const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -107,6 +131,79 @@ export default function WorkspacePage() {
         }, 200);
         return () => window.clearTimeout(timer);
     }, [activeTab]);
+
+    const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
+    const [createSessionName, setCreateSessionName] = useState('');
+    const [createSessionDescription, setCreateSessionDescription] = useState('');
+    const [createSessionError, setCreateSessionError] = useState<string | null>(null);
+    const [isCreateSessionLoading, setIsCreateSessionLoading] = useState(false);
+
+    const parseBackendError = (data: BackendError | string | undefined, fallback: string) => {
+        if (!data) return fallback;
+        if (typeof data === 'string') return data;
+        if (typeof data.detail === 'string') return data.detail;
+        if (Array.isArray(data.detail) && data.detail.length > 0) {
+            return data.detail[0].msg || fallback;
+        }
+        return fallback;
+    };
+
+    const openCreateSession = () => {
+        setCreateSessionError(null);
+        setIsCreateSessionOpen(true);
+    };
+
+    const closeCreateSession = () => {
+        if (isCreateSessionLoading) return;
+        setIsCreateSessionOpen(false);
+        setCreateSessionError(null);
+        setCreateSessionName('');
+        setCreateSessionDescription('');
+    };
+
+    const handleCreateSession = async () => {
+        const name = createSessionName.trim();
+        const description = createSessionDescription.trim();
+
+        if (name.length === 0) {
+            setCreateSessionError('Session name is required.');
+            focusField(nameInputId);
+            return;
+        }
+        if (name.length > 200) {
+            setCreateSessionError('Session name must be 200 characters or fewer.');
+            focusField(nameInputId);
+            return;
+        }
+        if (description.length > 1000) {
+            setCreateSessionError('Session description must be 1000 characters or fewer.');
+            focusField(descriptionInputId);
+            return;
+        }
+
+        setCreateSessionError(null);
+        setIsCreateSessionLoading(true);
+        try {
+            const res = await api.post(`/workspaces/${workspaceId}/sessions`, {
+                name,
+                description: description.length > 0 ? description : null,
+            });
+            const newSessionId = res?.data?.id;
+            closeCreateSession();
+            await workspaceSessions.refetch();
+            if (newSessionId) {
+                navigate(`/template/workspace/${workspaceId}/session/${newSessionId}`);
+            }
+        } catch (err: any) {
+            const message = parseBackendError(
+                err?.response?.data,
+                'Failed to create session. Please try again.',
+            );
+            setCreateSessionError(message);
+        } finally {
+            setIsCreateSessionLoading(false);
+        }
+    };
 
     if (!Number.isFinite(workspaceId) || (!workspace && !workspaceLoading)) {
         return (
@@ -236,7 +333,7 @@ export default function WorkspacePage() {
                         onQueryChange={workspaceSessions.setSessionQuery}
                         status={workspaceSessions.sessionStatus}
                         onStatusChange={workspaceSessions.startSessionFilterTransition}
-                        onCreateSession={() => navigate('/template/support')}
+                        onCreateSession={openCreateSession}
                     />
 
                     <div
@@ -546,6 +643,64 @@ export default function WorkspacePage() {
                     />
                 </div>
             )}
+
+            <Dialog
+                open={isCreateSessionOpen}
+                onClose={closeCreateSession}
+                size="s"
+                className="workspace-page__module-rename-dialog"
+            >
+                <Dialog.Header caption="Create session" />
+                <Dialog.Body>
+                    {createSessionError && (
+                        <Alert
+                            theme="danger"
+                            title="Could not create session"
+                            message={createSessionError}
+                        />
+                    )}
+                    <div className="workspace-page__module-form">
+                        <div className="workspace-page__module-form-field">
+                            <Text variant="body-1" className="workspace-page__settings-label">
+                                Name
+                            </Text>
+                            <TextInput
+                                id={nameInputId}
+                                value={createSessionName}
+                                onUpdate={setCreateSessionName}
+                                size="l"
+                                placeholder="Session name"
+                            />
+                        </div>
+                        <div className="workspace-page__module-form-field">
+                            <Text variant="body-1" className="workspace-page__settings-label">
+                                Description
+                            </Text>
+                            <TextArea
+                                id={descriptionInputId}
+                                value={createSessionDescription}
+                                onUpdate={setCreateSessionDescription}
+                                size="l"
+                                rows={4}
+                                placeholder="Optional description"
+                            />
+                        </div>
+                    </div>
+                </Dialog.Body>
+                <Dialog.Footer>
+                    <Button view="flat" onClick={closeCreateSession} disabled={isCreateSessionLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        view="action"
+                        onClick={handleCreateSession}
+                        loading={isCreateSessionLoading}
+                        disabled={createSessionName.trim().length === 0}
+                    >
+                        Create session
+                    </Button>
+                </Dialog.Footer>
+            </Dialog>
         </div>
     );
 }

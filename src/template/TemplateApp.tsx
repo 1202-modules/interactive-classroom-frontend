@@ -5,6 +5,7 @@ import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Oops from './pages/Oops/Oops';
 import WorkspacePage from './pages/Workspace/Workspace';
+import CreateWorkspacePage from './pages/Workspace/CreateWorkspace';
 import SessionPage from './pages/Session/SessionPage';
 import PresentationPage from './pages/Session/PresentationPage';
 import ProfilePage from './pages/Profile/Profile';
@@ -26,7 +27,7 @@ function TemplateApp() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/workspace/create" element={<Oops />} />
+                    <Route path="/workspace/create" element={<CreateWorkspacePage />} />
                     <Route
                         path="/workspace/:workspaceId/session/:sessionId/presentation"
                         element={<PresentationPage />}
