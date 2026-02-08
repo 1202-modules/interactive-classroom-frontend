@@ -14,6 +14,7 @@ export interface Session {
     end_datetime?: string | null;
     settings?: Record<string, unknown>;
     started_at?: string | null; // legacy field
+    is_deleted?: boolean;
     created_at: string;
     updated_at: string;
 }

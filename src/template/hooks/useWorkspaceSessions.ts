@@ -22,9 +22,8 @@ export function useWorkspaceSessions(workspaceId: number) {
                 `/workspaces/${workspaceId}/sessions`,
                 {
                     params: {
-                        include_deleted: true,
                         fields:
-                            'id,workspace_id,name,description,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,created_at,updated_at',
+                            'id,workspace_id,name,description,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,created_at,updated_at,is_deleted',
                     },
                 },
             );
@@ -54,10 +53,12 @@ export function useWorkspaceSessions(workspaceId: number) {
         if (sessionStatus !== 'active') return;
         if (sessions.length === 0) return;
 
-        const hasActive = sessions.some((s) => s.status === 'active');
+        const hasActive = sessions.some((s) => s.status === 'active' && !s.is_deleted);
         if (hasActive) return;
 
-        const nextStatus: SessionStatus = sessions.some((s) => s.status === 'archive')
+        const nextStatus: SessionStatus = sessions.some(
+            (s) => s.status === 'archive' && !s.is_deleted,
+        )
             ? 'archive'
             : 'trash';
         setSessionStatus(nextStatus);
@@ -67,9 +68,13 @@ export function useWorkspaceSessions(workspaceId: number) {
     const filteredSessions = useMemo(() => {
         return sessions.filter((session) => {
             // status filter
-            if (displayedSessionStatus === 'active' && session.status !== 'active') return false;
-            if (displayedSessionStatus === 'archive' && session.status !== 'archive') return false;
-            if (displayedSessionStatus === 'trash' && session.status !== 'trash') return false;
+            if (displayedSessionStatus === 'trash') {
+                if (!session.is_deleted) return false;
+            } else {
+                if (session.is_deleted) return false;
+                if (displayedSessionStatus === 'active' && session.status !== 'active') return false;
+                if (displayedSessionStatus === 'archive' && session.status !== 'archive') return false;
+            }
 
             if (!sessionQuery.trim()) return true;
             const q = sessionQuery.toLowerCase();
