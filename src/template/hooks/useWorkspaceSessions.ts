@@ -88,7 +88,17 @@ export function useWorkspaceSessions(workspaceId: number) {
         if (!sessionId || updatingSessionId === sessionId) return;
         const previous = sessions;
         setUpdatingSessionId(sessionId);
-        setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, status: next } : s)));
+        setSessions((prev) =>
+            prev.map((s) =>
+                s.id === sessionId
+                    ? {
+                          ...s,
+                          status: next,
+                          is_deleted: next === 'trash' ? true : false,
+                      }
+                    : s,
+            ),
+        );
 
         try {
             if (next === 'trash') {
@@ -110,7 +120,11 @@ export function useWorkspaceSessions(workspaceId: number) {
 
             if (res.data) {
                 setSessions((prev) =>
-                    prev.map((s) => (s.id === sessionId ? { ...s, ...res.data } : s)),
+                    prev.map((s) =>
+                        s.id === sessionId
+                            ? { ...s, ...res.data, is_deleted: false }
+                            : s,
+                    ),
                 );
             }
         } catch (err: any) {
@@ -163,12 +177,72 @@ export function useWorkspaceSessions(workspaceId: number) {
         }
     };
 
+    const restoreSession = async (sessionId: number) => {
+        if (!sessionId || updatingSessionId === sessionId) return;
+        const previous = sessions;
+        setUpdatingSessionId(sessionId);
+        setSessions((prev) =>
+            prev.map((s) =>
+                s.id === sessionId ? { ...s, is_deleted: false, status: 'active' } : s,
+            ),
+        );
+
+        try {
+            const res = await api.post<Partial<Session>>(`/sessions/${sessionId}/restore`, null, {
+                params: {
+                    fields:
+                        'id,name,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,updated_at,is_deleted',
+                },
+            });
+            if (res.data) {
+                setSessions((prev) =>
+                    prev.map((s) =>
+                        s.id === sessionId
+                            ? {
+                                  ...s,
+                                  ...res.data,
+                                  is_deleted: res.data.is_deleted ?? false,
+                              }
+                            : s,
+                    ),
+                );
+            }
+        } catch (err: any) {
+            const detail = err?.response?.data?.detail || err?.response?.data;
+            const message = typeof detail === 'string' ? detail : 'Failed to restore session';
+            setError(message);
+            setSessions(previous);
+        } finally {
+            setUpdatingSessionId(null);
+        }
+    };
+
+    const deleteSessionPermanently = async (sessionId: number) => {
+        if (!sessionId || updatingSessionId === sessionId) return;
+        const previous = sessions;
+        setUpdatingSessionId(sessionId);
+        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+
+        try {
+            await api.delete(`/sessions/${sessionId}/permanent`);
+        } catch (err: any) {
+            const detail = err?.response?.data?.detail || err?.response?.data;
+            const message =
+                typeof detail === 'string' ? detail : 'Failed to delete session permanently';
+            setError(message);
+            setSessions(previous);
+        } finally {
+            setUpdatingSessionId(null);
+        }
+    };
+
     const [deleteSessionId, setDeleteSessionId] = useState<number | null>(null);
     const closeDeleteDialog = () => setDeleteSessionId(null);
-    const confirmDeletePermanently = () => {
+    const confirmDeletePermanently = async () => {
         if (deleteSessionId != null) {
-            setSessions((prev) => prev.filter((s) => s.id !== deleteSessionId));
+            const targetId = deleteSessionId;
             setDeleteSessionId(null);
+            await deleteSessionPermanently(targetId);
         }
     };
 
@@ -187,6 +261,8 @@ export function useWorkspaceSessions(workspaceId: number) {
         confirmDeletePermanently,
         moveSession,
         toggleStartStop,
+        restoreSession,
+        deleteSessionPermanently,
         error,
         updatingSessionId,
         refetch: fetchSessions,

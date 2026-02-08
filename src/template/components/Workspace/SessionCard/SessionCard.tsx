@@ -17,6 +17,7 @@ interface SessionCardProps {
     onNavigate: (workspaceId: number, sessionId: number) => void;
     onToggleStartStop: (sessionId: number) => void;
     onMoveSession: (sessionId: number, status: SessionStatus) => void;
+    onRestore: (sessionId: number) => void;
     onDelete: (sessionId: number) => void;
     isUpdating?: boolean;
 }
@@ -27,11 +28,13 @@ export function SessionCard({
     onNavigate,
     onToggleStartStop,
     onMoveSession,
+    onRestore,
     onDelete,
     isUpdating,
 }: SessionCardProps) {
     const isLive = session.status === 'active' && !session.is_stopped;
-    const isTrash = session.status === 'trash';
+    const isTrash = session.is_deleted === true;
+    const isArchive = session.status === 'archive' && !isTrash;
 
     const menuItems = [
         [
@@ -39,25 +42,35 @@ export function SessionCard({
                 text: session.is_stopped ? 'Start session' : 'Stop session',
                 iconStart: <Icon data={session.is_stopped ? Play : Stop} size={16} />,
                 action: () => onToggleStartStop(session.id),
-                disabled: session.status !== 'active' || isUpdating,
+                disabled: session.status !== 'active' || isTrash || isArchive || isUpdating,
             },
-            session.status === 'active'
+            isTrash
                 ? {
-                    text: 'Move to archive',
-                    iconStart: <Icon data={Archive} size={16} />,
-                    action: () => onMoveSession(session.id, 'archive'),
-                }
-                : {
-                    text: 'Restore from archive',
+                    text: 'Restore from trash',
                     iconStart: <Icon data={ArrowRotateLeft} size={16} />,
-                    action: () => onMoveSession(session.id, 'active'),
-                },
-            session.status === 'trash'
+                    action: () => onRestore(session.id),
+                    disabled: isUpdating,
+                }
+                : session.status === 'active'
+                    ? {
+                        text: 'Move to archive',
+                        iconStart: <Icon data={Archive} size={16} />,
+                        action: () => onMoveSession(session.id, 'archive'),
+                        disabled: isUpdating,
+                    }
+                    : {
+                        text: 'Restore from archive',
+                        iconStart: <Icon data={ArrowRotateLeft} size={16} />,
+                        action: () => onMoveSession(session.id, 'active'),
+                        disabled: isUpdating,
+                    },
+            isTrash
                 ? {
                     text: 'Delete permanently',
                     iconStart: <Icon data={Xmark} size={16} />,
                     theme: 'danger' as const,
                     action: () => onDelete(session.id),
+                    disabled: isUpdating,
                 }
                 : {
                     text: 'Move to trash',
@@ -144,7 +157,7 @@ export function SessionCard({
                             <Text variant="body-2">Live</Text>
                         </span>
                     )}
-                    {session.status === 'active' && (
+                    {session.status === 'active' && !isTrash && (
                         <Button
                             view="flat"
                             size="s"

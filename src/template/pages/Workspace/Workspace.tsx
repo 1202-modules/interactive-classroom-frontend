@@ -383,6 +383,7 @@ export default function WorkspacePage() {
                                     }
                                     onToggleStartStop={workspaceSessions.toggleStartStop}
                                     onMoveSession={workspaceSessions.moveSession}
+                                    onRestore={workspaceSessions.restoreSession}
                                     onDelete={workspaceSessions.setDeleteSessionId}
                                     isUpdating={workspaceSessions.updatingSessionId === s.id}
                                 />
