@@ -492,7 +492,7 @@ export default function WorkspacePage() {
                             </Text>
                         </div>
 
-                        {isModulesLoading ? (
+                        {isModulesLoading || workspaceModules.isLoading ? (
                             <div className="workspace-page__modules-skeleton">
                                 {Array.from({ length: 4 }).map((_, i) => (
                                     <Card
@@ -529,6 +529,13 @@ export default function WorkspacePage() {
                             </div>
                         ) : (
                             <div className="workspace-page__modules">
+                                {workspaceModules.error && (
+                                    <Alert
+                                        theme="danger"
+                                        title="Failed to load modules"
+                                        message={workspaceModules.error}
+                                    />
+                                )}
                                 {(
                                     [
                                         {
@@ -536,22 +543,26 @@ export default function WorkspacePage() {
                                             title: 'Questions',
                                             subtitle:
                                                 'Collect questions and let participants upvote.',
+                                            isWip: false,
                                         },
                                         {
                                             type: 'poll' as const,
                                             title: 'Poll',
                                             subtitle: 'Gather opinions with flexible answer modes.',
+                                            isWip: true,
                                         },
                                         {
                                             type: 'quiz' as const,
                                             title: 'Quiz',
                                             subtitle: 'Run quizzes with options and time limits.',
+                                            isWip: true,
                                         },
                                         {
                                             type: 'timer' as const,
                                             title: 'Timer',
                                             subtitle:
                                                 'Keep activities on time with a shared countdown.',
+                                            isWip: false,
                                         },
                                     ] as const
                                 ).map((cluster) => {
@@ -564,6 +575,7 @@ export default function WorkspacePage() {
                                             type={cluster.type}
                                             title={cluster.title}
                                             subtitle={cluster.subtitle}
+                                            isWip={cluster.isWip}
                                             modules={typeModules}
                                             onOpenDetails={workspaceModules.openModuleDetails}
                                             onToggleEnabled={workspaceModules.toggleModuleEnabled}

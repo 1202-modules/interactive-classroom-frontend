@@ -170,6 +170,7 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                                             size="m"
                                             text={userInitials}
                                             theme="brand"
+                                            imgUrl={user.avatar_url || undefined}
                                             className="layout-header__user-avatar"
                                         />
                                         <Text variant="body-1" className="layout-header__user-name">

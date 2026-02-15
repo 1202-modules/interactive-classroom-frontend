@@ -1,83 +1,135 @@
-import {useMemo, useState} from 'react';
-import type {ActivityModuleType, WorkspaceActivityModule} from '../types/workspace';
-import {moduleService} from '../services/moduleService';
-// TODO: Replace with API call - import { getWorkspaceModules } from '../api/modules';
+import {useEffect, useMemo, useState} from 'react';
+import type {
+    ActivityModuleConfig,
+    ActivityModuleType,
+    WorkspaceActivityModule,
+} from '../types/workspace';
+import {useApi} from '@/hooks/useApi';
 
-// Mock data - will be replaced with API call
-const getMockModules = (): WorkspaceActivityModule[] => [
-    {
-        id: 1,
+type WorkspaceModuleApi = {
+    id: number;
+    workspace_id: number;
+    name: string;
+    module_type: ActivityModuleType;
+    settings: Record<string, unknown> | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+};
+
+const moduleFields = 'id,workspace_id,name,module_type,settings,created_at,updated_at';
+
+const defaultConfigByType: Record<ActivityModuleType, ActivityModuleConfig> = {
+    questions: {
         type: 'questions',
-        name: 'Main questions',
-        description: 'Collect questions from participants with voting and moderation.',
-        updated_at: '2026-01-17T10:40:00Z',
-        enabled: true,
-        used_in_sessions: 3,
-        config: {
-            type: 'questions',
-            allow_anonymous: false,
-            enable_upvotes: true,
-            max_length: 240,
-            cooldown_sec: 0,
-        },
+        allow_anonymous: false,
+        enable_upvotes: true,
+        max_length: 240,
+        cooldown_sec: 0,
     },
-    {
-        id: 2,
+    poll: {
         type: 'poll',
-        name: 'Poll-1',
-        description: 'Quick pulse-check poll with a word cloud mode.',
-        updated_at: '2026-01-15T17:10:00Z',
-        enabled: true,
-        used_in_sessions: 1,
-        config: {
-            type: 'poll',
-            question: "What do you think about today's topic?",
-            answer_mode: 'options',
-            word_cloud: true,
-            options: ['Great', 'Okay', 'Confusing'],
-        },
+        question: '',
+        answer_mode: 'options',
+        word_cloud: false,
+        options: [],
     },
-    {
-        id: 3,
+    quiz: {
         type: 'quiz',
-        name: 'Quick Quiz',
-        description: 'Single question quiz with timed answers.',
-        updated_at: '2026-01-16T12:20:00Z',
-        enabled: false,
-        used_in_sessions: 0,
-        config: {
-            type: 'quiz',
-            question: 'Which statement is correct?',
-            time_limit_sec: 60,
-            show_correct_answer: true,
-            options: [
-                {text: 'Option 1', correct: true},
-                {text: 'Option 2', correct: false},
-                {text: 'Option 3', correct: false},
-            ],
-        },
+        question: '',
+        time_limit_sec: 60,
+        show_correct_answer: true,
+        options: [],
     },
-    {
-        id: 4,
+    timer: {
         type: 'timer',
-        name: 'Timer-1',
-        description: 'Simple activity timer with optional sound and pause.',
-        updated_at: '2026-01-14T09:05:00Z',
-        enabled: true,
-        used_in_sessions: 2,
-        config: {
-            type: 'timer',
-            duration_sec: 120,
-            enable_sound: true,
-            allow_pause: true,
-        },
+        duration_sec: 120,
+        enable_sound: true,
+        allow_pause: true,
     },
-];
+};
 
-export function useWorkspaceModules(_workspaceId?: number) {
-    // TODO: Replace with API call - const [modules, setModules] = useState<WorkspaceActivityModule[]>([]);
-    // TODO: useEffect(() => { getWorkspaceModules(workspaceId).then(setModules); }, [workspaceId]);
-    const [modules, setModules] = useState<WorkspaceActivityModule[]>(() => getMockModules());
+const getBoolean = (value: unknown, fallback: boolean) =>
+    typeof value === 'boolean' ? value : fallback;
+const getNumber = (value: unknown, fallback: number) =>
+    typeof value === 'number' ? value : fallback;
+const getString = (value: unknown, fallback = '') => (typeof value === 'string' ? value : fallback);
+
+const normalizeConfig = (
+    type: ActivityModuleType,
+    settings: Record<string, unknown>,
+): ActivityModuleConfig => {
+    const defaults = defaultConfigByType[type];
+    switch (type) {
+        case 'questions':
+            return {
+                type: 'questions',
+                allow_anonymous: getBoolean(settings.allow_anonymous, defaults.allow_anonymous),
+                enable_upvotes: getBoolean(settings.enable_upvotes, defaults.enable_upvotes),
+                max_length: getNumber(settings.max_length, defaults.max_length),
+                cooldown_sec: getNumber(settings.cooldown_sec, defaults.cooldown_sec),
+            };
+        case 'poll':
+            return {
+                type: 'poll',
+                question: getString(settings.question, defaults.question),
+                answer_mode:
+                    (settings.answer_mode as 'options' | 'free' | 'mixed') ||
+                    defaults.answer_mode,
+                word_cloud: getBoolean(settings.word_cloud, defaults.word_cloud),
+                options: Array.isArray(settings.options)
+                    ? (settings.options as string[])
+                    : defaults.options,
+            };
+        case 'quiz':
+            return {
+                type: 'quiz',
+                question: getString(settings.question, defaults.question),
+                time_limit_sec: getNumber(settings.time_limit_sec, defaults.time_limit_sec),
+                show_correct_answer: getBoolean(
+                    settings.show_correct_answer,
+                    defaults.show_correct_answer,
+                ),
+                options: Array.isArray(settings.options)
+                    ? (settings.options as Array<{text: string; correct: boolean}>)
+                    : defaults.options,
+            };
+        case 'timer':
+            return {
+                type: 'timer',
+                duration_sec: getNumber(settings.duration_sec, defaults.duration_sec),
+                enable_sound: getBoolean(settings.enable_sound, defaults.enable_sound),
+                allow_pause: getBoolean(settings.allow_pause, defaults.allow_pause),
+            };
+    }
+};
+
+const buildSettings = (module: WorkspaceActivityModule) => ({
+    ...module.config,
+    description: module.description,
+    enabled: module.enabled,
+});
+
+const mapApiModule = (module: WorkspaceModuleApi): WorkspaceActivityModule => {
+    const settings = module.settings ?? {};
+    return {
+        id: module.id,
+        type: module.module_type,
+        name: module.name,
+        description: getString(settings.description, ''),
+        updated_at:
+            getString(module.updated_at || undefined, '') ||
+            getString(module.created_at || undefined, new Date().toISOString()),
+        enabled: getBoolean(settings.enabled, true),
+        used_in_sessions: getNumber(settings.used_in_sessions, 0),
+        config: normalizeConfig(module.module_type, settings),
+    };
+};
+
+export function useWorkspaceModules(workspaceId?: number) {
+    const api = useApi();
+    const [modules, setModules] = useState<WorkspaceActivityModule[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [isModuleDetailsOpen, setIsModuleDetailsOpen] = useState(false);
     const [moduleDetailsTab, setModuleDetailsTab] = useState<
         'overview' | 'settings' | 'content' | 'preview'
@@ -95,6 +147,31 @@ export function useWorkspaceModules(_workspaceId?: number) {
     const [isCreateModuleOpen, setIsCreateModuleOpen] = useState(false);
     const [createModuleType, setCreateModuleType] = useState<ActivityModuleType>('poll');
 
+    const fetchModules = async () => {
+        if (!Number.isFinite(workspaceId)) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await api.get<WorkspaceModuleApi[]>(
+                `/workspaces/${workspaceId}/modules`,
+                {
+                    params: {fields: moduleFields},
+                },
+            );
+            setModules((res.data || []).map(mapApiModule));
+        } catch (err: any) {
+            const message = err?.response?.data?.detail || 'Failed to load modules';
+            setError(typeof message === 'string' ? message : 'Failed to load modules');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchModules();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workspaceId]);
+
     const openModuleDetails = (moduleId: number) => {
         const current = modules.find((m) => m.id === moduleId);
         if (!current) return;
@@ -108,12 +185,31 @@ export function useWorkspaceModules(_workspaceId?: number) {
         setIsModuleDetailsOpen(false);
     };
 
-    const saveModuleDetails = () => {
+    const saveModuleDetails = async () => {
         if (!moduleDraft) return;
-        // TODO: Replace with API call - await updateModule(moduleDraft.id, moduleDraft);
-        const updated = moduleService.updateModule(moduleDraft.id, moduleDraft, modules);
-        setModules((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-        setIsModuleDetailsOpen(false);
+        if (!Number.isFinite(workspaceId)) return;
+        try {
+            const res = await api.put<WorkspaceModuleApi>(
+                `/workspaces/${workspaceId}/modules/${moduleDraft.id}`,
+                {
+                    name: moduleDraft.name,
+                    module_type: moduleDraft.type,
+                    settings: buildSettings(moduleDraft),
+                },
+                {
+                    params: {fields: moduleFields},
+                },
+            );
+            if (res.data && res.data.id) {
+                const updated = mapApiModule(res.data);
+                setModules((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+            } else {
+                await fetchModules();
+            }
+            setIsModuleDetailsOpen(false);
+        } catch (err) {
+            await fetchModules();
+        }
     };
 
     const openRenameModule = (m: WorkspaceActivityModule) => {
@@ -126,30 +222,98 @@ export function useWorkspaceModules(_workspaceId?: number) {
         setRenameValue('');
     };
 
-    const confirmRenameModule = () => {
+    const confirmRenameModule = async () => {
         if (renameModuleId == null) return;
-        // TODO: Replace with API call - await renameModule(renameModuleId, renameValue);
-        const updated = moduleService.renameModule(renameModuleId, renameValue, modules);
-        setModules((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-        closeRenameModule();
+        if (!Number.isFinite(workspaceId)) return;
+        const moduleToRename = modules.find((m) => m.id === renameModuleId);
+        if (!moduleToRename) return;
+        try {
+            const res = await api.put<WorkspaceModuleApi>(
+                `/workspaces/${workspaceId}/modules/${renameModuleId}`,
+                {
+                    name: renameValue.trim() || moduleToRename.name,
+                    module_type: moduleToRename.type,
+                    settings: buildSettings(moduleToRename),
+                },
+                {
+                    params: {fields: moduleFields},
+                },
+            );
+            if (res.data && res.data.id) {
+                const updated = mapApiModule(res.data);
+                setModules((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+            } else {
+                await fetchModules();
+            }
+            closeRenameModule();
+        } catch (err) {
+            await fetchModules();
+        }
     };
 
-    const duplicateModule = (m: WorkspaceActivityModule) => {
-        // TODO: Replace with API call - const duplicated = await duplicateModule(m.id);
-        const duplicated = moduleService.duplicateModule(m, modules);
-        setModules((prev) => [...prev, duplicated]);
+    const duplicateModule = async (m: WorkspaceActivityModule) => {
+        if (!Number.isFinite(workspaceId)) return;
+        try {
+            const res = await api.post<WorkspaceModuleApi>(
+                `/workspaces/${workspaceId}/modules`,
+                {
+                    name: `${m.name} copy`,
+                    module_type: m.type,
+                    settings: buildSettings(m),
+                },
+                {
+                    params: {fields: moduleFields},
+                },
+            );
+            if (res.data && res.data.id) {
+                setModules((prev) => [...prev, mapApiModule(res.data)]);
+            } else {
+                await fetchModules();
+            }
+        } catch (err) {
+            await fetchModules();
+        }
     };
 
-    const toggleModuleEnabled = (id: number) => {
-        // TODO: Replace with API call - await toggleModuleEnabled(id);
-        const updated = moduleService.toggleEnabled(id, modules);
-        setModules((prev) => prev.map((m) => (m.id === id ? updated : m)));
+    const toggleModuleEnabled = async (id: number) => {
+        if (!Number.isFinite(workspaceId)) return;
+        const moduleToToggle = modules.find((m) => m.id === id);
+        if (!moduleToToggle) return;
+        const nextModule = {...moduleToToggle, enabled: !moduleToToggle.enabled};
+        try {
+            const res = await api.put<WorkspaceModuleApi>(
+                `/workspaces/${workspaceId}/modules/${id}`,
+                {
+                    name: nextModule.name,
+                    module_type: nextModule.type,
+                    settings: buildSettings(nextModule),
+                },
+                {
+                    params: {fields: moduleFields},
+                },
+            );
+            if (res.data && res.data.id) {
+                const updated = mapApiModule(res.data);
+                setModules((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+            } else {
+                setModules((prev) => prev.map((m) => (m.id === id ? nextModule : m)));
+            }
+        } catch (err) {
+            await fetchModules();
+        }
     };
 
-    const deleteModule = (id: number) => {
-        // TODO: Replace with API call - await deleteModule(id);
-        setModules((prev) => moduleService.deleteModule(id, prev));
-        setDeleteModuleId(null);
+    const deleteModule = async (id: number) => {
+        if (!Number.isFinite(workspaceId)) return;
+        try {
+            await api.delete(`/workspaces/${workspaceId}/modules/${id}`, {
+                params: {hard: true},
+            });
+            setModules((prev) => prev.filter((m) => m.id !== id));
+            setDeleteModuleId(null);
+        } catch (err) {
+            await fetchModules();
+        }
     };
 
     const openCreateModule = (type: ActivityModuleType) => {
@@ -159,28 +323,45 @@ export function useWorkspaceModules(_workspaceId?: number) {
 
     const closeCreateModule = () => setIsCreateModuleOpen(false);
 
-    const createModule = (
+    const createModule = async (
         type: ActivityModuleType,
         name: string,
         description: string,
         enabled: boolean,
         config: WorkspaceActivityModule['config'],
     ) => {
-        // TODO: Replace with API call - const newModule = await createModule({ type, name, description, enabled, config });
-        const newModule = moduleService.createModule(
-            type,
-            name,
-            description,
-            enabled,
-            config,
-            modules,
-        );
-        setModules((prev) => [...prev, newModule]);
-        return newModule;
+        if (!Number.isFinite(workspaceId)) return;
+        try {
+            const res = await api.post<WorkspaceModuleApi>(
+                `/workspaces/${workspaceId}/modules`,
+                {
+                    name,
+                    module_type: type,
+                    settings: {
+                        ...config,
+                        description,
+                        enabled,
+                    },
+                },
+                {
+                    params: {fields: moduleFields},
+                },
+            );
+            if (res.data && res.data.id) {
+                const created = mapApiModule(res.data);
+                setModules((prev) => [...prev, created]);
+                return created;
+            }
+            await fetchModules();
+        } catch (err) {
+            await fetchModules();
+        }
     };
 
     return {
         modules,
+        isLoading,
+        error,
         isModuleDetailsOpen,
         moduleDetailsTab,
         selectedModuleId,

@@ -1,1 +1,4403 @@
-nothing here
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Interactive Classroom Platform API",
+        "description": "\n    Interactive Classroom Platform API\n    \n    API for managing interactive classroom sessions, workspaces, and user accounts.\n    \n    Features:\n    \n    - User Management: Registration, email verification, and profile management\n    - Workspace Management: Create and manage workspaces for organizing sessions\n    - Session Management: Create, start, stop, and manage interactive sessions\n    \n    Authentication:\n    \n    Most endpoints require JWT authentication. Include the token in the Authorization header:\n    \n    Authorization: Bearer <your-token>\n    ",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check",
+                "description": "Basic health check.",
+                "operationId": "health_check_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health/db": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check Db",
+                "description": "Database health check.",
+                "operationId": "health_check_db_health_db_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "description": "Register a new user with email and password.\n    \n    After registration, a verification code will be sent to the provided email.\n    The user must verify their email before they can log in.\n    \n    Business Rules:\n    - Email must be unique\n    - Password must be at least 8 characters\n    - Verification code expires in 15 minutes",
+                "operationId": "register_api_v1_auth_register_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisterResponse"
+                                },
+                                "example": {
+                                    "email": "user@example.com",
+                                    "verification_code_sent": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Email already exists or validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Email already exists"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": [
+                                        {
+                                            "loc": [
+                                                "body",
+                                                "email"
+                                            ],
+                                            "msg": "field required",
+                                            "type": "value_error.missing"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/verify-email": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Verify user email",
+                "description": "Verify user email with verification code.\n    \n    After successful verification, the user will receive an access token\n    and can start using the API.\n    \n    Business Rules:\n    - Verification code must match the one sent to email\n    - Code expires after 15 minutes\n    - Email can only be verified once",
+                "operationId": "verify_email_api_v1_auth_verify_email_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyEmailRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifyEmailResponse"
+                                },
+                                "example": {
+                                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                                    "token_type": "bearer",
+                                    "user_id": 1,
+                                    "email": "user@example.com"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid code, expired code, or email already verified",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Invalid verification code"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "User not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Login user",
+                "description": "Login user with email and password.\n    \n    Returns access token in JSON response and refresh token in HTTP-only cookie.\n    \n    Business Rules:\n    - Email must be verified before login\n    - Invalid credentials will return 401\n    - Refresh token is stored in HTTP-only cookie (not accessible via JavaScript)",
+                "operationId": "login_api_v1_auth_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                },
+                                "example": {
+                                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                                    "token_type": "bearer",
+                                    "user_id": 1,
+                                    "email": "user@example.com"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid credentials or email not verified",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Email not verified"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Invalid email or password"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/resend-code": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Resend verification code",
+                "description": "Resend verification code to user email.\n    \n    Business Rules:\n    - Can only be used if email is not yet verified\n    - New code expires in 15 minutes",
+                "operationId": "resend_code_api_v1_auth_resend_code_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendCodeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verification code resent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResendCodeResponse"
+                                },
+                                "example": {
+                                    "verification_code_sent": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "User not found or email already verified",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Email already verified"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Refresh access token",
+                "description": "Refresh access token using refresh token from HTTP-only cookie.\n    \n    Business Rules:\n    - Refresh token is read from cookie (not from request body)\n    - Old refresh token is revoked and new one is issued (token rotation)\n    - Returns new access token in JSON and new refresh token in cookie\n    - Invalid/expired refresh token returns 401",
+                "operationId": "refresh_api_v1_auth_refresh_post",
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshResponse"
+                                },
+                                "example": {
+                                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                                    "token_type": "bearer",
+                                    "user_id": 1,
+                                    "email": "user@example.com"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Refresh token not found"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Refresh token revoked",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Refresh token revoked"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication",
+                    "Authentication"
+                ],
+                "summary": "Logout user",
+                "description": "Logout user by revoking refresh token and clearing cookie.\n    \n    Business Rules:\n    - Refresh token is revoked in database\n    - Cookie is cleared from browser\n    - Access token remains valid until expiration (stateless)",
+                "operationId": "logout_api_v1_auth_logout_post",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                },
+                                "example": {
+                                    "message": "Logged out successfully"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Refresh token not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Refresh token not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/me": {
+            "get": {
+                "tags": [
+                    "Users",
+                    "Users"
+                ],
+                "summary": "Get current user profile",
+                "description": "Get the profile of the currently authenticated user.",
+                "operationId": "get_current_user_profile_api_v1_users_me_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,email,first_name)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,email,first_name)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "email": "user@example.com",
+                                    "email_verified": true,
+                                    "first_name": "John",
+                                    "last_name": "Doe",
+                                    "avatar_url": "https://example.com/avatar.jpg",
+                                    "created_at": "2024-01-15T10:30:00Z",
+                                    "updated_at": "2024-01-15T10:30:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "User not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Users",
+                    "Users"
+                ],
+                "summary": "Update current user profile",
+                "description": "Update the profile of the currently authenticated user.\n    \n    All fields are optional - only provided fields will be updated.",
+                "operationId": "update_current_user_profile_api_v1_users_me_put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "first_name": "John",
+                                    "last_name": "Doe",
+                                    "avatar_url": "https://example.com/avatar.jpg"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "User not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces": {
+            "get": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "List workspaces",
+                "description": "Get list of workspaces for the current user.\n    \n    Can be filtered by status (active, archive) and includes deleted workspaces.",
+                "operationId": "list_workspaces_api_v1_workspaces_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status (active, archive)",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status (active, archive)"
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,status)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,status)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workspaces retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "workspaces": [
+                                        {
+                                            "id": 1,
+                                            "user_id": 1,
+                                            "name": "My Workspace",
+                                            "description": "A workspace for my classes",
+                                            "status": "active",
+                                            "template_settings": {
+                                                "poll_duration": 30
+                                            },
+                                            "participant_count": 25,
+                                            "has_live_session": true,
+                                            "created_at": "2024-01-15T10:30:00Z",
+                                            "updated_at": "2024-01-15T10:30:00Z"
+                                        }
+                                    ],
+                                    "total": 1
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Create workspace",
+                "description": "Create a new workspace for the current user.",
+                "operationId": "create_workspace_api_v1_workspaces_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkspaceCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Workspace created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "user_id": 1,
+                                    "name": "My Workspace",
+                                    "description": "A workspace for my classes",
+                                    "status": "active",
+                                    "template_settings": {
+                                        "poll_duration": 30
+                                    },
+                                    "participant_count": 0,
+                                    "has_live_session": false,
+                                    "created_at": "2024-01-15T10:30:00Z",
+                                    "updated_at": "2024-01-15T10:30:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace name already exists"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}": {
+            "get": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Get workspace details",
+                "description": "Get detailed information about a specific workspace.",
+                "operationId": "get_workspace_api_v1_workspaces__workspace_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,status)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,status)",
+                        "example": "id,name,status"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workspace retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "user_id": 1,
+                                    "name": "My Workspace",
+                                    "description": "A workspace for my classes",
+                                    "status": "active",
+                                    "template_settings": {
+                                        "poll_duration": 30
+                                    },
+                                    "participant_count": 25,
+                                    "has_live_session": true,
+                                    "created_at": "2024-01-15T10:30:00Z",
+                                    "updated_at": "2024-01-15T10:30:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Update workspace",
+                "description": "Update an existing workspace.",
+                "operationId": "update_workspace_api_v1_workspaces__workspace_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                        "example": "id,name,status"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkspaceUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Workspace updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "Updated Workspace",
+                                    "status": "active"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace name already exists"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Delete workspace",
+                "description": "Soft delete a workspace (moves to trash).",
+                "operationId": "delete_workspace_api_v1_workspaces__workspace_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Workspace deleted successfully"
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot delete workspace with active running session"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/archive": {
+            "post": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Archive workspace",
+                "description": "Archive a workspace and end all active sessions.",
+                "operationId": "archive_workspace_api_v1_workspaces__workspace_id__archive_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workspace archived successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "My Workspace",
+                                    "status": "archive"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot archive deleted workspace"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/unarchive": {
+            "post": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Unarchive workspace",
+                "description": "Unarchive a workspace (restore from archive).",
+                "operationId": "unarchive_workspace_api_v1_workspaces__workspace_id__unarchive_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workspace unarchived successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "My Workspace",
+                                    "status": "active"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot unarchive deleted workspace"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/restore": {
+            "post": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Restore workspace from trash",
+                "description": "Restore a workspace from trash (undo soft delete).",
+                "operationId": "restore_workspace_api_v1_workspaces__workspace_id__restore_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workspace restored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "My Workspace",
+                                    "status": "active"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot restore workspace that is not deleted"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/permanent": {
+            "delete": {
+                "tags": [
+                    "Workspaces",
+                    "Workspaces"
+                ],
+                "summary": "Permanently delete workspace",
+                "description": "Permanently delete a workspace (hard delete). This action cannot be undone.",
+                "operationId": "delete_workspace_permanent_api_v1_workspaces__workspace_id__permanent_delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Workspace permanently deleted"
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot delete workspace with active running session"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/sessions": {
+            "get": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "List sessions in workspace",
+                "description": "Get list of sessions in a specific workspace.",
+                "operationId": "list_sessions_api_v1_workspaces__workspace_id__sessions_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status (active, archive)",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status (active, archive)"
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,status)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,status)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sessions retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "sessions": [
+                                        {
+                                            "id": 1,
+                                            "workspace_id": 1,
+                                            "name": "Lecture 1",
+                                            "description": "Introduction to the course",
+                                            "stopped_participant_count": 25,
+                                            "start_datetime": "2024-01-15T10:30:00Z",
+                                            "end_datetime": "2024-01-15T12:00:00Z",
+                                            "is_stopped": true,
+                                            "status": "active",
+                                            "settings": {
+                                                "poll_duration": 30
+                                            },
+                                            "created_at": "2024-01-15T09:00:00Z",
+                                            "updated_at": "2024-01-15T12:00:00Z",
+                                            "is_deleted": false
+                                        }
+                                    ],
+                                    "total": 1
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Create session",
+                "description": "Create a new session in a workspace.",
+                "operationId": "create_session_api_v1_workspaces__workspace_id__sessions_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Session created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "workspace_id": 1,
+                                    "name": "Lecture 1",
+                                    "description": "Introduction to the course",
+                                    "stopped_participant_count": 0,
+                                    "is_stopped": true,
+                                    "status": "active",
+                                    "settings": {
+                                        "poll_duration": 30
+                                    },
+                                    "created_at": "2024-01-15T09:00:00Z",
+                                    "updated_at": "2024-01-15T09:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session name already exists"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Workspace with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}": {
+            "get": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Get session details",
+                "description": "Get detailed information about a specific session.",
+                "operationId": "get_session_api_v1_sessions__session_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,status)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,status)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "workspace_id": 1,
+                                    "name": "Lecture 1",
+                                    "description": "Introduction to the course",
+                                    "stopped_participant_count": 25,
+                                    "start_datetime": "2024-01-15T10:30:00Z",
+                                    "end_datetime": "2024-01-15T12:00:00Z",
+                                    "is_stopped": true,
+                                    "status": "active",
+                                    "settings": {
+                                        "poll_duration": 30
+                                    },
+                                    "created_at": "2024-01-15T09:00:00Z",
+                                    "updated_at": "2024-01-15T12:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot access session in deleted workspace"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Update session",
+                "description": "Update an existing session.",
+                "operationId": "update_session_api_v1_sessions__session_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Session updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Delete session",
+                "description": "Soft delete a session (moves to trash).",
+                "operationId": "delete_session_api_v1_sessions__session_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Session deleted successfully"
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot delete session that is currently running"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/start": {
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Start session",
+                "description": "Start a session (set status to active and record start time).",
+                "operationId": "start_session_api_v1_sessions__session_id__start_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session started successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "Lecture 1",
+                                    "is_stopped": false,
+                                    "start_datetime": "2024-01-15T10:30:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot start session in archived workspace"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/stop": {
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Stop session",
+                "description": "Stop a session (set end_datetime and stopped_participant_count).",
+                "operationId": "stop_session_api_v1_sessions__session_id__stop_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "participant_count",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "description": "Number of participants at stop time (default 0)",
+                            "default": 0,
+                            "title": "Participant Count"
+                        },
+                        "description": "Number of participants at stop time (default 0)",
+                        "example": 25
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                        "example": "id,name,is_stopped"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session stopped successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "Lecture 1",
+                                    "is_stopped": true,
+                                    "stopped_participant_count": 25,
+                                    "end_datetime": "2024-01-15T12:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot stop session that is already stopped"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/archive": {
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Archive session",
+                "description": "Archive a session (set status to archive).",
+                "operationId": "archive_session_api_v1_sessions__session_id__archive_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session archived successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "Lecture 1",
+                                    "status": "archive"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot archive deleted session"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/unarchive": {
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Unarchive session",
+                "description": "Unarchive a session (set status to active).",
+                "operationId": "unarchive_session_api_v1_sessions__session_id__unarchive_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session unarchived successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "Lecture 1",
+                                    "status": "active"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot unarchive session in archived workspace"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/restore": {
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Restore session from trash",
+                "description": "Restore a session from trash (undo soft delete).",
+                "operationId": "restore_session_api_v1_sessions__session_id__restore_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session restored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/permanent": {
+            "delete": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Permanently delete session",
+                "description": "Permanently delete a session (hard delete). This action cannot be undone.",
+                "operationId": "delete_session_permanent_api_v1_sessions__session_id__permanent_delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Session permanently deleted"
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Cannot delete session that is currently running"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Session with id 1 not found"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/passcode": {
+            "get": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Get session passcode",
+                "description": "Get the passcode for a session.",
+                "operationId": "get_session_passcode_api_v1_sessions__session_id__passcode_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Passcode retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PasscodeResponse"
+                                },
+                                "example": {
+                                    "passcode": "ABC123"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/passcode/regenerate": {
+            "post": {
+                "tags": [
+                    "Sessions",
+                    "Sessions"
+                ],
+                "summary": "Regenerate session passcode",
+                "description": "Regenerate the passcode for a session. The old passcode becomes invalid.",
+                "operationId": "regenerate_session_passcode_api_v1_sessions__session_id__passcode_regenerate_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Passcode regenerated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PasscodeResponse"
+                                },
+                                "example": {
+                                    "passcode": "XYZ789"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/modules": {
+            "get": {
+                "tags": [
+                    "Workspace Modules",
+                    "Workspace Modules"
+                ],
+                "summary": "List workspace modules",
+                "description": "Get list of modules in a workspace.",
+                "operationId": "list_workspace_modules_api_v1_workspaces__workspace_id__modules_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,module_type)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,module_type)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Modules retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": [
+                                    {
+                                        "id": 1,
+                                        "workspace_id": 1,
+                                        "name": "Quiz Module",
+                                        "module_type": "quiz",
+                                        "settings": {
+                                            "question": "What is 2+2?",
+                                            "options": [
+                                                {
+                                                    "text": "3",
+                                                    "is_correct": false
+                                                },
+                                                {
+                                                    "text": "4",
+                                                    "is_correct": true
+                                                }
+                                            ]
+                                        },
+                                        "created_at": "2025-01-16T10:00:00Z",
+                                        "updated_at": "2025-01-16T10:00:00Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Workspace Modules",
+                    "Workspace Modules"
+                ],
+                "summary": "Create workspace module",
+                "description": "Create a new module in a workspace.",
+                "operationId": "create_workspace_module_api_v1_workspaces__workspace_id__modules_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkspaceModuleCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Module created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "workspace_id": 1,
+                                    "name": "Quiz Module",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "What is 2+2?",
+                                        "options": [
+                                            {
+                                                "text": "3",
+                                                "is_correct": false
+                                            },
+                                            {
+                                                "text": "4",
+                                                "is_correct": true
+                                            }
+                                        ]
+                                    },
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Invalid module type"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Workspace not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/workspaces/{workspace_id}/modules/{module_id}": {
+            "get": {
+                "tags": [
+                    "Workspace Modules",
+                    "Workspace Modules"
+                ],
+                "summary": "Get workspace module",
+                "description": "Get a workspace module by ID.",
+                "operationId": "get_workspace_module_api_v1_workspaces__workspace_id__modules__module_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,module_type)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,module_type)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Module retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "workspace_id": 1,
+                                    "name": "Quiz Module",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "What is 2+2?",
+                                        "options": [
+                                            {
+                                                "text": "3",
+                                                "is_correct": false
+                                            },
+                                            {
+                                                "text": "4",
+                                                "is_correct": true
+                                            }
+                                        ]
+                                    },
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Module not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Workspace Modules",
+                    "Workspace Modules"
+                ],
+                "summary": "Update workspace module",
+                "description": "Update an existing workspace module.",
+                "operationId": "update_workspace_module_api_v1_workspaces__workspace_id__modules__module_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkspaceModuleUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Module updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "workspace_id": 1,
+                                    "name": "Updated Quiz Module",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "Updated question"
+                                    },
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T11:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Invalid module type"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Module not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Workspace Modules",
+                    "Workspace Modules"
+                ],
+                "summary": "Delete Workspace Module",
+                "description": "Delete a workspace module.",
+                "operationId": "delete_workspace_module_api_v1_workspaces__workspace_id__modules__module_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Workspace Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "hard",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "description": "Hard delete (permanent)",
+                            "default": false,
+                            "title": "Hard"
+                        },
+                        "description": "Hard delete (permanent)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/modules": {
+            "get": {
+                "tags": [
+                    "Session Modules",
+                    "Session Modules"
+                ],
+                "summary": "List session modules",
+                "description": "Get list of modules in a session.",
+                "operationId": "list_session_modules_api_v1_sessions__session_id__modules_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,module_type)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,module_type)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Modules retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": [
+                                    {
+                                        "id": 1,
+                                        "session_id": 1,
+                                        "name": "Quiz Module-1",
+                                        "module_type": "quiz",
+                                        "settings": {
+                                            "question": "What is 2+2?",
+                                            "options": [
+                                                {
+                                                    "text": "3",
+                                                    "is_correct": false
+                                                },
+                                                {
+                                                    "text": "4",
+                                                    "is_correct": true
+                                                }
+                                            ]
+                                        },
+                                        "is_active": false,
+                                        "created_at": "2025-01-16T10:00:00Z",
+                                        "updated_at": "2025-01-16T10:00:00Z"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Session Modules",
+                    "Session Modules"
+                ],
+                "summary": "Clone workspace module to session",
+                "description": "Clone a workspace module to session (creates independent copy).",
+                "operationId": "create_session_module_api_v1_sessions__session_id__modules_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionModuleCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Module cloned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "session_id": 1,
+                                    "name": "Quiz Module-1",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "What is 2+2?",
+                                        "options": [
+                                            {
+                                                "text": "3",
+                                                "is_correct": false
+                                            },
+                                            {
+                                                "text": "4",
+                                                "is_correct": true
+                                            }
+                                        ]
+                                    },
+                                    "is_active": false,
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "workspace_module_id is required"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Session or workspace module not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/modules/{module_id}": {
+            "get": {
+                "tags": [
+                    "Session Modules",
+                    "Session Modules"
+                ],
+                "summary": "Get session module",
+                "description": "Get a session module by ID.",
+                "operationId": "get_session_module_api_v1_sessions__session_id__modules__module_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include (e.g., id,name,module_type)",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include (e.g., id,name,module_type)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Module retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "session_id": 1,
+                                    "name": "Quiz Module-1",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "What is 2+2?",
+                                        "options": [
+                                            {
+                                                "text": "3",
+                                                "is_correct": false
+                                            },
+                                            {
+                                                "text": "4",
+                                                "is_correct": true
+                                            }
+                                        ]
+                                    },
+                                    "is_active": false,
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T10:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Module not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Session Modules",
+                    "Session Modules"
+                ],
+                "summary": "Update session module",
+                "description": "Update an existing session module.",
+                "operationId": "update_session_module_api_v1_sessions__session_id__modules__module_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionModuleUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Module updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "session_id": 1,
+                                    "name": "Updated Quiz Module",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "Updated question"
+                                    },
+                                    "is_active": false,
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T11:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Invalid module type"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Module not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Session Modules",
+                    "Session Modules"
+                ],
+                "summary": "Delete Session Module",
+                "description": "Delete a session module.",
+                "operationId": "delete_session_module_api_v1_sessions__session_id__modules__module_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "hard",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "description": "Hard delete (permanent)",
+                            "default": false,
+                            "title": "Hard"
+                        },
+                        "description": "Hard delete (permanent)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{session_id}/modules/{module_id}/activate": {
+            "patch": {
+                "tags": [
+                    "Session Modules",
+                    "Session Modules"
+                ],
+                "summary": "Activate session module",
+                "description": "Activate a session module (deactivates others).",
+                "operationId": "activate_session_module_api_v1_sessions__session_id__modules__module_id__activate_patch",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Session Id"
+                        }
+                    },
+                    {
+                        "name": "module_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Module Id"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Comma-separated list of fields to include. If not specified, returns empty response.",
+                            "title": "Fields"
+                        },
+                        "description": "Comma-separated list of fields to include. If not specified, returns empty response."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Module activated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "session_id": 1,
+                                    "name": "Quiz Module-1",
+                                    "module_type": "quiz",
+                                    "settings": {
+                                        "question": "What is 2+2?",
+                                        "options": [
+                                            {
+                                                "text": "3",
+                                                "is_correct": false
+                                            },
+                                            {
+                                                "text": "4",
+                                                "is_correct": true
+                                            }
+                                        ]
+                                    },
+                                    "is_active": true,
+                                    "created_at": "2025-01-16T10:00:00Z",
+                                    "updated_at": "2025-01-16T11:00:00Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "detail": "Module not found"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "404": {
+                        "description": "Module not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Root",
+                "description": "Root endpoint.",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LoginRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User email address",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "title": "Password",
+                        "description": "User password",
+                        "example": "SecurePass123"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "LoginRequest",
+                "description": "Schema for user login.",
+                "example": {
+                    "email": "user@example.com",
+                    "password": "SecurePass123"
+                }
+            },
+            "LoginResponse": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token",
+                        "description": "JWT access token",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "description": "Token type",
+                        "default": "bearer",
+                        "example": "bearer"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "title": "User Id",
+                        "description": "User ID",
+                        "example": 1
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "description": "User email",
+                        "example": "user@example.com"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access_token",
+                    "user_id",
+                    "email"
+                ],
+                "title": "LoginResponse",
+                "description": "Schema for login response.",
+                "example": {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                    "email": "user@example.com",
+                    "token_type": "bearer",
+                    "user_id": 1
+                }
+            },
+            "MessageResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "description": "Response message",
+                        "example": "Operation completed successfully"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "title": "MessageResponse",
+                "description": "Schema for simple message response.",
+                "example": {
+                    "message": "Operation completed successfully"
+                }
+            },
+            "PasscodeResponse": {
+                "properties": {
+                    "passcode": {
+                        "type": "string",
+                        "title": "Passcode",
+                        "description": "Session passcode",
+                        "example": "ABC123"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "passcode"
+                ],
+                "title": "PasscodeResponse",
+                "description": "Schema for passcode response.",
+                "example": {
+                    "passcode": "ABC123"
+                }
+            },
+            "RefreshResponse": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token",
+                        "description": "New JWT access token",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "description": "Token type",
+                        "default": "bearer",
+                        "example": "bearer"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "title": "User Id",
+                        "description": "User ID",
+                        "example": 1
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "description": "User email",
+                        "example": "user@example.com"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access_token",
+                    "user_id",
+                    "email"
+                ],
+                "title": "RefreshResponse",
+                "description": "Schema for refresh token response.",
+                "example": {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                    "email": "user@example.com",
+                    "token_type": "bearer",
+                    "user_id": 1
+                }
+            },
+            "RegisterRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User email address",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 8,
+                        "title": "Password",
+                        "description": "User password (min 8 characters)",
+                        "example": "SecurePass123"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "RegisterRequest",
+                "description": "Schema for user registration.",
+                "example": {
+                    "email": "user@example.com",
+                    "password": "SecurePass123"
+                }
+            },
+            "RegisterResponse": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "description": "User email",
+                        "example": "user@example.com"
+                    },
+                    "verification_code_sent": {
+                        "type": "boolean",
+                        "title": "Verification Code Sent",
+                        "description": "Whether verification code was sent",
+                        "example": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "verification_code_sent"
+                ],
+                "title": "RegisterResponse",
+                "description": "Schema for registration response.",
+                "example": {
+                    "email": "user@example.com",
+                    "verification_code_sent": true
+                }
+            },
+            "ResendCodeRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User email address",
+                        "example": "user@example.com"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email"
+                ],
+                "title": "ResendCodeRequest",
+                "description": "Schema for resending verification code.",
+                "example": {
+                    "email": "user@example.com"
+                }
+            },
+            "ResendCodeResponse": {
+                "properties": {
+                    "verification_code_sent": {
+                        "type": "boolean",
+                        "title": "Verification Code Sent",
+                        "description": "Whether verification code was sent",
+                        "example": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "verification_code_sent"
+                ],
+                "title": "ResendCodeResponse",
+                "description": "Schema for resend code response.",
+                "example": {
+                    "verification_code_sent": true
+                }
+            },
+            "SessionCreateRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Session name",
+                        "example": "Lecture 1"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 1000
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Session description",
+                        "example": "Introduction to the course"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "SessionCreateRequest",
+                "description": "Schema for creating session.",
+                "example": {
+                    "description": "Introduction to the course",
+                    "name": "Lecture 1"
+                }
+            },
+            "SessionModuleCreateRequest": {
+                "properties": {
+                    "workspace_module_id": {
+                        "type": "integer",
+                        "title": "Workspace Module Id",
+                        "description": "Workspace module ID to clone from",
+                        "example": 1
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "Module name (auto-generated with suffix if not provided)",
+                        "example": "Quiz Module-1"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_module_id"
+                ],
+                "title": "SessionModuleCreateRequest",
+                "description": "Schema for creating session module (clones from workspace module).",
+                "example": {
+                    "name": "Quiz Module-1",
+                    "workspace_module_id": 1
+                }
+            },
+            "SessionModuleUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "Module name",
+                        "example": "Updated Quiz Module"
+                    },
+                    "module_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Module Type",
+                        "description": "Module type",
+                        "example": "quiz"
+                    },
+                    "settings": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Settings",
+                        "description": "Module settings (JSON)",
+                        "example": {
+                            "question": "Updated question"
+                        }
+                    }
+                },
+                "type": "object",
+                "title": "SessionModuleUpdateRequest",
+                "description": "Schema for updating session module.",
+                "example": {
+                    "name": "Updated Quiz Module",
+                    "settings": {
+                        "question": "Updated question"
+                    }
+                }
+            },
+            "SessionUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "Session name",
+                        "example": "Updated Lecture 1"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 1000
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Session description",
+                        "example": "Updated description"
+                    },
+                    "settings": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Settings",
+                        "description": "Session settings (JSON). Updates will create custom_settings if different from template.",
+                        "example": {
+                            "poll_duration": 45
+                        }
+                    }
+                },
+                "type": "object",
+                "title": "SessionUpdateRequest",
+                "description": "Schema for updating session.",
+                "example": {
+                    "description": "Updated description",
+                    "name": "Updated Lecture 1",
+                    "settings": {
+                        "poll_duration": 45,
+                        "show_results": false
+                    }
+                }
+            },
+            "UserUpdateRequest": {
+                "properties": {
+                    "first_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "First Name",
+                        "description": "First name",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Name",
+                        "description": "Last name",
+                        "example": "Doe"
+                    },
+                    "avatar_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Avatar Url",
+                        "description": "Avatar URL",
+                        "example": "https://example.com/avatar.jpg"
+                    }
+                },
+                "type": "object",
+                "title": "UserUpdateRequest",
+                "description": "Schema for updating user profile.",
+                "example": {
+                    "avatar_url": "https://example.com/avatar.jpg",
+                    "first_name": "John",
+                    "last_name": "Doe"
+                }
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "VerifyEmailRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User email address",
+                        "example": "user@example.com"
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 6,
+                        "minLength": 6,
+                        "title": "Code",
+                        "description": "Verification code",
+                        "example": "123456"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "code"
+                ],
+                "title": "VerifyEmailRequest",
+                "description": "Schema for email verification.",
+                "example": {
+                    "code": "123456",
+                    "email": "user@example.com"
+                }
+            },
+            "VerifyEmailResponse": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token",
+                        "description": "JWT access token",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "description": "Token type",
+                        "default": "bearer",
+                        "example": "bearer"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "title": "User Id",
+                        "description": "User ID",
+                        "example": 1
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email",
+                        "description": "User email",
+                        "example": "user@example.com"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access_token",
+                    "user_id",
+                    "email"
+                ],
+                "title": "VerifyEmailResponse",
+                "description": "Schema for email verification response.",
+                "example": {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                    "email": "user@example.com",
+                    "token_type": "bearer",
+                    "user_id": 1
+                }
+            },
+            "WorkspaceCreateRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Workspace name",
+                        "example": "My Workspace"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 1000
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Workspace description",
+                        "example": "A workspace for my classes"
+                    },
+                    "template_settings": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Template Settings",
+                        "description": "Template settings for sessions (JSON)",
+                        "example": {
+                            "poll_duration": 30,
+                            "show_results": true
+                        }
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "WorkspaceCreateRequest",
+                "description": "Schema for creating workspace.",
+                "example": {
+                    "description": "A workspace for my classes",
+                    "name": "My Workspace",
+                    "template_settings": {
+                        "allow_anonymous": false,
+                        "poll_duration": 30,
+                        "show_results": true
+                    }
+                }
+            },
+            "WorkspaceModuleCreateRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Module name",
+                        "example": "Quiz Module"
+                    },
+                    "module_type": {
+                        "type": "string",
+                        "title": "Module Type",
+                        "description": "Module type (quiz, poll, questions, timer)",
+                        "example": "quiz"
+                    },
+                    "settings": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Settings",
+                        "description": "Module settings (JSON)",
+                        "example": {
+                            "question": "What is 2+2?"
+                        }
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "module_type"
+                ],
+                "title": "WorkspaceModuleCreateRequest",
+                "description": "Schema for creating workspace module.",
+                "example": {
+                    "module_type": "quiz",
+                    "name": "Quiz Module",
+                    "settings": {
+                        "options": [
+                            {
+                                "is_correct": false,
+                                "text": "3"
+                            },
+                            {
+                                "is_correct": true,
+                                "text": "4"
+                            }
+                        ],
+                        "question": "What is 2+2?"
+                    }
+                }
+            },
+            "WorkspaceModuleUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "Module name",
+                        "example": "Updated Quiz Module"
+                    },
+                    "module_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Module Type",
+                        "description": "Module type",
+                        "example": "quiz"
+                    },
+                    "settings": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Settings",
+                        "description": "Module settings (JSON)",
+                        "example": {
+                            "question": "Updated question"
+                        }
+                    }
+                },
+                "type": "object",
+                "title": "WorkspaceModuleUpdateRequest",
+                "description": "Schema for updating workspace module.",
+                "example": {
+                    "name": "Updated Quiz Module",
+                    "settings": {
+                        "question": "Updated question"
+                    }
+                }
+            },
+            "WorkspaceUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "Workspace name",
+                        "example": "Updated Workspace"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 1000
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Workspace description",
+                        "example": "Updated description"
+                    },
+                    "template_settings": {
+                        "anyOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Template Settings",
+                        "description": "Template settings for sessions (JSON)",
+                        "example": {
+                            "poll_duration": 60
+                        }
+                    }
+                },
+                "type": "object",
+                "title": "WorkspaceUpdateRequest",
+                "description": "Schema for updating workspace.",
+                "example": {
+                    "description": "Updated description",
+                    "name": "Updated Workspace",
+                    "template_settings": {
+                        "poll_duration": 60,
+                        "show_results": true
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "User registration, email verification, and login"
+        },
+        {
+            "name": "Users",
+            "description": "User profile management"
+        },
+        {
+            "name": "Workspaces",
+            "description": "Workspace management operations"
+        },
+        {
+            "name": "Sessions",
+            "description": "Session management operations"
+        }
+    ]
+}
