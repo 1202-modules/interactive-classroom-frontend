@@ -8,6 +8,7 @@ import WorkspacePage from './pages/Workspace/Workspace';
 import CreateWorkspacePage from './pages/Workspace/CreateWorkspace';
 import SessionPage from './pages/Session/SessionPage';
 import PresentationPage from './pages/Session/PresentationPage';
+import ParticipantPage from './pages/Session/ParticipantPage';
 import ProfilePage from './pages/Profile/Profile';
 import SettingsPage from './pages/Settings/Settings';
 import LoginPage from './pages/Auth/Login';
@@ -36,6 +37,7 @@ function TemplateApp() {
                         path="/workspace/:workspaceId/session/:sessionId"
                         element={<SessionPage />}
                     />
+                    <Route path="/s/:code" element={<ParticipantPage />} />
                     <Route path="/workspace/:id" element={<WorkspacePage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />

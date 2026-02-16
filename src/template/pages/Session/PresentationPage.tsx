@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {Button, Icon, Text} from '@gravity-ui/uikit';
 import {
@@ -11,9 +11,8 @@ import {
 } from '@gravity-ui/icons';
 import {QRCodeSVG} from 'qrcode.react';
 
-import type {SessionDetail} from '../../types/sessionPage';
-import {mockSessionDetail} from '../../data/mockSessionDetail';
-// TODO: Replace with API call - import { getSessionDetail } from '../../api/sessions';
+import type {SessionModule} from '../../types/sessionPage';
+import {useApi} from '@/hooks/useApi';
 import './PresentationPage.css';
 
 // Helper для иконок типов модулей
@@ -32,34 +31,103 @@ function getModuleIcon(type: 'questions' | 'poll' | 'quiz' | 'timer') {
     }
 }
 
-// Мок-сообщения чата для демонстрации
-const mockChatMessages = [
-    {id: 1, author: 'Alice', text: 'Great explanation!', timestamp: Date.now()},
-    {id: 2, author: 'Bob', text: 'Can you repeat that?', timestamp: Date.now() + 2000},
-    {id: 3, author: 'Charlie', text: '👍', timestamp: Date.now() + 4000},
-];
+type SessionInfo = {
+    id: number;
+    workspace_id: number;
+    name: string;
+    is_stopped: boolean;
+    passcode?: string | null;
+};
+
+type SessionModuleApi = {
+    id: number;
+    session_id: number;
+    name: string | null;
+    module_type: SessionModule['type'];
+    settings: Record<string, unknown> | null;
+    is_active: boolean;
+};
+
+const sessionFields = 'id,workspace_id,name,is_stopped,passcode';
+const sessionModuleFields = 'id,session_id,name,module_type,settings,is_active';
+
+const mapSessionModule = (module: SessionModuleApi, index: number): SessionModule => ({
+    id: String(module.id),
+    module_id: 0,
+    order: index,
+    is_active: module.is_active,
+    name: module.name ?? 'Untitled module',
+    type: module.module_type,
+    config: module.settings ?? {},
+});
 
 export default function PresentationPage() {
-    const {workspaceId: _workspaceId, sessionId: _sessionId} = useParams();
-    const [sessionDetail] = useState<SessionDetail>(mockSessionDetail);
+    const {sessionId} = useParams();
+    const api = useApi();
+    const sessionIdNumber = Number(sessionId);
+    const isSessionIdValid = Number.isFinite(sessionIdNumber);
+    const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
+    const [sessionModules, setSessionModules] = useState<SessionModule[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [chatMessages, setChatMessages] = useState<typeof mockChatMessages>([]);
 
-    const qrCodeUrl = `${window.location.origin}/s/${sessionDetail.passcode}`;
-    const activeModule = sessionDetail.session_modules.find((m) => m.is_active);
-
-    // Simulate chat messages appearing
-    useEffect(() => {
-        if (activeModule) {
-            const timer = setTimeout(() => {
-                if (chatMessages.length < mockChatMessages.length) {
-                    setChatMessages((prev) => [...prev, mockChatMessages[prev.length]]);
-                }
-            }, 3000);
-            return () => clearTimeout(timer);
+    const fetchSessionInfo = useCallback(async () => {
+        if (!isSessionIdValid) return;
+        setIsLoading(true);
+        try {
+            const res = await api.get<SessionInfo>(`/sessions/${sessionIdNumber}`, {
+                params: {fields: sessionFields},
+            });
+            setSessionInfo(res.data);
+        } catch (err) {
+            setSessionInfo(null);
+        } finally {
+            setIsLoading(false);
         }
-        return undefined;
-    }, [chatMessages, activeModule]);
+    }, [api, isSessionIdValid, sessionIdNumber]);
+
+    const fetchSessionModules = useCallback(async () => {
+        if (!isSessionIdValid) return;
+        try {
+            const res = await api.get<SessionModuleApi[]>(
+                `/sessions/${sessionIdNumber}/modules`,
+                {
+                    params: {fields: sessionModuleFields},
+                },
+            );
+            setSessionModules((res.data || []).map(mapSessionModule));
+        } catch (err) {
+            setSessionModules([]);
+        }
+    }, [api, isSessionIdValid, sessionIdNumber]);
+
+    useEffect(() => {
+        fetchSessionInfo();
+    }, [fetchSessionInfo]);
+
+    useEffect(() => {
+        fetchSessionModules();
+    }, [fetchSessionModules]);
+
+    useEffect(() => {
+        document.body.classList.add('presentation-mode');
+        return () => {
+            document.body.classList.remove('presentation-mode');
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!isSessionIdValid) return;
+        const intervalId = window.setInterval(() => {
+            fetchSessionModules();
+        }, 5000);
+        return () => window.clearInterval(intervalId);
+    }, [fetchSessionModules, isSessionIdValid]);
+
+    const passcode = sessionInfo?.passcode ?? '';
+    const qrCodeUrl = passcode ? `${window.location.origin}/s/${passcode}` : '';
+    const activeModule = sessionModules.find((m) => m.is_active);
+
 
     const handleToggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -107,17 +175,21 @@ export default function PresentationPage() {
                 <div className="presentation-page__qr-fullscreen">
                     <div className="presentation-page__qr-container">
                         <Text variant="display-3" className="presentation-page__title">
-                            {sessionDetail.name}
+                            {isLoading ? 'Loading…' : sessionInfo?.name || 'Session'}
                         </Text>
                         <div className="presentation-page__qr-code-large">
-                            <QRCodeSVG value={qrCodeUrl} size={400} level="M" />
+                            {qrCodeUrl ? (
+                                <QRCodeSVG value={qrCodeUrl} size={400} level="M" />
+                            ) : (
+                                <div className="presentation-page__qr-placeholder" />
+                            )}
                         </div>
                         <div className="presentation-page__passcode-container">
                             <Text variant="header-1" color="secondary">
                                 Join at: {window.location.origin}/s/
                             </Text>
                             <Text variant="display-2" className="presentation-page__passcode">
-                                {sessionDetail.passcode}
+                                {passcode || '—'}
                             </Text>
                         </div>
                         <Text variant="subheader-1" color="secondary">
@@ -233,37 +305,24 @@ export default function PresentationPage() {
                         </div>
                     </div>
 
-                    {/* RIGHT 1/4: QR + Chat */}
+                    {/* RIGHT 1/4: QR */}
                     <div className="presentation-page__sidebar">
                         {/* Small QR Code */}
                         <div className="presentation-page__qr-small">
                             <Text variant="subheader-1">Join Session</Text>
-                            <div className="presentation-page__qr-code-small">
-                                <QRCodeSVG value={qrCodeUrl} size={120} level="M" />
-                            </div>
                             <Text variant="caption-1" color="secondary">
-                                {sessionDetail.passcode}
+                                {passcode || '—'}
                             </Text>
-                        </div>
-
-                        {/* Chat Messages */}
-                        <div className="presentation-page__chat">
-                            <Text variant="subheader-1">Live Chat</Text>
-                            <div className="presentation-page__chat-messages">
-                                {chatMessages.map((msg) => (
-                                    <div key={msg.id} className="presentation-page__chat-message">
-                                        <Text variant="body-short">
-                                            <strong>{msg.author}:</strong> {msg.text}
-                                        </Text>
-                                    </div>
-                                ))}
-                                {chatMessages.length === 0 && (
-                                    <Text variant="caption-1" color="secondary">
-                                        No messages yet...
-                                    </Text>
+                            <div className="presentation-page__qr-code-small">
+                                {qrCodeUrl ? (
+                                    <QRCodeSVG value={qrCodeUrl} size={"100%"} level="M" />
+                                ) : (
+                                    <div className="presentation-page__qr-placeholder" />
                                 )}
                             </div>
                         </div>
+
+                        {/* Chat removed for presentation mode */}
                     </div>
                 </div>
             )}

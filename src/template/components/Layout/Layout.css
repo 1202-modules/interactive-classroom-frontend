@@ -150,6 +150,10 @@
   box-sizing: border-box;
 }
 
+.presentation-mode .layout-main {
+  padding: 0;
+}
+
 .layout-main__center {
   max-width: 1920px;
   margin: 0 auto;
