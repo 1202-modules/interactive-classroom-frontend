@@ -324,6 +324,10 @@ export function useWorkspaceModules(workspaceId?: number) {
         }
     };
 
+    const replaceModule = (updated: WorkspaceActivityModule) => {
+        setModules((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+    };
+
     const deleteModule = async (id: number) => {
         if (!Number.isFinite(workspaceId)) return;
         try {
@@ -411,6 +415,7 @@ export function useWorkspaceModules(workspaceId?: number) {
         openCreateModule,
         closeCreateModule,
         createModule,
+        replaceModule,
         refetchModules: fetchModules,
     };
 }

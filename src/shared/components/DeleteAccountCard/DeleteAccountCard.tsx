@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { logout } from '@/shared/store/authSlice';
 import { setUser } from '@/shared/store/userSlice';
 import type { AppDispatch } from '@/shared/store/store';
+import { api } from '@/shared/api/api';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { TextInput } from '@gravity-ui/uikit';
 import './DeleteAccountCard.css';
@@ -28,8 +29,14 @@ export function DeleteAccountCard() {
         setDeleting(true);
         try {
             await api.delete('/users/me');
+            try {
+                await api.post('/auth/logout', null, { withCredentials: true });
+            } catch {
+                // Clear local state and cookie handling even if logout fails
+            }
             dispatch(logout());
             dispatch(setUser(null));
+            delete api.defaults.headers.common.Authorization;
             navigate('/login', { replace: true });
         } catch (err: unknown) {
             const message = parseBackendError(

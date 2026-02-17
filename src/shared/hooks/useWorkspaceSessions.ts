@@ -257,6 +257,13 @@ export function useWorkspaceSessions(workspaceId: number) {
         }
     };
 
+    const addSession = useCallback((session: Session) => {
+        setSessions((prev) => {
+            if (prev.some((s) => s.id === session.id)) return prev;
+            return [session, ...prev];
+        });
+    }, []);
+
     return {
         sessions,
         sessionQuery,
@@ -274,6 +281,7 @@ export function useWorkspaceSessions(workspaceId: number) {
         toggleStartStop,
         restoreSession,
         deleteSessionPermanently,
+        addSession,
         error,
         updatingSessionId,
         refetch: fetchSessions,

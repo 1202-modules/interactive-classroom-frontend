@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, Button, DropdownMenu, Icon, Skeleton, Spin, Text } from '@gravity-ui/uikit';
 import { ArrowRightFromSquare, Gear, GraduationCap, Moon, Person, Sun } from '@gravity-ui/icons';
@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { logout } from '@/shared/store/authSlice';
 import { setUser } from '@/shared/store/userSlice';
 import type { AppDispatch } from '@/shared/store/store';
+import { api } from '@/shared/api/api';
 import './Layout.css';
 
 interface LayoutProps {
@@ -51,11 +52,17 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
         return 'Dashboard';
     };
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(async () => {
+        try {
+            await api.post('/auth/logout', null, { withCredentials: true });
+        } catch {
+            // Proceed with local cleanup even if server logout fails (e.g. offline)
+        }
         dispatch(logout());
         dispatch(setUser(null));
+        delete api.defaults.headers.common.Authorization;
         navigate('/login', { replace: true });
-    };
+    }, [dispatch, navigate]);
 
     const userDisplayName = useMemo(() => {
         if (!user) return '';

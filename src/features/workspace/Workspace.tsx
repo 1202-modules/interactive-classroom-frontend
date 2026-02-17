@@ -110,7 +110,7 @@ export default function WorkspacePage() {
     const createSession = useCreateSession({
         workspaceId,
         api,
-        onSuccess: workspaceSessions.refetch,
+        onSuccess: (session) => session && workspaceSessions.addSession(session),
     });
 
     const saveSettings = useWorkspaceSaveSettings({
@@ -161,12 +161,15 @@ export default function WorkspacePage() {
                     enabled: editModuleForm.moduleEnabled,
                 },
             });
-            // Refresh modules list - trigger refetch in useWorkspaceModules
-            const res = await api.get(`/workspaces/${workspaceId}/modules`, {
-                params: {fields: 'id,name,module_type,description,updated_at,enabled,used_in_sessions,settings'},
-            });
-            // Note: useWorkspaceModules doesn't expose refetch, so we manually update
-            // In future, we should add refetch to useWorkspaceModules
+            const updated: WorkspaceActivityModule = {
+                ...editModule.module,
+                name: editModuleForm.moduleName,
+                description: editModuleForm.moduleDescription,
+                enabled: editModuleForm.moduleEnabled,
+                config,
+                updated_at: new Date().toISOString(),
+            };
+            workspaceModules.replaceModule(updated);
         } catch (err) {
             console.error('Failed to update module:', err);
         }

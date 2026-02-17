@@ -2,12 +2,28 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '@/shared/hooks/useApi';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
+import type { Session } from '@/shared/types/session';
 import type { AxiosInstance } from 'axios';
 
 interface UseCreateSessionOptions {
     workspaceId: number;
     api: AxiosInstance;
-    onSuccess?: () => Promise<void>;
+    onSuccess?: (session: Session | null) => void | Promise<void>;
+}
+
+function normalizeCreatedSession(data: Partial<Session> & { id: number }, workspaceId: number): Session {
+    return {
+        id: data.id,
+        workspace_id: workspaceId,
+        name: data.name ?? '',
+        description: data.description ?? null,
+        status: data.status ?? 'active',
+        is_stopped: data.is_stopped ?? true,
+        participant_count: data.participant_count ?? 0,
+        created_at: data.created_at ?? new Date().toISOString(),
+        updated_at: data.updated_at ?? new Date().toISOString(),
+        is_deleted: data.is_deleted ?? false,
+    };
 }
 
 export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessionOptions) {
@@ -64,14 +80,15 @@ export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessi
         setError(null);
         setIsLoading(true);
         try {
-            const res = await api.post(`/workspaces/${workspaceId}/sessions`, {
+            const res = await api.post<Session>(`/workspaces/${workspaceId}/sessions`, {
                 name: trimmedName,
                 description: trimmedDescription.length > 0 ? trimmedDescription : null,
             });
-            const newSessionId = res?.data?.id;
+            const created = res?.data ?? null;
+            const newSessionId = created?.id;
             close();
-            if (onSuccess) {
-                await onSuccess();
+            if (onSuccess && created?.id) {
+                await onSuccess(normalizeCreatedSession(created as Partial<Session> & { id: number }, workspaceId));
             }
             if (newSessionId) {
                 navigate(`/workspace/${workspaceId}/session/${newSessionId}`);
