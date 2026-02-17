@@ -16,3 +16,12 @@ export async function getParticipantsByPasscode(
     return res.data;
 }
 
+export async function getParticipantsBySessionId(
+    apiClient: AxiosInstance,
+    sessionId: number,
+): Promise<SessionParticipantsResponse> {
+    const res = await apiClient.get<SessionParticipantsResponse>(
+        `/sessions/${sessionId}/participants`,
+    );
+    return res.data;
+}

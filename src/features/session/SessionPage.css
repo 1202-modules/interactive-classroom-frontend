@@ -27,10 +27,39 @@
   gap: var(--g-spacing-2);
 }
 
+.session-page__header-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--g-spacing-2);
+}
+
+.session-page__header-title {
+  cursor: default;
+}
+
+.session-page__header-title_clickable {
+  cursor: pointer;
+}
+
+.session-page__header-title_clickable:hover {
+  text-decoration: underline;
+}
+
 .session-page__header-meta {
   display: flex;
   align-items: center;
   gap: var(--g-spacing-3);
+}
+
+.session-page__passcode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--g-color-base-generic);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g-color-text-primary);
 }
 
 .session-page__header-actions {

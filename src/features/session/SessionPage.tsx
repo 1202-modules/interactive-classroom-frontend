@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import {Button, ClipboardButton, Divider, Icon, Label, Tab, TabList, TabProvider, Text} from '@gravity-ui/uikit';
 import {ArrowLeft, Gear, Play, Stop, Tv} from '@gravity-ui/icons';
 
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
 import {SessionModulesTab} from './SessionModulesTab';
 import {SessionPreviewTab} from './SessionPreviewTab';
+import {SessionInviteModal} from './SessionInviteModal';
 import {useSessionDetail} from '@/shared/hooks/useSessionDetail';
 import '../workspace/Workspace.css';
 import './SessionPage.css';
 
 export default function SessionPage() {
+    const [inviteModalOpen, setInviteModalOpen] = useState(false);
     const {
         sessionInfo,
         sessionLoading,
@@ -51,18 +54,14 @@ export default function SessionPage() {
                         <Icon data={ArrowLeft} size={20} />
                     </Button>
                     <div className="session-page__header-info">
-                        <Text variant="header-1">
-                            {sessionTitle}
-                        </Text>
-                        <div className="session-page__header-meta">
-                            <Label theme={sessionInfo?.is_stopped ? 'normal' : 'success'} size="m">
-                                {sessionInfo?.is_stopped ? 'Stopped' : 'Live'}
-                            </Label>
-                            <Text variant="body-1" color="secondary">
-                                {activeParticipantsCount} active participants
-                            </Text>
-                            <Text variant="caption-2" color="secondary">
-                                Code: {sessionPasscode}
+                        <div className="session-page__header-title-row">
+                            <Text
+                                variant="header-1"
+                                className={`session-page__header-title ${canCopyPasscode ? 'session-page__header-title_clickable' : ''}`}
+                                onClick={() => canCopyPasscode && setInviteModalOpen(true)}
+                                as="span"
+                            >
+                                {sessionTitle}
                             </Text>
                             {canCopyPasscode && (
                                 <ClipboardButton
@@ -70,6 +69,17 @@ export default function SessionPage() {
                                     size="s"
                                 />
                             )}
+                        </div>
+                        <div className="session-page__header-meta">
+                            <Label theme={sessionInfo?.is_stopped ? 'normal' : 'success'} size="m">
+                                {sessionInfo?.is_stopped ? 'Stopped' : 'Live'}
+                            </Label>
+                            <Text variant="body-1" color="secondary">
+                                {activeParticipantsCount} active participants
+                            </Text>
+                            <span className="session-page__passcode-badge">
+                                Code: {sessionPasscode}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -91,6 +101,13 @@ export default function SessionPage() {
                     </Button>
                 </div>
             </div>
+
+            <SessionInviteModal
+                open={inviteModalOpen}
+                onClose={() => setInviteModalOpen(false)}
+                sessionName={sessionTitle}
+                passcode={sessionPasscode}
+            />
 
             <Divider />
 

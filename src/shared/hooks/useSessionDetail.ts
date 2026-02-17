@@ -16,7 +16,7 @@ import {useWorkspaceSettings} from './useWorkspaceSettings';
 import {useWorkspaceModules} from './useWorkspaceModules';
 import {useApi} from '@/shared/hooks/useApi';
 import {SESSION_FIELDS, SESSION_MODULE_FIELDS, fieldsToString} from '@/shared/api/fields';
-import {mockParticipants} from '@/features/workspace/data/mockSessionDetail';
+import {getParticipantsBySessionId} from '@/shared/api/sessionParticipants';
 
 export type MainTab = 'modules' | 'preview' | 'settings';
 
@@ -36,7 +36,8 @@ export function useSessionDetail() {
     const [sessionModules, setSessionModules] = useState<SessionModule[]>([]);
     const [sessionLoading, setSessionLoading] = useState(false);
     const [sessionModulesLoading, setSessionModulesLoading] = useState(false);
-    const [participants] = useState<Participant[]>(mockParticipants);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [activeParticipantsCount, setActiveParticipantsCount] = useState(0);
     const [mainTab, setMainTab] = useState<MainTab>('modules');
     const [participantSearch, setParticipantSearch] = useState('');
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -85,6 +86,35 @@ export function useSessionDetail() {
     useEffect(() => {
         fetchSessionModules();
     }, [fetchSessionModules]);
+
+    const fetchParticipants = useCallback(async () => {
+        if (!isSessionIdValid) return;
+        try {
+            const res = await getParticipantsBySessionId(api, sessionIdNumber);
+            const items = res.participants.map((p) => ({
+                id: p.id,
+                name: p.display_name ?? 'Anonymous',
+                joined_at: '',
+                is_active: p.is_active,
+                auth_type: p.participant_type as Participant['auth_type'],
+            }));
+            setParticipants(items);
+            setActiveParticipantsCount(res.active_count ?? items.filter((p) => p.is_active).length);
+        } catch {
+            setParticipants([]);
+            setActiveParticipantsCount(0);
+        }
+    }, [api, isSessionIdValid, sessionIdNumber]);
+
+    useEffect(() => {
+        fetchParticipants();
+    }, [fetchParticipants]);
+
+    useEffect(() => {
+        if (!isSessionIdValid) return;
+        const intervalId = window.setInterval(fetchParticipants, 10000);
+        return () => window.clearInterval(intervalId);
+    }, [fetchParticipants, isSessionIdValid]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {activationConstraint: {distance: 8}}),
@@ -236,7 +266,6 @@ export function useSessionDetail() {
         return participants.filter((p) => p.name.toLowerCase().includes(search));
     }, [participants, participantSearch]);
 
-    const activeParticipantsCount = participants.filter((p) => p.is_active).length;
     const sessionPasscode = sessionInfo?.passcode ?? '—';
     const canCopyPasscode = Boolean(sessionInfo?.passcode);
 
