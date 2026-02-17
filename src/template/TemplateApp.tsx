@@ -14,6 +14,7 @@ import SettingsPage from './pages/Settings/Settings';
 import LoginPage from './pages/Auth/Login';
 import RegisterPage from './pages/Auth/Register';
 import { useFetchUser } from '@/hooks/useFetchUser';
+import { ProtectedRoute } from '@/components/Routing/ProtectedRoute';
 
 function TemplateApp() {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -27,20 +28,63 @@ function TemplateApp() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/workspace/create" element={<CreateWorkspacePage />} />
+                    <Route path="/s/:code" element={<ParticipantPage />} />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/workspace/create"
+                        element={
+                            <ProtectedRoute>
+                                <CreateWorkspacePage />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/workspace/:workspaceId/session/:sessionId/presentation"
-                        element={<PresentationPage />}
+                        element={
+                            <ProtectedRoute>
+                                <PresentationPage />
+                            </ProtectedRoute>
+                        }
                     />
                     <Route
                         path="/workspace/:workspaceId/session/:sessionId"
-                        element={<SessionPage />}
+                        element={
+                            <ProtectedRoute>
+                                <SessionPage />
+                            </ProtectedRoute>
+                        }
                     />
-                    <Route path="/s/:code" element={<ParticipantPage />} />
-                    <Route path="/workspace/:id" element={<WorkspacePage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route
+                        path="/workspace/:id"
+                        element={
+                            <ProtectedRoute>
+                                <WorkspacePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/profile"
+                        element={
+                            <ProtectedRoute>
+                                <ProfilePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/settings"
+                        element={
+                            <ProtectedRoute>
+                                <SettingsPage />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route path="/terms" element={<Oops />} />
                     <Route path="/privacy" element={<Oops />} />
                     <Route path="/support" element={<Oops />} />

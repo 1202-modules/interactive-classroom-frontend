@@ -31,7 +31,7 @@ export default function LoginForm() {
     const navigate = useNavigate();
 
     const location = useLocation();
-    const from = (location.state as {from?: string})?.from || '/workspaces';
+    const from = (location.state as {from?: string})?.from || '/';
 
     const {accessToken} = useAuth();
 
@@ -139,7 +139,7 @@ export default function LoginForm() {
     };
 
     if (accessToken) {
-        return <Navigate to={from || '/workspaces'} replace />;
+        return <Navigate to={from || '/'} replace />;
     }
 
     return (

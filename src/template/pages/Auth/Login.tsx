@@ -25,7 +25,7 @@ type BackendError = {
 export default function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const from = (location.state as { from?: string })?.from || '/workspaces';
+    const from = (location.state as { from?: string })?.from || '/';
 
     const dispatch = useDispatch<AppDispatch>();
     const { accessToken } = useAuth();

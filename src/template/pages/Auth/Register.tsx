@@ -23,7 +23,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export default function RegisterPage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const from = (location.state as { from?: string })?.from || '/workspaces';
+    const from = (location.state as { from?: string })?.from || '/';
     const { accessToken } = useAuth();
 
     const [firstName, setFirstName] = useState('');
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                         view="flat"
                         size="s"
                         className="auth-page__link"
-                        onClick={() => navigate('/auth/login')}
+                        onClick={() => navigate('/login')}
                     >
                         Log in
                     </Button>

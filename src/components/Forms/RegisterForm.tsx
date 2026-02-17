@@ -36,7 +36,7 @@ export default function RegisterForm() {
     const {accessToken} = useAuth();
 
     if (accessToken) {
-        return <Navigate to={from || '/workspaces'} replace />;
+        return <Navigate to={from || '/'} replace />;
     }
 
     const [form, setForm] = useState<RegisterFormValue>({
@@ -141,7 +141,7 @@ export default function RegisterForm() {
             });
             setConfirmError('');
             setIsCodeLoading(false);
-            navigate('/auth/login');
+            navigate('/login');
             return res;
         } catch (err) {
             const error = err as AxiosError<BackendError | string>;

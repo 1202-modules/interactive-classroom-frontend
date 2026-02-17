@@ -17,7 +17,7 @@ export default function LogoutForm() {
         e.preventDefault();
         dispatch(logout());
         dispatch(setUser(null));
-        navigate('/auth/login', {replace: true});
+        navigate('/login', {replace: true});
     };
 
     const handleCancelButton = (e: React.MouseEvent<HTMLButtonElement>) => {
