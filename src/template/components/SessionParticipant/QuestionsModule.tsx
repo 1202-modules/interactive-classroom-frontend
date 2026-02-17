@@ -55,10 +55,11 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
 
     // Check cooldown
     useEffect(() => {
-        if (cooldownUntil && cooldownUntil > Date.now()) {
-            const timer = setTimeout(() => setCooldownUntil(null), cooldownUntil - Date.now());
-            return () => clearTimeout(timer);
+        if (!cooldownUntil || cooldownUntil <= Date.now()) {
+            return;
         }
+        const timer = setTimeout(() => setCooldownUntil(null), cooldownUntil - Date.now());
+        return () => clearTimeout(timer);
     }, [cooldownUntil]);
 
     const handleSubmitQuestion = useCallback(async () => {
@@ -187,9 +188,12 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                         placeholder="Ask a question"
                         size="l"
                         value={questionText}
-                        onUpdate={setQuestionText}
+                        onUpdate={(value) => {
+                            if (!settings || value.length <= settings.max_length) {
+                                setQuestionText(value);
+                            }
+                        }}
                         disabled={isSubmitting || (cooldownUntil !== null && cooldownUntil > Date.now())}
-                        maxLength={settings?.max_length}
                     />
                     <Button
                         view="action"
@@ -230,9 +234,11 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                                 </Text>
                                 <Text variant="body-1">{message.content}</Text>
                                 {message.is_answered && (
-                                    <Label theme="success" size="s" style={{ marginTop: '4px' }}>
-                                        Answered
-                                    </Label>
+                                    <div style={{ marginTop: '4px' }}>
+                                        <Label theme="success" size="s">
+                                            Answered
+                                        </Label>
+                                    </div>
                                 )}
                             </div>
                             <div className="participant-page__question-actions">
@@ -271,9 +277,12 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                                             placeholder="Reply..."
                                             size="m"
                                             value={replyText[message.id] || ''}
-                                            onUpdate={(value) => setReplyText((prev) => ({ ...prev, [message.id]: value }))}
+                                            onUpdate={(value) => {
+                                                if (!settings || value.length <= settings.max_length) {
+                                                    setReplyText((prev) => ({ ...prev, [message.id]: value }));
+                                                }
+                                            }}
                                             disabled={isSubmitting || (cooldownUntil !== null && cooldownUntil > Date.now())}
-                                            maxLength={settings?.max_length}
                                         />
                                         <Button
                                             view="flat"

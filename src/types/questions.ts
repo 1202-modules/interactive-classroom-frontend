@@ -3,6 +3,9 @@ export interface QuestionsModuleSettings {
     allow_participant_answers: boolean;
     length_limit_mode: 'compact' | 'moderate' | 'extended' | string;
     max_length: number;
+    cooldown_enabled?: boolean;
+    cooldown_seconds?: number;
+    max_questions_total?: number | null;
 }
 
 export interface QuestionMessageItem {

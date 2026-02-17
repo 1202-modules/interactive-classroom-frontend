@@ -76,6 +76,67 @@ export default function ParticipantPage() {
         loadSessionInfo();
     }, [code, api]);
 
+    const startHeartbeat = useCallback(() => {
+        if (!code) return;
+
+        // Clear existing interval
+        if (heartbeatIntervalRef.current !== null) {
+            clearInterval(heartbeatIntervalRef.current);
+        }
+
+        const sendHeartbeatRequest = async () => {
+            try {
+                const participantToken = getParticipantToken();
+                await sendHeartbeat(api, code, participantToken);
+            } catch (err) {
+                // Silently fail - heartbeat errors shouldn't break the UI
+                console.error('Heartbeat failed:', err);
+            }
+        };
+
+        // Send immediately
+        sendHeartbeatRequest();
+
+        // Set interval based on page visibility
+        const getInterval = () => (isPageVisibleRef.current ? 15000 : 60000); // 15s visible, 60s hidden
+
+        const intervalId = window.setInterval(() => {
+            sendHeartbeatRequest();
+        }, getInterval());
+
+        heartbeatIntervalRef.current = intervalId;
+    }, [code, api]);
+
+    const handleJoinRegistered = useCallback(async () => {
+        if (!code || joinState.type !== 'session_info') return;
+
+        if (!accessToken) {
+            navigate('/login', { state: { from: `/s/${code}` } });
+            return;
+        }
+
+        setIsJoining(true);
+        setError(null);
+        try {
+            const response = await joinRegistered(api, code);
+            setJoinState({
+                type: 'joined',
+                sessionId: response.session_id,
+                participantId: response.participant_id,
+            });
+            startHeartbeat();
+        } catch (err: any) {
+            const message =
+                err?.response?.data?.detail ||
+                err?.response?.data ||
+                err?.message ||
+                'Failed to join session';
+            setError(message);
+        } finally {
+            setIsJoining(false);
+        }
+    }, [code, api, accessToken, navigate, joinState, startHeartbeat]);
+
     // Page Visibility API for heartbeat
     useEffect(() => {
         const handleVisibilityChange = () => {
@@ -132,38 +193,8 @@ export default function ParticipantPage() {
                 setIsJoining(false);
             }
         },
-        [code, api, joinState],
+        [code, api, joinState, startHeartbeat],
     );
-
-    const handleJoinRegistered = useCallback(async () => {
-        if (!code || joinState.type !== 'session_info') return;
-
-        if (!accessToken) {
-            navigate('/login', { state: { from: `/s/${code}` } });
-            return;
-        }
-
-        setIsJoining(true);
-        setError(null);
-        try {
-            const response = await joinRegistered(api, code);
-            setJoinState({
-                type: 'joined',
-                sessionId: response.session_id,
-                participantId: response.participant_id,
-            });
-            startHeartbeat();
-        } catch (err: any) {
-            const message =
-                err?.response?.data?.detail ||
-                err?.response?.data ||
-                err?.message ||
-                'Failed to join session';
-            setError(message);
-        } finally {
-            setIsJoining(false);
-        }
-    }, [code, api, accessToken, navigate, joinState]);
 
     const handleJoinGuest = useCallback(
         async (sessionInfo?: SessionByPasscodeResponse) => {
@@ -190,7 +221,7 @@ export default function ParticipantPage() {
                 setIsJoining(false);
             }
         },
-        [code, api],
+        [code, api, startHeartbeat],
     );
 
     const handleRequestEmailCode = useCallback(
@@ -247,37 +278,6 @@ export default function ParticipantPage() {
         },
         [code, api, joinState, handleJoinGuest],
     );
-
-    const startHeartbeat = useCallback(() => {
-        if (!code) return;
-
-        // Clear existing interval
-        if (heartbeatIntervalRef.current !== null) {
-            clearInterval(heartbeatIntervalRef.current);
-        }
-
-        const sendHeartbeatRequest = async () => {
-            try {
-                const participantToken = getParticipantToken();
-                await sendHeartbeat(api, code, participantToken);
-            } catch (err) {
-                // Silently fail - heartbeat errors shouldn't break the UI
-                console.error('Heartbeat failed:', err);
-            }
-        };
-
-        // Send immediately
-        sendHeartbeatRequest();
-
-        // Set interval based on page visibility
-        const getInterval = () => (isPageVisibleRef.current ? 15000 : 60000); // 15s visible, 60s hidden
-
-        const intervalId = window.setInterval(() => {
-            sendHeartbeatRequest();
-        }, getInterval());
-
-        heartbeatIntervalRef.current = intervalId;
-    }, [code, api]);
 
     // Cleanup heartbeat on unmount
     useEffect(() => {
