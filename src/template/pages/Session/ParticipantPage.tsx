@@ -1,184 +1,420 @@
-import {useMemo, useState} from 'react';
-import {useParams} from 'react-router-dom';
-import {Button, Card, Label, Text, TextInput} from '@gravity-ui/uikit';
-import type {SessionModule} from '../../types/sessionPage';
-import {mockSessionDetail} from '../../data/mockSessionDetail';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button, Card, Label, Loader, Text, TextInput } from '@gravity-ui/uikit';
+import { useApi } from '@/hooks/useApi';
+import { useAuth } from '@/hooks/useAuth';
+import type { SessionByPasscodeResponse, ParticipantEntryMode } from '@/types/sessionJoin';
+import {
+    getSessionByPasscode,
+    joinAnonymous,
+    joinRegistered,
+    joinGuest,
+    requestEmailCode,
+    verifyEmailCode,
+    sendHeartbeat,
+} from '@/api/sessionJoin';
+import { setParticipantToken, setGuestToken, getParticipantToken } from '@/utils/tokenStorage';
+import { AnonymousJoinForm } from '../../components/SessionJoin/AnonymousJoinForm';
+import { EmailCodeJoinForm } from '../../components/SessionJoin/EmailCodeJoinForm';
+import { EmailCodeVerifyForm } from '../../components/SessionJoin/EmailCodeVerifyForm';
 import './ParticipantPage.css';
 
-type TimerConfig = {
-    duration_sec?: number;
-};
-
-const formatDuration = (seconds: number) => {
-    const total = Math.max(0, Math.floor(seconds));
-    const minutes = Math.floor(total / 60);
-    const remaining = total % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(remaining).padStart(2, '0')}`;
-};
-
-type QuestionItem = {
-    id: number;
-    text: string;
-    likes: number;
-    isMine: boolean;
-    isLiked: boolean;
-};
+type JoinState =
+    | { type: 'loading' }
+    | { type: 'session_info'; data: SessionByPasscodeResponse }
+    | { type: 'email_request'; email: string; verificationCode?: string }
+    | { type: 'joined'; sessionId: number; participantId: number }
+    | { type: 'error'; message: string };
 
 export default function ParticipantPage() {
-    const {code} = useParams();
-    const sessionDetail = mockSessionDetail;
-    const [questionText, setQuestionText] = useState('');
-    const [questions, setQuestions] = useState<QuestionItem[]>([
-        {
-            id: 1,
-            text: 'Can we get the slides after the session?',
-            likes: 4,
-            isMine: false,
-            isLiked: false,
-        },
-        {
-            id: 2,
-            text: 'What is the deadline for the next task?',
-            likes: 2,
-            isMine: false,
-            isLiked: false,
-        },
-    ]);
+    const { code } = useParams<{ code: string }>();
+    const navigate = useNavigate();
+    const api = useApi();
+    const { accessToken } = useAuth();
+    const [joinState, setJoinState] = useState<JoinState>({ type: 'loading' });
+    const [isJoining, setIsJoining] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    
+    // Heartbeat interval
+    const heartbeatIntervalRef = useRef<number | null>(null);
+    const isPageVisibleRef = useRef(true);
 
-    const activeModule = useMemo(
-        () => sessionDetail.session_modules.find((m) => m.is_active),
-        [sessionDetail.session_modules],
+    // Load session info on mount
+    useEffect(() => {
+        if (!code) {
+            setJoinState({ type: 'error', message: 'Invalid session code' });
+            return;
+        }
+
+        const loadSessionInfo = async () => {
+            try {
+                setError(null);
+                const sessionInfo = await getSessionByPasscode(api, code);
+                
+                // If guest is already authenticated, join immediately
+                if (sessionInfo.guest_authenticated) {
+                    await handleJoinGuest(sessionInfo);
+                    return;
+                }
+                
+                setJoinState({ type: 'session_info', data: sessionInfo });
+            } catch (err: any) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data ||
+                    err?.message ||
+                    'Failed to load session';
+                setJoinState({ type: 'error', message });
+            }
+        };
+
+        loadSessionInfo();
+    }, [code, api]);
+
+    // Page Visibility API for heartbeat
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            isPageVisibleRef.current = !document.hidden;
+            // Restart heartbeat with appropriate interval
+            if (joinState.type === 'joined') {
+                startHeartbeat();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [joinState.type, startHeartbeat]);
+
+    // Auto-join for registered mode
+    useEffect(() => {
+        if (
+            joinState.type === 'session_info' &&
+            joinState.data.participant_entry_mode === 'registered'
+        ) {
+            if (accessToken) {
+                handleJoinRegistered();
+            } else {
+                navigate('/login', { state: { from: `/s/${code}` } });
+            }
+        }
+    }, [joinState, accessToken, handleJoinRegistered, navigate, code]);
+
+    const handleJoinAnonymous = useCallback(
+        async (displayName?: string) => {
+            if (!code || joinState.type !== 'session_info') return;
+
+            setIsJoining(true);
+            setError(null);
+            try {
+                const response = await joinAnonymous(api, code, { display_name: displayName });
+                setParticipantToken(response.participant_token);
+                setJoinState({
+                    type: 'joined',
+                    sessionId: response.session_id,
+                    participantId: response.participant_id,
+                });
+                startHeartbeat();
+            } catch (err: any) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data ||
+                    err?.message ||
+                    'Failed to join session';
+                setError(message);
+            } finally {
+                setIsJoining(false);
+            }
+        },
+        [code, api, joinState],
     );
 
-    const timerConfig = (activeModule?.config ?? {}) as TimerConfig;
-    const remainingTime = formatDuration(timerConfig.duration_sec ?? 0);
-    const statusLabel = sessionDetail.is_stopped ? 'stopped' : 'active';
+    const handleJoinRegistered = useCallback(async () => {
+        if (!code || joinState.type !== 'session_info') return;
 
-    const sortedQuestions = useMemo(
-        () => [...questions].sort((a, b) => b.likes - a.likes),
-        [questions],
+        if (!accessToken) {
+            navigate('/login', { state: { from: `/s/${code}` } });
+            return;
+        }
+
+        setIsJoining(true);
+        setError(null);
+        try {
+            const response = await joinRegistered(api, code);
+            setJoinState({
+                type: 'joined',
+                sessionId: response.session_id,
+                participantId: response.participant_id,
+            });
+            startHeartbeat();
+        } catch (err: any) {
+            const message =
+                err?.response?.data?.detail ||
+                err?.response?.data ||
+                err?.message ||
+                'Failed to join session';
+            setError(message);
+        } finally {
+            setIsJoining(false);
+        }
+    }, [code, api, accessToken, navigate, joinState]);
+
+    const handleJoinGuest = useCallback(
+        async (sessionInfo?: SessionByPasscodeResponse) => {
+            if (!code) return;
+
+            setIsJoining(true);
+            setError(null);
+            try {
+                const response = await joinGuest(api, code);
+                setJoinState({
+                    type: 'joined',
+                    sessionId: response.session_id,
+                    participantId: response.participant_id,
+                });
+                startHeartbeat();
+            } catch (err: any) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data ||
+                    err?.message ||
+                    'Failed to join session';
+                setError(message);
+            } finally {
+                setIsJoining(false);
+            }
+        },
+        [code, api],
     );
 
-    const handleSubmitQuestion = () => {
-        const trimmed = questionText.trim();
-        if (!trimmed) return;
-        setQuestions((prev) => [
-            {id: Date.now(), text: trimmed, likes: 0, isMine: true, isLiked: false},
-            ...prev,
-        ]);
-        setQuestionText('');
-    };
+    const handleRequestEmailCode = useCallback(
+        async (email: string) => {
+            if (!code || joinState.type !== 'session_info') return;
 
-    const handleLikeQuestion = (id: number) => {
-        setQuestions((prev) =>
-            prev.map((q) => {
-                if (q.id !== id) return q;
-                const nextLiked = !q.isLiked;
-                const delta = nextLiked ? 1 : -1;
-                return {
-                    ...q,
-                    isLiked: nextLiked,
-                    likes: Math.max(0, q.likes + delta),
-                };
-            }),
-        );
-    };
+            setIsJoining(true);
+            setError(null);
+            try {
+                const response = await requestEmailCode(api, code, { email });
+                setJoinState({
+                    type: 'email_request',
+                    email,
+                    verificationCode: response.code,
+                });
+            } catch (err: any) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data ||
+                    err?.message ||
+                    'Failed to send verification code';
+                setError(message);
+            } finally {
+                setIsJoining(false);
+            }
+        },
+        [code, api, joinState],
+    );
 
-    return (
-        <div className="participant-page">
-            <div className="participant-page__header">
-                <Text variant="display-1">Session</Text>
-                <Text variant="body-2" color="secondary">
-                    Code: {code || '—'}
-                </Text>
+    const handleVerifyEmailCode = useCallback(
+        async (verificationCode: string, displayName?: string) => {
+            if (!code || joinState.type !== 'email_request') return;
+
+            setIsJoining(true);
+            setError(null);
+            try {
+                const response = await verifyEmailCode(api, code, {
+                    email: joinState.email,
+                    code: verificationCode,
+                    display_name: displayName,
+                });
+                setGuestToken(response.access_token);
+                await handleJoinGuest();
+            } catch (err: any) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data ||
+                    err?.message ||
+                    'Invalid verification code';
+                setError(message);
+            } finally {
+                setIsJoining(false);
+            }
+        },
+        [code, api, joinState, handleJoinGuest],
+    );
+
+    const startHeartbeat = useCallback(() => {
+        if (!code) return;
+
+        // Clear existing interval
+        if (heartbeatIntervalRef.current !== null) {
+            clearInterval(heartbeatIntervalRef.current);
+        }
+
+        const sendHeartbeatRequest = async () => {
+            try {
+                const participantToken = getParticipantToken();
+                await sendHeartbeat(api, code, participantToken);
+            } catch (err) {
+                // Silently fail - heartbeat errors shouldn't break the UI
+                console.error('Heartbeat failed:', err);
+            }
+        };
+
+        // Send immediately
+        sendHeartbeatRequest();
+
+        // Set interval based on page visibility
+        const getInterval = () => (isPageVisibleRef.current ? 15000 : 60000); // 15s visible, 60s hidden
+
+        const intervalId = window.setInterval(() => {
+            sendHeartbeatRequest();
+        }, getInterval());
+
+        heartbeatIntervalRef.current = intervalId;
+    }, [code, api]);
+
+    // Cleanup heartbeat on unmount
+    useEffect(() => {
+        return () => {
+            if (heartbeatIntervalRef.current !== null) {
+                clearInterval(heartbeatIntervalRef.current);
+            }
+        };
+    }, []);
+
+    // Render based on join state
+    if (joinState.type === 'loading') {
+        return (
+            <div className="participant-page">
+                <Card view="outlined" className="participant-page__card">
+                    <Loader size="l" />
+                    <Text variant="body-1" style={{ marginTop: '16px' }}>
+                        Loading session...
+                    </Text>
+                </Card>
             </div>
+        );
+    }
 
-            {!activeModule && (
+    if (joinState.type === 'error') {
+        return (
+            <div className="participant-page">
                 <Card view="outlined" className="participant-page__card">
-                    <Text variant="header-1">No active module</Text>
-                    <Text variant="body-1" color="secondary">
-                        Please wait for the host to start a module.
+                    <Text variant="header-2" color="danger">
+                        Error
                     </Text>
+                    <Text variant="body-1" style={{ marginTop: '16px' }}>
+                        {joinState.message}
+                    </Text>
+                    <Button
+                        view="action"
+                        size="l"
+                        onClick={() => window.location.reload()}
+                        style={{ marginTop: '16px' }}
+                    >
+                        Retry
+                    </Button>
                 </Card>
-            )}
+            </div>
+        );
+    }
 
-            {activeModule && activeModule.type === 'timer' && (
-                <Card view="outlined" className="participant-page__card">
-                    <div className="participant-page__card-head">
-                        <Text variant="header-2">Timer</Text>
-                        <Label theme={sessionDetail.is_stopped ? 'normal' : 'success'} size="m">
-                            {statusLabel}
-                        </Label>
-                    </div>
-                    <Text variant="display-3" className="participant-page__timer">
-                        {remainingTime}
-                    </Text>
-                    <Text variant="body-2" color="secondary">
-                        Countdown to the end of the timer.
-                    </Text>
-                </Card>
-            )}
+    if (joinState.type === 'session_info') {
+        const { data: sessionInfo } = joinState;
+        const mode: ParticipantEntryMode = sessionInfo.participant_entry_mode;
 
-            {activeModule && activeModule.type === 'questions' && (
-                <Card view="outlined" className="participant-page__card">
-                    <div className="participant-page__card-head">
-                        <Text variant="header-2">Questions</Text>
-                        <Label theme={sessionDetail.is_stopped ? 'normal' : 'success'} size="m">
-                            {statusLabel}
-                        </Label>
-                    </div>
-                    <div className="participant-page__question-form">
-                        <TextInput
-                            placeholder="Ask a question"
-                            size="l"
-                            value={questionText}
-                            onUpdate={setQuestionText}
-                        />
-                        <Button view="action" size="l" onClick={handleSubmitQuestion}>
-                            Send
-                        </Button>
-                    </div>
-                    <div className="participant-page__questions-list">
-                        {sortedQuestions.length === 0 ? (
-                            <div className="participant-page__questions-empty">
-                                <Text variant="body-1" color="secondary">
-                                    Be the first to ask a question.
-                                </Text>
-                            </div>
-                        ) : (
-                            sortedQuestions.map((question) => (
-                                <div key={question.id} className="participant-page__question-item">
-                                    <div className="participant-page__question-text">
-                                        <Text variant="body-1">{question.text}</Text>
-                                    </div>
-                                    <div className="participant-page__question-actions">
-                                        <Text variant="body-2" color="secondary">
-                                            {question.likes}
-                                        </Text>
-                                        <Button
-                                            view="flat"
-                                            size="s"
-                                            disabled={question.isMine}
-                                            onClick={() => handleLikeQuestion(question.id)}
-                                        >
-                                            {question.isLiked ? 'Unlike' : 'Like'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))
+        // Handle different entry modes
+        if (mode === 'anonymous') {
+            return (
+                <div className="participant-page">
+                    <Card view="outlined" className="participant-page__card">
+                        <AnonymousJoinForm onSubmit={handleJoinAnonymous} isLoading={isJoining} />
+                        {error && (
+                            <Text variant="body-2" color="danger" style={{ marginTop: '16px' }}>
+                                {error}
+                            </Text>
                         )}
-                    </div>
-                </Card>
-            )}
+                    </Card>
+                </div>
+            );
+        }
 
-            {activeModule && activeModule.type !== 'timer' && activeModule.type !== 'questions' && (
+        if (mode === 'registered') {
+            return (
+                <div className="participant-page">
+                    <Card view="outlined" className="participant-page__card">
+                        <Loader size="l" />
+                        <Text variant="body-1" style={{ marginTop: '16px' }}>
+                            Joining session...
+                        </Text>
+                    </Card>
+                </div>
+            );
+        }
+
+        if (mode === 'sso') {
+            return (
+                <div className="participant-page">
+                    <Card view="outlined" className="participant-page__card">
+                        <Text variant="header-2">SSO Authentication</Text>
+                        <Text variant="body-1" style={{ marginTop: '16px' }}>
+                            SSO authentication is not yet implemented.
+                        </Text>
+                    </Card>
+                </div>
+            );
+        }
+
+        if (mode === 'email_code') {
+            return (
+                <div className="participant-page">
+                    <Card view="outlined" className="participant-page__card">
+                        <EmailCodeJoinForm
+                            onSubmit={handleRequestEmailCode}
+                            isLoading={isJoining}
+                            error={error}
+                            emailCodeDomainsWhitelist={sessionInfo.email_code_domains_whitelist}
+                        />
+                    </Card>
+                </div>
+            );
+        }
+    }
+
+    if (joinState.type === 'email_request') {
+        return (
+            <div className="participant-page">
                 <Card view="outlined" className="participant-page__card">
-                    <Text variant="header-2">{activeModule.name}</Text>
-                    <Text variant="body-1" color="secondary">
-                        Module type: {activeModule.type}
+                    <EmailCodeVerifyForm
+                        email={joinState.email}
+                        onSubmit={handleVerifyEmailCode}
+                        isLoading={isJoining}
+                        error={error}
+                        verificationCode={joinState.verificationCode}
+                    />
+                </Card>
+            </div>
+        );
+    }
+
+    if (joinState.type === 'joined') {
+        // TODO: Show actual session interface with modules (Questions, Timer, etc.)
+        // This will be implemented in the second half
+        return (
+            <div className="participant-page">
+                <Card view="outlined" className="participant-page__card">
+                    <Text variant="header-2">Successfully joined session!</Text>
+                    <Text variant="body-1" style={{ marginTop: '16px' }}>
+                        Session interface will be implemented in the next phase.
+                    </Text>
+                    <Text variant="body-2" color="secondary" style={{ marginTop: '8px' }}>
+                        Session ID: {joinState.sessionId}, Participant ID: {joinState.participantId}
                     </Text>
                 </Card>
-            )}
-        </div>
-    );
+            </div>
+        );
+    }
+
+    return null;
 }
