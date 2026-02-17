@@ -309,13 +309,13 @@ export default function PresentationPage() {
                     <div className="presentation-page__sidebar">
                         {/* Small QR Code */}
                         <div className="presentation-page__qr-small">
-                            <Text variant="subheader-1">Join Session</Text>
-                            <Text variant="caption-1" color="secondary">
+                            <Text variant="display-2">Join Session</Text>
+                            <Text variant="header-1" color="secondary">
                                 {passcode || '—'}
                             </Text>
                             <div className="presentation-page__qr-code-small">
                                 {qrCodeUrl ? (
-                                    <QRCodeSVG value={qrCodeUrl} size={"100%"} level="M" />
+                                    <QRCodeSVG value={qrCodeUrl} size={1000} level="M" />
                                 ) : (
                                     <div className="presentation-page__qr-placeholder" />
                                 )}

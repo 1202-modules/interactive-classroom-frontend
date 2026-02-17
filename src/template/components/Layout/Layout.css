@@ -141,7 +141,6 @@
   align-items: stretch;
 }
 
-
 .layout-main {
   flex: 1;
   padding: var(--g-spacing-10) 275px var(--g-spacing-8);
@@ -190,6 +189,11 @@
   gap: var(--g-spacing-2);
 }
 
+.g-button__text {
+  display: flex !important;
+  align-items: center;
+}
+
 /* Mobile: compact header */
 @media (max-width: 768px) {
   .layout-header {
@@ -209,6 +213,10 @@
 
   .layout-header__create-text {
     display: none;
+  }
+
+  .layout-header__theme {
+    display: none !important;
   }
 
   .layout-header__user-name {
