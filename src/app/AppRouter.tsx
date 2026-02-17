@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@gravity-ui/uikit';
-import Layout from './components/Layout/Layout';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Oops from './pages/Oops/Oops';
-import WorkspacePage from './pages/Workspace/Workspace';
-import CreateWorkspacePage from './pages/Workspace/CreateWorkspace';
-import SessionPage from './pages/Session/SessionPage';
-import PresentationPage from './pages/Session/PresentationPage';
-import ParticipantPage from './pages/Session/ParticipantPage';
-import ProfilePage from './pages/Profile/Profile';
-import SettingsPage from './pages/Settings/Settings';
-import LoginPage from './pages/Auth/Login';
-import RegisterPage from './pages/Auth/Register';
-import { useFetchUser } from '@/hooks/useFetchUser';
-import { ProtectedRoute } from '@/components/Routing/ProtectedRoute';
+import Layout from '@/shared/components/Layout';
+import Dashboard from '@/features/dashboard/Dashboard';
+import Oops from '@/features/oops/Oops';
+import WorkspacePage from '@/features/workspace/Workspace';
+import CreateWorkspacePage from '@/features/workspace/CreateWorkspace';
+import SessionPage from '@/features/session/SessionPage';
+import PresentationPage from '@/features/session/PresentationPage';
+import ParticipantPage from '@/features/session/ParticipantPage';
+import ProfilePage from '@/features/profile/Profile';
+import SettingsPage from '@/features/settings/Settings';
+import LoginPage from '@/features/auth/pages/Login';
+import RegisterPage from '@/features/auth/pages/Register';
+import { useFetchUser } from '@/features/auth/useFetchUser';
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 
 function AppRouter() {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');

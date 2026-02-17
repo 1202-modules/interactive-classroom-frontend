@@ -1,5 +1,5 @@
-import { useAuthInit } from './hooks/useAuthInit';
-import AppRouter from './app/AppRouter';
+import { useAuthInit } from '@/features/auth/useAuthInit';
+import AppRouter from '@/app/AppRouter';
 
 const App = () => {
     useAuthInit();
