@@ -18,7 +18,14 @@ type WorkspaceModuleApi = {
 
 const moduleFields = 'id,workspace_id,name,module_type,settings,created_at,updated_at';
 
-const defaultConfigByType: Record<ActivityModuleType, ActivityModuleConfig> = {
+type ModuleDefaultsByType = {
+    questions: Extract<ActivityModuleConfig, {type: 'questions'}>;
+    poll: Extract<ActivityModuleConfig, {type: 'poll'}>;
+    quiz: Extract<ActivityModuleConfig, {type: 'quiz'}>;
+    timer: Extract<ActivityModuleConfig, {type: 'timer'}>;
+};
+
+const defaultConfigByType: ModuleDefaultsByType = {
     questions: {
         type: 'questions',
         allow_anonymous: false,
@@ -58,47 +65,56 @@ const normalizeConfig = (
     type: ActivityModuleType,
     settings: Record<string, unknown>,
 ): ActivityModuleConfig => {
-    const defaults = defaultConfigByType[type];
     switch (type) {
         case 'questions':
+            const questionsDefaults = defaultConfigByType.questions;
             return {
                 type: 'questions',
-                allow_anonymous: getBoolean(settings.allow_anonymous, defaults.allow_anonymous),
-                enable_upvotes: getBoolean(settings.enable_upvotes, defaults.enable_upvotes),
-                max_length: getNumber(settings.max_length, defaults.max_length),
-                cooldown_sec: getNumber(settings.cooldown_sec, defaults.cooldown_sec),
+                allow_anonymous: getBoolean(
+                    settings.allow_anonymous,
+                    questionsDefaults.allow_anonymous,
+                ),
+                enable_upvotes: getBoolean(
+                    settings.enable_upvotes,
+                    questionsDefaults.enable_upvotes,
+                ),
+                max_length: getNumber(settings.max_length, questionsDefaults.max_length),
+                cooldown_sec: getNumber(settings.cooldown_sec, questionsDefaults.cooldown_sec),
             };
         case 'poll':
+            const pollDefaults = defaultConfigByType.poll;
             return {
                 type: 'poll',
-                question: getString(settings.question, defaults.question),
+                question: getString(settings.question, pollDefaults.question),
                 answer_mode:
                     (settings.answer_mode as 'options' | 'free' | 'mixed') ||
-                    defaults.answer_mode,
-                word_cloud: getBoolean(settings.word_cloud, defaults.word_cloud),
+                    pollDefaults.answer_mode,
+                word_cloud: getBoolean(settings.word_cloud, pollDefaults.word_cloud),
                 options: Array.isArray(settings.options)
                     ? (settings.options as string[])
-                    : defaults.options,
+                    : pollDefaults.options,
             };
         case 'quiz':
+            const quizDefaults = defaultConfigByType.quiz;
             return {
                 type: 'quiz',
-                question: getString(settings.question, defaults.question),
-                time_limit_sec: getNumber(settings.time_limit_sec, defaults.time_limit_sec),
+                question: getString(settings.question, quizDefaults.question),
+                time_limit_sec: getNumber(settings.time_limit_sec, quizDefaults.time_limit_sec),
                 show_correct_answer: getBoolean(
                     settings.show_correct_answer,
-                    defaults.show_correct_answer,
+                    quizDefaults.show_correct_answer,
                 ),
                 options: Array.isArray(settings.options)
                     ? (settings.options as Array<{text: string; correct: boolean}>)
-                    : defaults.options,
+                    : quizDefaults.options,
             };
         case 'timer':
+            const timerDefaults = defaultConfigByType.timer;
             return {
                 type: 'timer',
-                duration_sec: getNumber(settings.duration_sec, defaults.duration_sec),
-                enable_sound: getBoolean(settings.enable_sound, defaults.enable_sound),
-                allow_pause: getBoolean(settings.allow_pause, defaults.allow_pause),
+                duration_sec: getNumber(settings.duration_sec, timerDefaults.duration_sec),
+                enable_sound: getBoolean(settings.enable_sound, timerDefaults.enable_sound),
+                allow_pause: getBoolean(settings.allow_pause, timerDefaults.allow_pause),
             };
     }
 };
@@ -329,8 +345,8 @@ export function useWorkspaceModules(workspaceId?: number) {
         description: string,
         enabled: boolean,
         config: WorkspaceActivityModule['config'],
-    ) => {
-        if (!Number.isFinite(workspaceId)) return;
+    ): Promise<WorkspaceActivityModule | undefined> => {
+        if (!Number.isFinite(workspaceId)) return undefined;
         try {
             const res = await api.post<WorkspaceModuleApi>(
                 `/workspaces/${workspaceId}/modules`,
@@ -353,8 +369,10 @@ export function useWorkspaceModules(workspaceId?: number) {
                 return created;
             }
             await fetchModules();
+            return undefined;
         } catch (err) {
             await fetchModules();
+            return undefined;
         }
     };
 
