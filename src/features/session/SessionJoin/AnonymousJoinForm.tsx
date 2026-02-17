@@ -18,8 +18,8 @@ export function AnonymousJoinForm({ onSubmit, isLoading }: AnonymousJoinFormProp
         <form onSubmit={handleSubmit}>
             <Text variant="header-2" style={{ marginBottom: '16px' }}>
                 Join Session
-            </Text>
-            <Text variant="body-1" color="secondary" style={{ marginBottom: '24px' }}>
+            </Text><br />
+            <Text variant="body-1" color="secondary">
                 Enter your name (optional) to join as an anonymous participant
             </Text>
             <TextInput
@@ -28,7 +28,7 @@ export function AnonymousJoinForm({ onSubmit, isLoading }: AnonymousJoinFormProp
                 onUpdate={setDisplayName}
                 size="l"
                 disabled={isLoading}
-                style={{ marginBottom: '16px' }}
+                style={{ marginTop: '16px' }}
             />
             <Button
                 type="submit"
@@ -37,6 +37,7 @@ export function AnonymousJoinForm({ onSubmit, isLoading }: AnonymousJoinFormProp
                 loading={isLoading}
                 disabled={isLoading}
                 width="max"
+                style={{ marginTop: '16px' }}
             >
                 Join Session
             </Button>
