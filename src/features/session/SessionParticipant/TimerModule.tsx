@@ -5,6 +5,7 @@ import { parseBackendError } from '@/shared/utils/parseBackendError';
 import type { AxiosInstance } from 'axios';
 import type { TimerStateResponse } from '@/shared/types/timer';
 import { beep } from '@/shared/utils/beep';
+import { getSoundEnabled } from '@/shared/utils/soundPreferences';
 
 interface TimerModuleProps {
     api: AxiosInstance;
@@ -40,8 +41,13 @@ export function TimerModule({ api, passcode, moduleId }: TimerModuleProps) {
                 const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
                 setRemainingSeconds(remaining);
 
-                // Play sound when timer reaches 0
-                if (remaining === 0 && timerState.sound_notification_enabled && !soundPlayedRef.current) {
+                // Play sound when timer reaches 0 (only if module + user sound enabled)
+                if (
+                    remaining === 0 &&
+                    timerState.sound_notification_enabled &&
+                    getSoundEnabled() &&
+                    !soundPlayedRef.current
+                ) {
                     beep(0.5, 440);
                     soundPlayedRef.current = true;
                 } else if (remaining > 0) {

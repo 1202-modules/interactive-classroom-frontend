@@ -5,10 +5,10 @@
 
 .workspace-card {
   height: 100%;
-  min-height: 220px;
+  min-height: 172px;
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: 18px;
   transition: transform 0.2s;
   box-sizing: border-box;
   width: 100%;
@@ -45,7 +45,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .workspace-card__title {
@@ -69,8 +69,8 @@
 }
 
 .workspace-card__description {
-  margin-bottom: 20px;
-  min-height: 40px;
+  margin-bottom: 12px;
+  min-height: 36px;
   flex: 1;
   overflow: hidden;
   display: -webkit-box;
@@ -86,13 +86,13 @@
 
 .workspace-card__footer {
   margin-top: auto;
-  padding-top: 20px;
+  padding-top: 14px;
   border-top: 1px solid var(--g-color-line-generic);
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  min-height: 48px;
+  min-height: 40px;
 }
 
 .workspace-card__stat {

@@ -77,7 +77,7 @@ export default function CreateWorkspacePage() {
     const handleReset = () => {
         workspaceSettings.setWorkspaceName('');
         workspaceSettings.setWorkspaceDescription('');
-        workspaceSettings.setDefaultSessionDuration('60');
+        workspaceSettings.setDefaultSessionDuration('90');
         workspaceSettings.setCustomSessionDuration('75');
         workspaceSettings.setMaxParticipants('100');
         workspaceSettings.setCustomMaxParticipants('150');

@@ -125,22 +125,9 @@ export function SessionDefaults({
             description="Set default values and preferences for new sessions in this workspace."
         >
             <div className="workspace-page__settings-field">
-                <div className="workspace-page__settings-label-row">
-                    <Text variant="body-1" className="workspace-page__settings-label">
-                        Default session duration
-                    </Text>
-                    <Label
-                        theme="warning"
-                        size="s"
-                        className="workspace-page__wip-label"
-                        title="Work In Progress - This feature is currently under development"
-                    >
-                        <span className="workspace-page__wip-icon-wrapper">
-                            <Icon data={Clock} size={14} />
-                        </span>
-                        <span>WIP</span>
-                    </Label>
-                </div>
+                <Text variant="body-1" className="workspace-page__settings-label">
+                    Default session duration
+                </Text>
                 <div className="workspace-page__settings-inline">
                     <SegmentedRadioGroup
                         size="l"

@@ -11,7 +11,7 @@ export function useWorkspaceSettings(workspace: Workspace | undefined) {
     // Session defaults
     const [defaultSessionDuration, setDefaultSessionDuration] = useState<
         '30' | '60' | '90' | '120' | '240' | 'custom'
-    >('60');
+    >('90');
     const [customSessionDuration, setCustomSessionDuration] = useState('75');
     const [maxParticipants, setMaxParticipants] = useState<
         '10' | '50' | '100' | '200' | '400' | 'custom'

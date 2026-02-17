@@ -1,7 +1,6 @@
 import {Button, ClipboardButton, Divider, Icon, Label, Tab, TabList, TabProvider, Text} from '@gravity-ui/uikit';
-import {Gear, Play, Stop, Tv} from '@gravity-ui/icons';
+import {ArrowLeft, Gear, Play, Stop, Tv} from '@gravity-ui/icons';
 
-import { PageHeader } from '@/shared/components/PageHeader';
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
 import {SessionModulesTab} from './SessionModulesTab';
 import {SessionPreviewTab} from './SessionPreviewTab';
@@ -45,48 +44,53 @@ export default function SessionPage() {
 
     return (
         <div className="session-page">
-            <PageHeader
-                title={sessionTitle}
-                back={{ label: 'Back to workspace', onClick: handleBackToWorkspace }}
-                meta={
-                    <>
-                        <Label theme={sessionInfo?.is_stopped ? 'normal' : 'success'} size="m">
-                            {sessionInfo?.is_stopped ? 'Stopped' : 'Live'}
-                        </Label>
-                        <Text variant="body-1" color="secondary">
-                            {activeParticipantsCount} active participants
+            {/* Header (layout from commit 1860575) */}
+            <div className="session-page__header">
+                <div className="session-page__header-main">
+                    <Button view="flat" size="l" onClick={handleBackToWorkspace}>
+                        <Icon data={ArrowLeft} size={20} />
+                    </Button>
+                    <div className="session-page__header-info">
+                        <Text variant="header-1">
+                            {sessionTitle}
                         </Text>
-                        <Text variant="caption-2" color="secondary">
-                            Code: {sessionPasscode}
-                        </Text>
-                        {canCopyPasscode && (
-                            <ClipboardButton
-                                text={`${window.location.origin}/s/${sessionPasscode}`}
-                                size="s"
-                            />
-                        )}
-                    </>
-                }
-                actions={
-                    <>
-                        <Button
-                            view={sessionInfo?.is_stopped ? 'action' : 'outlined-danger'}
-                            size="l"
-                            onClick={handleStartStop}
-                        >
-                            <Icon data={sessionInfo?.is_stopped ? Play : Stop} size={18} />
-                            {sessionInfo?.is_stopped ? 'Start Session' : 'Stop Session'}
-                        </Button>
-                        <Button view="flat" size="l">
-                            <Icon data={Gear} size={18} />
-                        </Button>
-                        <Button view="outlined" size="l" onClick={handleOpenPresentation}>
-                            <Icon data={Tv} size={18} />
-                            Presentation
-                        </Button>
-                    </>
-                }
-            />
+                        <div className="session-page__header-meta">
+                            <Label theme={sessionInfo?.is_stopped ? 'normal' : 'success'} size="m">
+                                {sessionInfo?.is_stopped ? 'Stopped' : 'Live'}
+                            </Label>
+                            <Text variant="body-1" color="secondary">
+                                {activeParticipantsCount} active participants
+                            </Text>
+                            <Text variant="caption-2" color="secondary">
+                                Code: {sessionPasscode}
+                            </Text>
+                            {canCopyPasscode && (
+                                <ClipboardButton
+                                    text={`${window.location.origin}/s/${sessionPasscode}`}
+                                    size="s"
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="session-page__header-actions">
+                    <Button
+                        view={sessionInfo?.is_stopped ? 'action' : 'outlined-danger'}
+                        size="l"
+                        onClick={handleStartStop}
+                    >
+                        <Icon data={sessionInfo?.is_stopped ? Play : Stop} size={18} />
+                        {sessionInfo?.is_stopped ? 'Start Session' : 'Stop Session'}
+                    </Button>
+                    <Button view="flat" size="l">
+                        <Icon data={Gear} size={18} />
+                    </Button>
+                    <Button view="outlined" size="l" onClick={handleOpenPresentation}>
+                        <Icon data={Tv} size={18} />
+                        Presentation
+                    </Button>
+                </div>
+            </div>
 
             <Divider />
 

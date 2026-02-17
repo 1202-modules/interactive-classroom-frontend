@@ -160,8 +160,8 @@
 
 .dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .dashboard__grid-wrap {
@@ -189,7 +189,7 @@
 @media (max-width: 1024px) {
   .dashboard__grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    gap: 14px;
   }
 }
 

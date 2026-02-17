@@ -1,29 +1,57 @@
-import {useState} from 'react';
-import {Card, Divider, Icon, RadioGroup, Select, Switch, Text} from '@gravity-ui/uikit';
-import {Bell, Globe, Palette, Shield} from '@gravity-ui/icons';
+import { useEffect, useState } from 'react';
+import { Card, Divider, Icon, RadioGroup, Select, Switch, Text } from '@gravity-ui/uikit';
+import { Bell, Globe, Palette, Shield } from '@gravity-ui/icons';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { WipLabel } from '@/shared/components/WipLabel';
+import { useThemeContext } from '@/shared/context/ThemeContext';
+import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { getSoundEnabled, setSoundEnabled as setSoundLocal } from '@/shared/utils/soundPreferences';
+import { DeleteAccountCard } from '@/shared/components/DeleteAccountCard/DeleteAccountCard';
 import './Settings.css';
 
 export default function SettingsPage() {
-    // Appearance state
-    const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('light');
-    const [animationsEnabled, setAnimationsEnabled] = useState(true);
+    const themeCtx = useThemeContext();
+    const { preferences, savePreferences } = useUserPreferences();
+    const themePreference = (themeCtx?.themePreference ?? preferences?.theme ?? 'light') as 'light' | 'dark' | 'auto';
 
-    // Language & Region state
+    const [animationsEnabled, setAnimationsEnabled] = useState(true);
     const [language, setLanguage] = useState('en');
     const [dateFormat, setDateFormat] = useState('MM/DD/YYYY');
     const [timeFormat, setTimeFormat] = useState('12h');
-
-    // Notifications state
-    const [browserNotifications, setBrowserNotifications] = useState(true);
-    const [soundEnabled, setSoundEnabled] = useState(true);
-    const [notificationSound, setNotificationSound] = useState('default');
-
-    // Privacy & Security state
+    const [browserNotifications, setBrowserNotifications] = useState(preferences?.browser_notifications ?? true);
+    const [soundEnabled, setSoundEnabledState] = useState(() => getSoundEnabled());
+    const [notificationSound, setNotificationSound] = useState(preferences?.notification_sound ?? 'default');
     const [trackingEnabled, setTrackingEnabled] = useState(true);
     const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
     const [crashReports, setCrashReports] = useState(true);
+
+    useEffect(() => {
+        const fromPrefs = preferences?.sound_enabled ?? getSoundEnabled();
+        setSoundEnabledState(fromPrefs);
+        setBrowserNotifications(preferences?.browser_notifications ?? true);
+        setNotificationSound(preferences?.notification_sound ?? 'default');
+    }, [preferences?.sound_enabled, preferences?.browser_notifications, preferences?.notification_sound]);
+
+    const handleThemeChange = (value: string) => {
+        const v = value as 'light' | 'dark' | 'auto';
+        themeCtx?.setThemePreference(v);
+    };
+
+    const handleSoundEnabledChange = async (enabled: boolean) => {
+        setSoundEnabledState(enabled);
+        setSoundLocal(enabled);
+        await savePreferences({ sound_enabled: enabled });
+    };
+
+    const handleBrowserNotificationsChange = async (enabled: boolean) => {
+        setBrowserNotifications(enabled);
+        await savePreferences({ browser_notifications: enabled });
+    };
+
+    const handleNotificationSoundChange = async (value: string) => {
+        setNotificationSound(value);
+        await savePreferences({ notification_sound: value });
+    };
 
     // Language options
     const languageOptions = [
@@ -80,14 +108,12 @@ export default function SettingsPage() {
                                 Theme
                             </Text>
                             <RadioGroup
-                                value={theme}
-                                onUpdate={(value: string) =>
-                                    setTheme(value as 'light' | 'dark' | 'auto')
-                                }
+                                value={themePreference}
+                                onUpdate={handleThemeChange}
                                 options={[
-                                    {value: 'light', content: 'Light'},
-                                    {value: 'dark', content: 'Dark'},
-                                    {value: 'auto', content: 'Auto (follow system)'},
+                                    { value: 'light', content: 'Light' },
+                                    { value: 'dark', content: 'Dark' },
+                                    { value: 'auto', content: 'Auto (follow system)' },
                                 ]}
                                 size="l"
                             />
@@ -194,15 +220,12 @@ export default function SettingsPage() {
                     <div className="settings-page__card-content">
                         <div className="settings-page__field">
                             <div className="settings-page__switch-field">
-                                <div className="settings-page__switch-label-row">
-                                    <Switch
-                                        checked={browserNotifications}
-                                        onUpdate={setBrowserNotifications}
-                                        content="Browser Notifications"
-                                        size="l"
-                                    />
-                                    <WipLabel />
-                                </div>
+                                <Switch
+                                    checked={browserNotifications}
+                                    onUpdate={handleBrowserNotificationsChange}
+                                    content="Browser Notifications"
+                                    size="l"
+                                />
                                 <Text variant="body-2" color="secondary">
                                     Show browser notifications for important events.
                                 </Text>
@@ -213,32 +236,26 @@ export default function SettingsPage() {
 
                         <div className="settings-page__field">
                             <div className="settings-page__switch-field">
-                                <div className="settings-page__switch-label-row">
-                                    <Switch
-                                        checked={soundEnabled}
-                                        onUpdate={setSoundEnabled}
-                                        content="Sound Notifications"
-                                        size="l"
-                                    />
-                                    <WipLabel />
-                                </div>
+                                <Switch
+                                    checked={soundEnabled}
+                                    onUpdate={handleSoundEnabledChange}
+                                    content="Sound Notifications (Timer, etc.)"
+                                    size="l"
+                                />
                                 <Text variant="body-2" color="secondary">
-                                    Play sounds for notifications.
+                                    Play sounds when the timer finishes and for other notifications.
                                 </Text>
                             </div>
                         </div>
 
                         {soundEnabled && (
                             <div className="settings-page__field">
-                                <div className="settings-page__label-row">
-                                    <Text variant="body-1" className="settings-page__label">
-                                        Notification Sound
-                                    </Text>
-                                    <WipLabel />
-                                </div>
+                                <Text variant="body-1" className="settings-page__label">
+                                    Notification Sound
+                                </Text>
                                 <Select
                                     value={[notificationSound]}
-                                    onUpdate={(value) => setNotificationSound(value[0])}
+                                    onUpdate={(value) => handleNotificationSoundChange(value[0])}
                                     options={soundOptions}
                                     size="l"
                                     placeholder="Select sound"
@@ -315,6 +332,9 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </Card>
+
+                {/* Delete Account */}
+                <DeleteAccountCard />
             </div>
         </div>
     );

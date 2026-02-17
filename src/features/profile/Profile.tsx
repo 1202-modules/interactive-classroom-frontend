@@ -12,17 +12,20 @@ import {
     TextInput,
     Alert,
 } from '@gravity-ui/uikit';
-import { Camera, Lock, Shield, TrashBin } from '@gravity-ui/icons';
+import { Camera, Lock, Shield } from '@gravity-ui/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useRef } from 'react';
 import { useUser } from '@/shared/hooks/useUser';
 import { useAuth } from '@/features/auth/useAuth';
 import { useApi } from '@/shared/hooks/useApi';
+import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { setUser } from '@/shared/store/userSlice';
 import type { AppDispatch } from '@/shared/store/store';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { WipLabel } from '@/shared/components/WipLabel';
+import { DeleteAccountCard } from '@/shared/components/DeleteAccountCard/DeleteAccountCard';
 import './Profile.css';
 
 export default function ProfilePage() {
@@ -31,6 +34,8 @@ export default function ProfilePage() {
     const { data: user, loading: userLoading, error: userError } = useUser();
     const api = useApi();
     const dispatch = useDispatch<AppDispatch>();
+    const { preferences, savePreferences } = useUserPreferences();
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
     // Basic info state
     const [firstName, setFirstName] = useState('');
@@ -130,10 +135,6 @@ export default function ProfilePage() {
         }
     };
 
-    const handleDeleteAccount = () => {
-        // TODO: Implement account deletion
-    };
-
     useEffect(() => {
         if (!accessToken) {
             navigate('/login', { replace: true });
@@ -149,6 +150,38 @@ export default function ProfilePage() {
         setEmail(user.email || '');
         setAvatarUrl(user.avatar_url || '');
     }, [user]);
+
+    useEffect(() => {
+        if (preferences?.timezone_mode) setTimezone(preferences.timezone_mode);
+        if (preferences?.timezone) setCustomTimezone(preferences.timezone);
+    }, [preferences?.timezone_mode, preferences?.timezone]);
+
+    const handleTimezoneChange = async () => {
+        await savePreferences({
+            timezone_mode: timezone as import('@/shared/types/userPreferences').TimezoneMode,
+            timezone: timezone === 'manual' ? customTimezone : undefined,
+        });
+    };
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const dataUrl = reader.result as string;
+            setAvatarUrl(dataUrl);
+            try {
+                const res = await api.put('/users/me', { avatar_url: dataUrl });
+                const payload = res.data || {};
+                if (payload.avatar_url !== undefined) setAvatarUrl(payload.avatar_url || '');
+                dispatch(setUser({ ...(user || {}), ...payload } as import('@/shared/store/userSlice').User));
+            } catch {
+                // keep local preview
+            }
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
 
     return (
         <div className="profile-page">
@@ -195,13 +228,18 @@ export default function ProfilePage() {
                                             style={{ width: 150, height: 150, fontSize: '60px' }}
                                         />
                                     </div>
+                                    <input
+                                        ref={avatarInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="profile-page__avatar-input"
+                                        onChange={handleAvatarUpload}
+                                    />
                                     <div className="profile-page__avatar-actions">
                                         <Button
                                             view="outlined"
                                             size="l"
-                                            onClick={() => {
-                                                // TODO: Implement avatar upload
-                                            }}
+                                            onClick={() => avatarInputRef.current?.click()}
                                         >
                                             <Icon data={Camera} size={16} />
                                             Change Photo
@@ -332,15 +370,12 @@ export default function ProfilePage() {
 
                         {/* Timezone */}
                         <div className="profile-page__field">
-                            <div className="profile-page__label-row">
-                                <Text variant="body-1" className="profile-page__label">
-                                    Timezone
-                                </Text>
-                                <WipLabel />
-                            </div>
+                            <Text variant="body-1" className="profile-page__label">
+                                Timezone
+                            </Text>
                             <RadioGroup
                                 value={timezone}
-                                onUpdate={setTimezone}
+                                onUpdate={(v) => setTimezone(v)}
                                 options={[
                                     { value: 'auto', content: 'Automatic (detect from browser)' },
                                     { value: 'manual', content: 'Manual selection' },
@@ -363,6 +398,14 @@ export default function ProfilePage() {
                                     />
                                 </div>
                             )}
+                            <Button
+                                view="outlined"
+                                size="m"
+                                onClick={handleTimezoneChange}
+                                style={{ marginTop: 'var(--g-spacing-2)' }}
+                            >
+                                Save timezone
+                            </Button>
                         </div>
                     </div>
                 </Card>
@@ -408,33 +451,7 @@ export default function ProfilePage() {
                 </Card>
 
                 {/* Delete Account */}
-                <Card view="outlined" className="profile-page__card">
-                    <div className="profile-page__card-header">
-                        <Text variant="header-2">Delete Account</Text>
-                        <Text variant="body-2" color="secondary">
-                            Permanently delete your account and all associated data.
-                        </Text>
-                    </div>
-
-                    <div className="profile-page__card-content">
-                        <div className="profile-page__field">
-                            <Text variant="body-2" color="secondary" className="profile-page__hint">
-                                This action cannot be undone. All your workspaces, sessions, and
-                                data will be permanently deleted.
-                            </Text>
-                            <div style={{ marginTop: 'var(--g-spacing-3)' }}>
-                                <Button
-                                    view="outlined-danger"
-                                    size="l"
-                                    onClick={handleDeleteAccount}
-                                >
-                                    <Icon data={TrashBin} size={16} />
-                                    Delete Account
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
+                <DeleteAccountCard />
             </div>
         </div>
     );

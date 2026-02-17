@@ -89,6 +89,10 @@
   font-size: 48px !important;
 }
 
+.profile-page__avatar-input {
+  display: none;
+}
+
 .profile-page__avatar-actions {
   display: flex;
   flex-direction: column;

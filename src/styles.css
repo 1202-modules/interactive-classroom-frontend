@@ -1,6 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
+/* Fix password input always showing dark theme - override autofill to match current theme */
+.g-root_theme_light input[type="password"]:-webkit-autofill,
+.g-root_theme_light input[type="password"]:-webkit-autofill:hover,
+.g-root_theme_light input[type="password"]:-webkit-autofill:focus,
+.g-root_theme_light input[type="password"]:-webkit-autofill:active {
+    -webkit-text-fill-color: #000;
+    -webkit-box-shadow: 0 0 0 30px rgb(255, 255, 255) inset !important;
+    caret-color: #000;
+}
+
+.g-root_theme_dark input[type="password"]:-webkit-autofill,
+.g-root_theme_dark input[type="password"]:-webkit-autofill:hover,
+.g-root_theme_dark input[type="password"]:-webkit-autofill:focus,
+.g-root_theme_dark input[type="password"]:-webkit-autofill:active {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 30px rgb(34, 29, 34) inset !important;
+    caret-color: #fff;
+}
 
 .g-root {
     --g-font-family-monospace: 'Roboto Mono', 'Monaco', 'Consolas', 'Liberation Mono', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Courier New', 'Courier', monospace;

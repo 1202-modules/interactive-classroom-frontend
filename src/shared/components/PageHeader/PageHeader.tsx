@@ -4,7 +4,7 @@ import { ArrowLeft } from '@gravity-ui/icons';
 import './PageHeader.css';
 
 export interface PageHeaderBack {
-    label: string;
+    label?: string;
     onClick: () => void;
 }
 
@@ -29,7 +29,9 @@ export function PageHeader({ title, subtitle, back, actions, meta, className }: 
                         className="page-header__back"
                     >
                         <Icon data={ArrowLeft} size={16} />
-                        {back.label}
+                        {back.label != null && back.label !== '' && (
+                            <span className="page-header__back-label">{back.label}</span>
+                        )}
                     </Button>
                 )}
                 <div className="page-header__title-wrap">

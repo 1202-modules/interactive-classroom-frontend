@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@gravity-ui/uikit';
 import Layout from '@/shared/components/Layout';
@@ -15,11 +14,12 @@ import LoginPage from '@/features/auth/pages/Login';
 import RegisterPage from '@/features/auth/pages/Register';
 import { useFetchUser } from '@/features/auth/useFetchUser';
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
+import { ThemeContextProvider, useThemeContext } from '@/shared/context/ThemeContext';
 
-function AppRouter() {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
-    const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
-    useFetchUser();
+function AppLayout() {
+    const ctx = useThemeContext();
+    const theme = ctx?.theme ?? 'light';
+    const toggleTheme = ctx?.toggleTheme ?? (() => {});
 
     return (
         <ThemeProvider theme={theme}>
@@ -91,6 +91,16 @@ function AppRouter() {
                 </Routes>
             </Layout>
         </ThemeProvider>
+    );
+}
+
+function AppRouter() {
+    useFetchUser();
+
+    return (
+        <ThemeContextProvider>
+            <AppLayout />
+        </ThemeContextProvider>
     );
 }
 

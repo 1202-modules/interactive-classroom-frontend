@@ -19,6 +19,10 @@
   align-self: flex-start;
 }
 
+.page-header__back-label {
+  margin-left: var(--g-spacing-1);
+}
+
 .page-header__title-wrap {
   display: flex;
   flex-direction: column;
