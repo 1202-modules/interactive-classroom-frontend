@@ -154,7 +154,7 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
 
     const canCreateQuestion = useMemo(() => {
         if (!settings) return true;
-        if (settings.max_questions_total === null) return true;
+        if (settings.max_questions_total === null || settings.max_questions_total === undefined) return true;
         const topLevelCount = messages.filter((m) => m.parent_id === null).length;
         return topLevelCount < settings.max_questions_total;
     }, [settings, messages]);
