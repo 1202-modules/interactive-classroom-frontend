@@ -5,6 +5,7 @@ import type {
     WorkspaceActivityModule,
 } from '../types/workspace';
 import {useApi} from '@/hooks/useApi';
+import {WORKSPACE_MODULE_FIELDS, fieldsToString} from '@/api/fields';
 
 type WorkspaceModuleApi = {
     id: number;
@@ -16,7 +17,6 @@ type WorkspaceModuleApi = {
     updated_at?: string | null;
 };
 
-const moduleFields = 'id,workspace_id,name,module_type,settings,created_at,updated_at';
 
 type ModuleDefaultsByType = {
     questions: Extract<ActivityModuleConfig, {type: 'questions'}>;
@@ -171,7 +171,7 @@ export function useWorkspaceModules(workspaceId?: number) {
             const res = await api.get<WorkspaceModuleApi[]>(
                 `/workspaces/${workspaceId}/modules`,
                 {
-                    params: {fields: moduleFields},
+                    params: {fields: fieldsToString(WORKSPACE_MODULE_FIELDS.LIST)},
                 },
             );
             setModules((res.data || []).map(mapApiModule));
@@ -213,7 +213,7 @@ export function useWorkspaceModules(workspaceId?: number) {
                     settings: buildSettings(moduleDraft),
                 },
                 {
-                    params: {fields: moduleFields},
+                    params: {fields: fieldsToString(WORKSPACE_MODULE_FIELDS.LIST)},
                 },
             );
             if (res.data && res.data.id) {
@@ -252,7 +252,7 @@ export function useWorkspaceModules(workspaceId?: number) {
                     settings: buildSettings(moduleToRename),
                 },
                 {
-                    params: {fields: moduleFields},
+                    params: {fields: fieldsToString(WORKSPACE_MODULE_FIELDS.LIST)},
                 },
             );
             if (res.data && res.data.id) {
@@ -278,7 +278,7 @@ export function useWorkspaceModules(workspaceId?: number) {
                     settings: buildSettings(m),
                 },
                 {
-                    params: {fields: moduleFields},
+                    params: {fields: fieldsToString(WORKSPACE_MODULE_FIELDS.LIST)},
                 },
             );
             if (res.data && res.data.id) {
@@ -305,7 +305,7 @@ export function useWorkspaceModules(workspaceId?: number) {
                     settings: buildSettings(nextModule),
                 },
                 {
-                    params: {fields: moduleFields},
+                    params: {fields: fieldsToString(WORKSPACE_MODULE_FIELDS.LIST)},
                 },
             );
             if (res.data && res.data.id) {
@@ -360,7 +360,7 @@ export function useWorkspaceModules(workspaceId?: number) {
                     },
                 },
                 {
-                    params: {fields: moduleFields},
+                    params: {fields: fieldsToString(WORKSPACE_MODULE_FIELDS.LIST)},
                 },
             );
             if (res.data && res.data.id) {

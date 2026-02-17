@@ -13,6 +13,7 @@ import {QRCodeSVG} from 'qrcode.react';
 
 import type {SessionModule} from '../../types/sessionPage';
 import {useApi} from '@/hooks/useApi';
+import {SESSION_FIELDS, SESSION_MODULE_FIELDS, fieldsToString} from '@/api/fields';
 import './PresentationPage.css';
 
 // Helper для иконок типов модулей
@@ -48,8 +49,6 @@ type SessionModuleApi = {
     is_active: boolean;
 };
 
-const sessionFields = 'id,workspace_id,name,is_stopped,passcode';
-const sessionModuleFields = 'id,session_id,name,module_type,settings,is_active';
 
 const mapSessionModule = (module: SessionModuleApi, index: number): SessionModule => ({
     id: String(module.id),
@@ -76,7 +75,7 @@ export default function PresentationPage() {
         setIsLoading(true);
         try {
             const res = await api.get<SessionInfo>(`/sessions/${sessionIdNumber}`, {
-                params: {fields: sessionFields},
+                params: {fields: fieldsToString(SESSION_FIELDS.PRESENTATION)},
             });
             setSessionInfo(res.data);
         } catch (err) {
@@ -92,7 +91,7 @@ export default function PresentationPage() {
             const res = await api.get<SessionModuleApi[]>(
                 `/sessions/${sessionIdNumber}/modules`,
                 {
-                    params: {fields: sessionModuleFields},
+                    params: {fields: fieldsToString(SESSION_MODULE_FIELDS.LIST)},
                 },
             );
             setSessionModules((res.data || []).map(mapSessionModule));

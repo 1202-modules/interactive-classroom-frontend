@@ -14,6 +14,7 @@ export type Workspace = {
     name: string;
     description: string;
     status: 'active' | 'archive' | string;
+    is_deleted?: boolean;
     session_settings: Record<string, unknown>;
     session_count: number;
     participant_count: number;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import type { Session, SessionStatus } from '../types/session';
 import { useApi } from '@/hooks/useApi';
+import { SESSION_FIELDS, fieldsToString } from '@/api/fields';
 
 export function useWorkspaceSessions(workspaceId: number) {
     const api = useApi();
@@ -22,8 +23,7 @@ export function useWorkspaceSessions(workspaceId: number) {
                 `/workspaces/${workspaceId}/sessions`,
                 {
                     params: {
-                        fields:
-                            'id,workspace_id,name,description,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,created_at,updated_at,is_deleted',
+                        fields: fieldsToString(SESSION_FIELDS.LIST),
                     },
                 },
             );
@@ -113,8 +113,7 @@ export function useWorkspaceSessions(workspaceId: number) {
 
             const res = await api.post<Partial<Session>>(endpoint, null, {
                 params: {
-                    fields:
-                        'id,name,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,updated_at',
+                    fields: fieldsToString(SESSION_FIELDS.UPDATE),
                 },
             });
 
@@ -149,8 +148,7 @@ export function useWorkspaceSessions(workspaceId: number) {
             prev.map((s) => (s.id === sessionId ? { ...s, is_stopped: nextStopped } : s)),
         );
 
-        const fields =
-            'id,name,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,updated_at';
+        const fields = fieldsToString(SESSION_FIELDS.UPDATE);
 
         const endpoint = nextStopped
             ? `/sessions/${sessionId}/stop`
@@ -190,8 +188,7 @@ export function useWorkspaceSessions(workspaceId: number) {
         try {
             const res = await api.post<Partial<Session>>(`/sessions/${sessionId}/restore`, null, {
                 params: {
-                    fields:
-                        'id,name,status,is_stopped,passcode,participant_count,stopped_participant_count,start_datetime,end_datetime,updated_at,is_deleted',
+                    fields: fieldsToString(SESSION_FIELDS.RESTORE),
                 },
             });
             if (res.data) {

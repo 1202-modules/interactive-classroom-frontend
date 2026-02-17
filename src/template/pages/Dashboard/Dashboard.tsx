@@ -32,6 +32,10 @@ const Dashboard: React.FC = () => {
             if (displayedTab === 'trash') {
                 return workspace.is_deleted === true || workspace.status === 'trash';
             }
+            // Exclude deleted workspaces from active and archive lists
+            if (workspace.is_deleted === true) {
+                return false;
+            }
             if (displayedTab === 'active') return workspace.status === 'active';
             if (displayedTab === 'archive') return workspace.status === 'archive';
             return true;

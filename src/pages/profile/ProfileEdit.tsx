@@ -6,6 +6,7 @@ import {useDispatch} from 'react-redux';
 import type {AppDispatch} from '@/store/store';
 import {setUser} from '@/store/userSlice';
 import {useApi} from '@/hooks/useApi';
+import {USER_FIELDS, fieldsToString} from '@/api/fields';
 import styles from './Profile.module.css';
 
 type ValidationDetail = {
@@ -69,7 +70,7 @@ export default function ProfileEdit() {
                 payload.avatar_url = avatarUrl.trim();
             }
 
-            const fields = 'id,email,first_name,last_name,avatar_url,updated_at';
+            const fields = fieldsToString(USER_FIELDS.PROFILE);
 
             let nextUser = (await api.put('/users/me', payload, {params: {fields}})).data;
 

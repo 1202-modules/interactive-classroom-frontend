@@ -44,7 +44,8 @@ const Workspaces = () => {
         }
 
         const normalized = searchQuery.toLowerCase();
-        const base = data.workspaces;
+        // Exclude deleted workspaces from all lists (they should only appear in trash)
+        const base = data.workspaces.filter((w) => !w.is_deleted);
 
         setFilteredData(
             normalized ? base.filter((w) => w.name.toLowerCase().includes(normalized)) : base,

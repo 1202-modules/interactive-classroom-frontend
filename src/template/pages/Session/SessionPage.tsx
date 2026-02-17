@@ -58,6 +58,7 @@ import {SessionDefaults} from '../../components/Workspace/SessionDefaults/Sessio
 import {useWorkspaceSettings} from '../../hooks/useWorkspaceSettings';
 import {useWorkspaceModules} from '../../hooks/useWorkspaceModules';
 import {useApi} from '@/hooks/useApi';
+import {SESSION_FIELDS, SESSION_MODULE_FIELDS, fieldsToString} from '@/api/fields';
 import '../Workspace/Workspace.css';
 import './SessionPage.css';
 
@@ -85,9 +86,6 @@ type SessionModuleApi = {
     updated_at?: string | null;
 };
 
-const sessionFields = 'id,workspace_id,name,is_stopped,start_datetime,end_datetime,status,passcode';
-const sessionModuleFields =
-    'id,session_id,name,module_type,settings,is_active,created_at,updated_at';
 
 const getSessionModuleType = (value: unknown): SessionModule['type'] => {
     if (value === 'questions' || value === 'poll' || value === 'quiz' || value === 'timer') {
@@ -317,7 +315,7 @@ export default function SessionPage() {
         setSessionLoading(true);
         try {
             const res = await api.get<SessionInfo>(`/sessions/${sessionIdNumber}`, {
-                params: {fields: sessionFields},
+                params: {fields: fieldsToString(SESSION_FIELDS.DETAILS)},
             });
             setSessionInfo(res.data);
         } catch (err) {
@@ -334,7 +332,7 @@ export default function SessionPage() {
             const res = await api.get<SessionModuleApi[]>(
                 `/sessions/${sessionIdNumber}/modules`,
                 {
-                    params: {fields: sessionModuleFields},
+                    params: {fields: fieldsToString(SESSION_MODULE_FIELDS.DETAILS)},
                 },
             );
             const modules = (res.data || []).map((m, index) => mapSessionModule(m, index));
@@ -407,7 +405,7 @@ export default function SessionPage() {
         if (!Number.isFinite(numericId)) return;
         try {
             await api.patch(`/sessions/${sessionIdNumber}/modules/${numericId}/activate`, null, {
-                params: {fields: sessionModuleFields},
+                params: {fields: fieldsToString(SESSION_MODULE_FIELDS.DETAILS)},
             });
             await fetchSessionModules();
         } catch (err) {
@@ -444,7 +442,7 @@ export default function SessionPage() {
                     workspace_module_id: workspaceModuleId,
                 },
                 {
-                    params: {fields: sessionModuleFields},
+                    params: {fields: fieldsToString(SESSION_MODULE_FIELDS.DETAILS)},
                 },
             );
 
