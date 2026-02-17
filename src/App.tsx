@@ -1,10 +1,10 @@
 import { useAuthInit } from './hooks/useAuthInit';
-import TemplateApp from './template/TemplateApp';
+import AppRouter from './app/AppRouter';
 
 const App = () => {
     useAuthInit();
 
-    return <TemplateApp />;
+    return <AppRouter />;
 };
 
 export default App;

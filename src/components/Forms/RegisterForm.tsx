@@ -5,24 +5,13 @@ import {AxiosError} from 'axios';
 import {Link, Navigate, useLocation, useNavigate} from 'react-router-dom';
 import {useAuth} from '@/hooks/useAuth';
 import {api} from '@/api/api';
+import {parseBackendError} from '@/utils/parseBackendError';
 
 type RegisterFormValue = {
     email: string;
     password: string;
     confirmPassword: string;
     code: string;
-};
-
-type ValidationDetail = {
-    type: string;
-    loc: (string | number)[];
-    msg: string;
-    input: unknown;
-    ctx?: Record<string, unknown>;
-};
-
-type BackendError = {
-    detail?: string | ValidationDetail[];
 };
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -72,24 +61,6 @@ export default function RegisterForm() {
         }
     };
 
-    const parseBackendError = (data: BackendError | string | undefined, fallback: string) => {
-        if (!data) return fallback;
-
-        if (typeof data === 'string') {
-            return data;
-        }
-
-        if (typeof data.detail === 'string') {
-            return data.detail;
-        }
-
-        if (Array.isArray(data.detail) && data.detail.length > 0) {
-            return data.detail[0].msg || fallback;
-        }
-
-        return fallback;
-    };
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
@@ -115,11 +86,11 @@ export default function RegisterForm() {
             setResendCooldown(RESEND_COOLDOWN_SECONDS);
             return res.data;
         } catch (err) {
-            const error = err as AxiosError<BackendError | string>;
-            const message = parseBackendError(error.response?.data, 'Ошибка регистрации');
+            const axiosErr = err as AxiosError<{ detail?: string | Array<{ msg?: string }> }>;
+            const message = parseBackendError(axiosErr.response?.data, 'Ошибка регистрации');
             setRegError(message);
             console.error(message);
-            return error;
+            return err;
         }
     };
 
@@ -144,8 +115,8 @@ export default function RegisterForm() {
             navigate('/login');
             return res;
         } catch (err) {
-            const error = err as AxiosError<BackendError | string>;
-            const message = parseBackendError(error.response?.data, 'Error');
+            const axiosErr = err as AxiosError<{ detail?: string | Array<{ msg?: string }> }>;
+            const message = parseBackendError(axiosErr.response?.data, 'Error');
             setConfirmError(message);
             setIsCodeLoading(false);
             return error;
@@ -165,11 +136,11 @@ export default function RegisterForm() {
 
             return res.data;
         } catch (err) {
-            const error = err as AxiosError<BackendError | string>;
-            const message = parseBackendError(error.response?.data, 'Error');
+            const axiosErr = err as AxiosError<{ detail?: string | Array<{ msg?: string }> }>;
+            const message = parseBackendError(axiosErr.response?.data, 'Error');
             setResendSuccess('');
             setResendError(message);
-            return error;
+            return err;
         } finally {
             setIsResendLoading(false);
         }

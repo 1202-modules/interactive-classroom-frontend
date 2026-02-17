@@ -9,22 +9,11 @@ import {setCredentials} from '@/store/authSlice';
 import {useAuth} from '@/hooks/useAuth';
 import {setUser, setUserError, setUserLoading} from '@/store/userSlice';
 import {api} from '@/api/api';
+import {parseBackendError} from '@/utils/parseBackendError';
 
 type LoginFormState = {
     email: string;
     password: string;
-};
-
-type ValidationDetail = {
-    type: string;
-    loc: (string | number)[];
-    msg: string;
-    input: unknown;
-    ctx?: Record<string, unknown>;
-};
-
-type BackendError = {
-    detail?: string | ValidationDetail[];
 };
 
 export default function LoginForm() {
@@ -52,24 +41,6 @@ export default function LoginForm() {
             [name]: value,
         }));
         setError('');
-    };
-
-    const parseBackendError = (data: BackendError | string | undefined, fallback: string) => {
-        if (!data) return fallback;
-
-        if (typeof data === 'string') {
-            return data;
-        }
-
-        if (typeof data.detail === 'string') {
-            return data.detail;
-        }
-
-        if (Array.isArray(data.detail) && data.detail.length > 0) {
-            return data.detail[0].msg || fallback;
-        }
-
-        return fallback;
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -131,8 +102,8 @@ export default function LoginForm() {
                 dispatch(setUserLoading(false));
             }
         } catch (err) {
-            const error = err as AxiosError<BackendError | string>;
-            const message = parseBackendError(error.response?.data, 'Invalid email or password');
+            const axiosErr = err as AxiosError<{ detail?: string | Array<{ msg?: string }> }>;
+            const message = parseBackendError(axiosErr.response?.data, 'Invalid email or password');
             setError(message);
             setIsLoading(false);
         }

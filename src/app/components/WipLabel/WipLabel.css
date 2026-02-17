@@ -1,0 +1,35 @@
+.wip-label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.wip-label__icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.wip-label__icon-wrapper svg,
+.wip-label__icon-wrapper :global(svg) {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  display: block;
+  vertical-align: middle;
+}
+
+.wip-label__icon-wrapper :global(.g-icon) {
+  width: 14px !important;
+  height: 14px !important;
+  display: block;
+  vertical-align: middle;
+}
+
+.wip-label > span:last-child {
+  margin-left: 0;
+}
