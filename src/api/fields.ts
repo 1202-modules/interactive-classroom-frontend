@@ -3,32 +3,6 @@
  * These constants ensure type safety and prevent typos in field names.
  */
 
-export const WORKSPACE_FIELDS = {
-    LIST: [
-        'id',
-        'name',
-        'description',
-        'status',
-        'is_deleted',
-        'participant_count',
-        'session_count',
-        'has_live_session',
-        'live_session_name',
-        'last_session_started_at',
-        'created_at',
-        'updated_at',
-    ] as const,
-    CARD: [
-        'id',
-        'name',
-        'description',
-        'status',
-        'participant_count',
-        'session_count',
-        'has_live_session',
-    ] as const,
-} as const;
-
 export const SESSION_FIELDS = {
     LIST: [
         'id',
