@@ -12,7 +12,7 @@ RUN npm ci
 # Copy source files
 COPY . .
 
-# Build the app (no VITE_API_URL needed, API is separate service)
+# Build the app
 RUN npm run build
 
 # Production stage
@@ -27,4 +27,3 @@ COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
-
