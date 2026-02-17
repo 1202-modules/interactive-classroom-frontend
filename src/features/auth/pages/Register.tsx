@@ -10,6 +10,7 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import './Auth.css';
 
 const RESEND_COOLDOWN_SECONDS = 60;
+const ALREADY_PENDING_MARKER = 'already pending';
 
 export default function RegisterPage() {
     const navigate = useNavigate();
@@ -59,7 +60,19 @@ export default function RegisterPage() {
         } catch (err) {
             const axiosErr = err as AxiosError<{ detail?: string | Array<{ msg?: string }> }>;
             const message = parseBackendError(axiosErr.response?.data, 'Ошибка регистрации');
-            setRegError(message);
+            const isAlreadyPending =
+                typeof message === 'string' && message.toLowerCase().includes(ALREADY_PENDING_MARKER);
+
+            if (isAlreadyPending) {
+                setRegError('');
+                setConfirmPassword('');
+                setIsCodeSent(true);
+                setResendCooldown(0);
+                setIsResendLoading(true);
+                await resendCodeRequest();
+            } else {
+                setRegError(message);
+            }
             return err;
         }
     };
