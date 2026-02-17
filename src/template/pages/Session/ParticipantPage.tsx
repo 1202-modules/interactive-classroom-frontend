@@ -13,10 +13,15 @@ import {
     verifyEmailCode,
     sendHeartbeat,
 } from '@/api/sessionJoin';
-import { setParticipantToken, setGuestToken, getParticipantToken } from '@/utils/tokenStorage';
+import { setParticipantToken, setGuestToken, getParticipantToken, getGuestToken } from '@/utils/tokenStorage';
+import { getModulesByPasscode } from '@/api/sessionModules';
+import type { SessionModuleItem } from '@/types/sessionModulesByPasscode';
 import { AnonymousJoinForm } from '../../components/SessionJoin/AnonymousJoinForm';
 import { EmailCodeJoinForm } from '../../components/SessionJoin/EmailCodeJoinForm';
 import { EmailCodeVerifyForm } from '../../components/SessionJoin/EmailCodeVerifyForm';
+import { QuestionsModule } from '../../components/SessionParticipant/QuestionsModule';
+import { TimerModule } from '../../components/SessionParticipant/TimerModule';
+import { ParticipantsList } from '../../components/SessionParticipant/ParticipantsList';
 import './ParticipantPage.css';
 
 type JoinState =
@@ -399,22 +404,138 @@ export default function ParticipantPage() {
     }
 
     if (joinState.type === 'joined') {
-        // TODO: Show actual session interface with modules (Questions, Timer, etc.)
-        // This will be implemented in the second half
+        return <JoinedSessionView code={code!} api={api} accessToken={accessToken} participantId={joinState.participantId} />;
+    }
+
+    return null;
+}
+
+interface JoinedSessionViewProps {
+    code: string;
+    api: ReturnType<typeof useApi>;
+    accessToken: string | null;
+    participantId: number;
+}
+
+function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSessionViewProps) {
+    const [modules, setModules] = useState<SessionModuleItem[]>([]);
+    const [activeModule, setActiveModule] = useState<SessionModuleItem | null>(null);
+    const [isLoadingModules, setIsLoadingModules] = useState(true);
+    const [modulesError, setModulesError] = useState<string | null>(null);
+    const { accessToken: userToken } = useAuth();
+    const guestToken = getGuestToken();
+    const participantToken = getParticipantToken();
+
+    // Get auth token: guest > user > participant
+    const authToken = useMemo(() => {
+        return guestToken || userToken || participantToken || null;
+    }, [guestToken, userToken, participantToken]);
+
+    useEffect(() => {
+        if (!authToken) {
+            setModulesError('Authentication required');
+            setIsLoadingModules(false);
+            return;
+        }
+
+        const fetchModules = async () => {
+            setIsLoadingModules(true);
+            setModulesError(null);
+            try {
+                const response = await getModulesByPasscode(api, code, authToken);
+                setModules(response.modules || []);
+                setActiveModule(response.active_module || null);
+            } catch (err: any) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data ||
+                    err?.message ||
+                    'Failed to load modules';
+                setModulesError(message);
+            } finally {
+                setIsLoadingModules(false);
+            }
+        };
+
+        fetchModules();
+        // Poll every 5 seconds for module updates
+        const interval = setInterval(fetchModules, 5000);
+        return () => clearInterval(interval);
+    }, [code, api, authToken]);
+
+    if (!authToken) {
         return (
             <div className="participant-page">
                 <Card view="outlined" className="participant-page__card">
-                    <Text variant="header-2">Successfully joined session!</Text>
+                    <Text variant="header-2" color="danger">Authentication Error</Text>
                     <Text variant="body-1" style={{ marginTop: '16px' }}>
-                        Session interface will be implemented in the next phase.
-                    </Text>
-                    <Text variant="body-2" color="secondary" style={{ marginTop: '8px' }}>
-                        Session ID: {joinState.sessionId}, Participant ID: {joinState.participantId}
+                        Unable to authenticate. Please refresh the page.
                     </Text>
                 </Card>
             </div>
         );
     }
 
-    return null;
+    if (isLoadingModules) {
+        return (
+            <div className="participant-page">
+                <Card view="outlined" className="participant-page__card">
+                    <Loader size="l" />
+                    <Text variant="body-1" style={{ marginTop: '16px' }}>
+                        Loading session modules...
+                    </Text>
+                </Card>
+            </div>
+        );
+    }
+
+    if (modulesError) {
+        return (
+            <div className="participant-page">
+                <Card view="outlined" className="participant-page__card">
+                    <Text variant="header-2" color="danger">Error</Text>
+                    <Text variant="body-1" style={{ marginTop: '16px' }}>
+                        {modulesError}
+                    </Text>
+                    <Button
+                        view="action"
+                        size="l"
+                        onClick={() => window.location.reload()}
+                        style={{ marginTop: '16px' }}
+                    >
+                        Retry
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
+
+    return (
+        <div className="participant-page">
+            <ParticipantsList api={api} passcode={code} authToken={authToken} />
+
+            {activeModule && activeModule.module_type === 'questions' && (
+                <QuestionsModule
+                    api={api}
+                    passcode={code}
+                    moduleId={activeModule.id}
+                    authToken={authToken}
+                    participantId={participantId}
+                />
+            )}
+
+            {activeModule && activeModule.module_type === 'timer' && (
+                <TimerModule api={api} passcode={code} moduleId={activeModule.id} />
+            )}
+
+            {!activeModule && (
+                <Card view="outlined" className="participant-page__card">
+                    <Text variant="header-2">No Active Module</Text>
+                    <Text variant="body-1" color="secondary" style={{ marginTop: '16px' }}>
+                        Waiting for lecturer to activate a module...
+                    </Text>
+                </Card>
+            )}
+        </div>
+    );
 }

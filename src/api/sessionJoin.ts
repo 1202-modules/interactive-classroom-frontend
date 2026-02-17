@@ -1,44 +1,41 @@
 /**
- * API functions for session join and guest authentication
+ * API functions for session join and guest authentication.
+ *
+ * Note: these endpoints live under /api/v1 (axios baseURL already includes it).
  */
-import type { AxiosInstance } from 'axios';
+import type {AxiosInstance} from 'axios';
+
 import type {
-    SessionByPasscodeResponse,
     AnonymousJoinRequest,
     AnonymousJoinResponse,
-    RegisteredJoinResponse,
-    GuestJoinResponse,
     EmailCodeRequestRequest,
     EmailCodeRequestResponse,
     EmailCodeVerifyRequest,
     EmailCodeVerifyResponse,
-} from '../types/sessionJoin';
-import { getParticipantToken, getGuestToken } from '../utils/tokenStorage';
+    GuestJoinResponse,
+    RegisteredJoinResponse,
+    SessionByPasscodeResponse,
+} from '@/types/sessionJoin';
+import {getGuestToken, getParticipantToken} from '@/utils/tokenStorage';
 
-/**
- * Get session info by passcode
- */
 export async function getSessionByPasscode(
     apiClient: AxiosInstance,
     passcode: string,
 ): Promise<SessionByPasscodeResponse> {
     const guestToken = getGuestToken();
     const headers: Record<string, string> = {};
-    
+
+    // Only guest token is supported by this public endpoint (for autologin in email_code mode)
     if (guestToken) {
         headers.Authorization = `Bearer ${guestToken}`;
     }
-    
-    const res = await apiClient.get<SessionByPasscodeResponse>(
-        `/sessions/by-passcode/${passcode}`,
-        { headers },
-    );
+
+    const res = await apiClient.get<SessionByPasscodeResponse>(`/sessions/by-passcode/${passcode}`, {
+        headers,
+    });
     return res.data;
 }
 
-/**
- * Join session as anonymous participant
- */
 export async function joinAnonymous(
     apiClient: AxiosInstance,
     passcode: string,
@@ -51,46 +48,31 @@ export async function joinAnonymous(
     return res.data;
 }
 
-/**
- * Join session as registered user
- */
 export async function joinRegistered(
     apiClient: AxiosInstance,
     passcode: string,
 ): Promise<RegisteredJoinResponse> {
+    // Uses Authorization header from axios defaults (user token)
     const res = await apiClient.post<RegisteredJoinResponse>(
         `/sessions/by-passcode/${passcode}/join/registered`,
     );
     return res.data;
 }
 
-/**
- * Join session as guest (email_code mode)
- */
-export async function joinGuest(
-    apiClient: AxiosInstance,
-    passcode: string,
-): Promise<GuestJoinResponse> {
+export async function joinGuest(apiClient: AxiosInstance, passcode: string): Promise<GuestJoinResponse> {
     const guestToken = getGuestToken();
-    if (!guestToken) {
-        throw new Error('Guest token is required');
-    }
-    
+    if (!guestToken) throw new Error('Guest token is required');
+
     const res = await apiClient.post<GuestJoinResponse>(
         `/sessions/by-passcode/${passcode}/join/guest`,
         {},
         {
-            headers: {
-                Authorization: `Bearer ${guestToken}`,
-            },
+            headers: {Authorization: `Bearer ${guestToken}`},
         },
     );
     return res.data;
 }
 
-/**
- * Request email verification code
- */
 export async function requestEmailCode(
     apiClient: AxiosInstance,
     passcode: string,
@@ -103,9 +85,6 @@ export async function requestEmailCode(
     return res.data;
 }
 
-/**
- * Verify email code and get guest token
- */
 export async function verifyEmailCode(
     apiClient: AxiosInstance,
     passcode: string,
@@ -118,30 +97,22 @@ export async function verifyEmailCode(
     return res.data;
 }
 
-/**
- * Send heartbeat to mark participant as active
- */
 export async function sendHeartbeat(
     apiClient: AxiosInstance,
     passcode: string,
-    participantToken?: string | null,
+    participantTokenOverride?: string | null,
 ): Promise<void> {
-    const token = participantToken || getParticipantToken();
     const guestToken = getGuestToken();
-    
-    const config: { headers?: Record<string, string>; data?: { participant_token: string } } = {};
-    
-    if (guestToken) {
-        // For registered/guest: use Authorization header
-        config.headers = {
-            Authorization: `Bearer ${guestToken}`,
-        };
-    } else if (token) {
-        // For anonymous: can use either Authorization header or body
-        config.headers = {
-            Authorization: `Bearer ${token}`,
-        };
-    }
-    
-    await apiClient.post(`/sessions/by-passcode/${passcode}/heartbeat`, {}, config);
+    const participantToken = participantTokenOverride ?? getParticipantToken();
+
+    // For registered users we rely on axios default Authorization header (user token)
+    const headers: Record<string, string> = {};
+    if (guestToken) headers.Authorization = `Bearer ${guestToken}`;
+    else if (participantToken) headers.Authorization = `Bearer ${participantToken}`;
+
+    await apiClient.post(
+        `/sessions/by-passcode/${passcode}/heartbeat`,
+        {},
+        Object.keys(headers).length ? {headers} : undefined,
+    );
 }
