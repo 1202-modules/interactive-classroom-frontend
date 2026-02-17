@@ -8,8 +8,8 @@ import {
     TrashBin,
     Xmark,
 } from '@gravity-ui/icons';
-import type { Session, SessionStatus } from '../../types/session';
-import { formatShortDate } from '../../utils/date';
+import type { Session, SessionStatus } from '../../../types/session';
+import { formatShortDate } from '../../../utils/date';
 
 interface SessionCardProps {
     session: Session;

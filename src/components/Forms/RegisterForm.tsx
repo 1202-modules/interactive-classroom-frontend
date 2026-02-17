@@ -119,7 +119,7 @@ export default function RegisterForm() {
             const message = parseBackendError(axiosErr.response?.data, 'Error');
             setConfirmError(message);
             setIsCodeLoading(false);
-            return error;
+            return err;
         }
     };
 

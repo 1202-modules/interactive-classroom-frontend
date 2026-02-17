@@ -1,6 +1,6 @@
 import {Button, Card, Icon, SegmentedRadioGroup, TextInput} from '@gravity-ui/uikit';
 import {Magnifier} from '@gravity-ui/icons';
-import type {SessionStatus} from '../../types/session';
+import type {SessionStatus} from '../../../types/session';
 
 interface SessionFiltersProps {
     query: string;

@@ -10,7 +10,7 @@ import {
     TextInput,
 } from '@gravity-ui/uikit';
 import {Plus} from '@gravity-ui/icons';
-import type {QuizTimeLimit} from '../../types/workspace';
+import type {QuizTimeLimit} from '../../../types/workspace';
 import {ModuleFormCommon} from './ModuleFormCommon';
 
 interface QuizModuleFormProps {

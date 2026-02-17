@@ -9,7 +9,7 @@ import {
     TextInput,
 } from '@gravity-ui/uikit';
 import {Plus} from '@gravity-ui/icons';
-import type {PollAnswerMode} from '../../types/workspace';
+import type {PollAnswerMode} from '../../../types/workspace';
 import {ModuleFormCommon} from './ModuleFormCommon';
 
 interface PollModuleFormProps {

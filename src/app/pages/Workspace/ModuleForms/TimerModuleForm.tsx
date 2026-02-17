@@ -1,5 +1,5 @@
 import {Divider, SegmentedRadioGroup, Switch, Text, TextInput} from '@gravity-ui/uikit';
-import type {TimerDuration} from '../../types/workspace';
+import type {TimerDuration} from '../../../types/workspace';
 import {ModuleFormCommon} from './ModuleFormCommon';
 
 interface TimerModuleFormProps {

@@ -1,7 +1,7 @@
 import {Button, Card, DropdownMenu, Icon, Label, Text} from '@gravity-ui/uikit';
 import {EllipsisVertical} from '@gravity-ui/icons';
-import type {WorkspaceActivityModule} from '../../types/workspace';
-import {formatShortDate} from '../../utils/date';
+import type {WorkspaceActivityModule} from '../../../types/workspace';
+import {formatShortDate} from '../../../utils/date';
 
 interface ModuleCardProps {
     module: WorkspaceActivityModule;

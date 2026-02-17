@@ -1,6 +1,6 @@
 import {Icon, Label, Text} from '@gravity-ui/uikit';
 import {Clock} from '@gravity-ui/icons';
-import type {ActivityModuleType, WorkspaceActivityModule} from '../../types/workspace';
+import type {ActivityModuleType, WorkspaceActivityModule} from '../../../types/workspace';
 import {ModuleCard} from '../ModuleCard/ModuleCard';
 import {ModulePlusCard} from '../ModulePlusCard/ModulePlusCard';
 

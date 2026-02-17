@@ -23,7 +23,7 @@ export function WorkspaceNotFound({ error }: WorkspaceNotFoundProps) {
             <Alert
                 theme="warning"
                 title="Workspace not found"
-                message={error || 'This workspace does not exist (or isn't available).'}
+                message={error || "This workspace does not exist (or isn't available)."}
             />
             <div className="workspace-page__notfound-actions">
                 <Button view="action" size="l" onClick={() => navigate('/dashboard')}>

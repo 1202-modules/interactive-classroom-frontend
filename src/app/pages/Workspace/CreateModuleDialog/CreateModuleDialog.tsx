@@ -1,10 +1,10 @@
 import {Button, Dialog} from '@gravity-ui/uikit';
-import type {ActivityModuleType} from '../../types/workspace';
+import type {ActivityModuleType} from '../../../types/workspace';
 import {PollModuleForm} from '../ModuleForms/PollModuleForm';
 import {QuizModuleForm} from '../ModuleForms/QuizModuleForm';
 import {QuestionsModuleForm} from '../ModuleForms/QuestionsModuleForm';
 import {TimerModuleForm} from '../ModuleForms/TimerModuleForm';
-import type {useModuleForm} from '../../hooks/useModuleForm';
+import type {useModuleForm} from '../../../hooks/useModuleForm';
 
 type ModuleFormHook = ReturnType<typeof useModuleForm>;
 

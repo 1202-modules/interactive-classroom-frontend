@@ -1,6 +1,6 @@
 import {Card, Icon, Text} from '@gravity-ui/uikit';
 import {Plus} from '@gravity-ui/icons';
-import type {ActivityModuleType} from '../../types/workspace';
+import type {ActivityModuleType} from '../../../types/workspace';
 
 interface ModulePlusCardProps {
     type: ActivityModuleType;

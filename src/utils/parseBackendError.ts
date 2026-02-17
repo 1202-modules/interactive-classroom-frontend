@@ -11,7 +11,7 @@ export type ValidationDetail = {
 };
 
 export type BackendError = {
-    detail?: string | ValidationDetail[];
+    detail?: string | ValidationDetail[] | Array<{ msg?: string }>;
 };
 
 export function parseBackendError(
@@ -20,9 +20,12 @@ export function parseBackendError(
 ): string {
     if (!data) return fallback;
     if (typeof data === 'string') return data;
-    if (typeof data.detail === 'string') return data.detail;
-    if (Array.isArray(data.detail) && data.detail.length > 0) {
-        return data.detail[0].msg || fallback;
+    if (typeof (data as BackendError).detail === 'string') return (data as BackendError).detail as string;
+    const detail = (data as BackendError).detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+        const first = detail[0];
+        const msg = typeof first === 'object' && first && 'msg' in first ? first.msg : (first as ValidationDetail).msg;
+        return msg || fallback;
     }
     return fallback;
 }
