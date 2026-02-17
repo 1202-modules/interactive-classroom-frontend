@@ -110,7 +110,9 @@ export default function WorkspacePage() {
     const createSession = useCreateSession({
         workspaceId,
         api,
-        onSuccess: (session) => session && workspaceSessions.addSession(session),
+        onSuccess: (session) => {
+                    if (session) workspaceSessions.addSession(session);
+                },
     });
 
     const saveSettings = useWorkspaceSaveSettings({
