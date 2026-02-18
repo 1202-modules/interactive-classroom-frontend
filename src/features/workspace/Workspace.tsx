@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     Breadcrumbs,
@@ -61,41 +61,41 @@ export default function WorkspacePage() {
         loadOrganizations();
     }, [api]);
 
+    const refetchWorkspace = useCallback(async () => {
+        if (!Number.isFinite(workspaceId)) return;
+        setWorkspaceError(null);
+        try {
+            const res = await api.get<Workspace>(`/workspaces/${workspaceId}`);
+            setWorkspace(res.data);
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { status?: number; data?: unknown } };
+            const message = parseBackendError(
+                axiosErr?.response?.data,
+                'Failed to load workspace',
+            );
+            setWorkspaceError(message);
+            if (axiosErr?.response?.status === 404) setWorkspace(null);
+        }
+    }, [api, workspaceId]);
+
     useEffect(() => {
         if (!Number.isFinite(workspaceId)) return;
         let cancelled = false;
-        const fetchWorkspace = async () => {
-            setWorkspaceLoading(true);
-            setWorkspaceError(null);
-            try {
-                const res = await api.get<Workspace>(`/workspaces/${workspaceId}`);
-                if (!cancelled) {
-                    setWorkspace(res.data);
-                }
-            } catch (err: unknown) {
-                if (cancelled) return;
-                const axiosErr = err as { response?: { status?: number; data?: unknown } };
-                const status = axiosErr?.response?.status;
-                const message = parseBackendError(
-                    axiosErr?.response?.data,
-                    'Failed to load workspace',
-                );
-                setWorkspaceError(message);
-                if (status === 404) setWorkspace(null);
-            } finally {
-                if (!cancelled) setWorkspaceLoading(false);
-            }
-        };
-        fetchWorkspace();
+        setWorkspaceLoading(true);
+        refetchWorkspace().finally(() => {
+            if (!cancelled) setWorkspaceLoading(false);
+        });
         return () => {
             cancelled = true;
         };
-    }, [api, workspaceId]);
+    }, [refetchWorkspace, workspaceId]);
 
     // Use hooks for state management
     const workspaceSettings = useWorkspaceSettings(workspace || undefined);
     const workspaceModules = useWorkspaceModules(workspaceId);
-    const workspaceSessions = useWorkspaceSessions(workspaceId);
+    const workspaceSessions = useWorkspaceSessions(workspaceId, {
+        onSessionsChange: refetchWorkspace,
+    });
     const moduleForm = useModuleForm(
         workspaceModules.createModuleType,
         workspaceModules.isCreateModuleOpen,
@@ -117,8 +117,6 @@ export default function WorkspacePage() {
             if (session) {
                 workspaceSessions.addSession(session);
                 workspaceSessions.startSessionFilterTransition('active');
-                // Do not refetch here: it can return a list without the new session and overwrite addSession.
-                // List is refetched on mount when user returns to workspace (with cache-busting).
             }
         },
     });

@@ -26,35 +26,38 @@ function normalizeCreatedSession(data: Partial<Session> & { id: number }, worksp
     };
 }
 
+export type CreateSessionSettings = {
+    defaultSessionDuration: '30' | '60' | '90' | '120' | '240' | 'custom';
+    customSessionDuration: string;
+    maxParticipants: '10' | '50' | '100' | '200' | '400' | 'custom';
+    customMaxParticipants: string;
+    participantEntryMode: 'anonymous' | 'registered' | 'sso' | 'email_code';
+    ssoOrganizationId: number | null;
+    emailCodeDomainsWhitelist: string[];
+};
+
+const defaultSessionSettings: CreateSessionSettings = {
+    defaultSessionDuration: '60',
+    customSessionDuration: '60',
+    maxParticipants: '50',
+    customMaxParticipants: '50',
+    participantEntryMode: 'anonymous',
+    ssoOrganizationId: null,
+    emailCodeDomainsWhitelist: [],
+};
+
 export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessionOptions) {
     const navigate = useNavigate();
     const [name, setName] = useState('');
-    const [sessionSettings, setSessionSettings] = useState<{
-        defaultSessionDuration: '30' | '60' | '90' | '120' | '240' | 'custom';
-        customSessionDuration: string;
-        maxParticipants: '10' | '50' | '100' | '200' | '400' | 'custom';
-        customMaxParticipants: string;
-        participantEntryMode: 'anonymous' | 'registered' | 'sso' | 'email_code';
-        ssoOrganizationId: number | null;
-        emailCodeDomainsWhitelist: string[];
-    } | null>(null);
+    const [sessionSettings, setSessionSettings] = useState<CreateSessionSettings | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
-    const open = useCallback((initialSettings?: {
-        defaultSessionDuration: '30' | '60' | '90' | '120' | '240' | 'custom';
-        customSessionDuration: string;
-        maxParticipants: '10' | '50' | '100' | '200' | '400' | 'custom';
-        customMaxParticipants: string;
-        participantEntryMode: 'anonymous' | 'registered' | 'sso' | 'email_code';
-        ssoOrganizationId: number | null;
-        emailCodeDomainsWhitelist: string[];
-    }) => {
+    const open = useCallback((initialSettings?: CreateSessionSettings) => {
         setError(null);
-        if (initialSettings) {
-            setSessionSettings(initialSettings);
-        }
+        setName('');
+        setSessionSettings(initialSettings ?? defaultSessionSettings);
         setIsOpen(true);
     }, []);
 
@@ -62,8 +65,7 @@ export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessi
         if (isLoading) return;
         setIsOpen(false);
         setError(null);
-        setName('');
-        setSessionSettings(null);
+        /* Keep name and sessionSettings until next open so the dialog doesn't flash to "just Name" during close animation */
     }, [isLoading]);
 
     const focusField = useCallback((fieldId: string) => {

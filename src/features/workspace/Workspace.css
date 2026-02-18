@@ -759,8 +759,28 @@
 }
 
 /* Create session dialog: width limited to Session duration row + padding */
+/* Adaptive width: dialog panel and content fit Session duration row + padding */
 .create-session-dialog {
-  --g-dialog-width: min(460px, calc(100vw - 2 * var(--g-spacing-6)));
+  --g-dialog-width: fit-content;
+}
+
+.create-session-dialog .g-dialog {
+  width: fit-content !important;
+  min-width: 460px;
+  max-width: calc(100vw - 2 * var(--g-spacing-6));
+}
+
+.create-session-dialog .g-dialog-body {
+  width: fit-content;
+  box-sizing: border-box;
+}
+
+.create-session-dialog .workspace-page__module-form {
+  width: fit-content;
+}
+
+.create-session-dialog .g-dialog-footer__children {
+  gap: var(--g-spacing-3);
 }
 
 

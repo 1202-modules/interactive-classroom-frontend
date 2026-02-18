@@ -4,8 +4,12 @@ import { useApi } from '@/shared/hooks/useApi';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { SESSION_FIELDS, fieldsToString } from '@/shared/api/fields';
 
-export function useWorkspaceSessions(workspaceId: number) {
+export function useWorkspaceSessions(
+    workspaceId: number,
+    options?: { onSessionsChange?: () => void },
+) {
     const api = useApi();
+    const onSessionsChange = options?.onSessionsChange;
     const [sessions, setSessions] = useState<Session[]>([]);
     const [sessionQuery, setSessionQuery] = useState('');
     const [sessionStatus, setSessionStatus] = useState<SessionStatus>('active');
@@ -108,6 +112,7 @@ export function useWorkspaceSessions(workspaceId: number) {
         try {
             if (next === 'trash') {
                 await api.delete(`/sessions/${sessionId}`);
+                onSessionsChange?.();
                 return;
             }
 
@@ -131,6 +136,7 @@ export function useWorkspaceSessions(workspaceId: number) {
                     ),
                 );
             }
+            onSessionsChange?.();
         } catch (err: unknown) {
             setError(
                 parseBackendError(
@@ -214,6 +220,7 @@ export function useWorkspaceSessions(workspaceId: number) {
                     ),
                 );
             }
+            onSessionsChange?.();
         } catch (err: unknown) {
             setError(
                 parseBackendError(
@@ -235,6 +242,7 @@ export function useWorkspaceSessions(workspaceId: number) {
 
         try {
             await api.delete(`/sessions/${sessionId}/permanent`);
+            onSessionsChange?.();
         } catch (err: unknown) {
             setError(
                 parseBackendError(
