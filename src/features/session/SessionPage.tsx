@@ -9,6 +9,7 @@ import {
     TabList,
     TabProvider,
     Text,
+    Tooltip,
 } from '@gravity-ui/uikit';
 import {ArrowLeft, ChevronDown, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
 
@@ -97,19 +98,25 @@ export default function SessionPage() {
                                     ? `${participants.length} participants`
                                     : `${activeParticipantsCount} active · ${participants.length} total participants`}
                             </Text>
-                            <button
-                                type="button"
-                                className={`session-page__passcode-badge${canCopyPasscode ? ' session-page__passcode-badge_clickable' : ''}`}
-                                onClick={canCopyPasscode ? async () => {
-                                    await handleCopySessionLink();
-                                    setPasscodeCopied(true);
-                                    setTimeout(() => setPasscodeCopied(false), 2000);
-                                } : undefined}
-                                disabled={!canCopyPasscode}
-                                title={canCopyPasscode ? 'Copy session link' : undefined}
+                            <Tooltip
+                                content="Link copied!"
+                                open={passcodeCopied}
+                                onOpenChange={(o) => !o && setPasscodeCopied(false)}
                             >
-                                {passcodeCopied ? 'Link copied!' : `Code: ${sessionPasscode}`}
-                            </button>
+                                <button
+                                    type="button"
+                                    className={`session-page__passcode-badge${canCopyPasscode ? ' session-page__passcode-badge_clickable' : ''}`}
+                                    onClick={canCopyPasscode ? async () => {
+                                        await handleCopySessionLink();
+                                        setPasscodeCopied(true);
+                                        setTimeout(() => setPasscodeCopied(false), 2000);
+                                    } : undefined}
+                                    disabled={!canCopyPasscode}
+                                    title={canCopyPasscode ? 'Copy session link' : undefined}
+                                >
+                                    Code: {sessionPasscode}
+                                </button>
+                            </Tooltip>
                         </div>
                     </div>
                 </div>

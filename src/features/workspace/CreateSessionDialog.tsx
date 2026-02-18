@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, Text, TextInput } from '@gravity-ui/uikit';
+import { Alert, Button, Dialog, Divider, Text, TextInput } from '@gravity-ui/uikit';
 
 interface CreateSessionDialogProps {
     open: boolean;
@@ -27,7 +27,7 @@ export function CreateSessionDialog({
         <Dialog
             open={open}
             onClose={onClose}
-            size="s"
+            size="m"
             className="workspace-page__module-rename-dialog"
         >
             <Dialog.Header caption="Create session" />
@@ -48,7 +48,17 @@ export function CreateSessionDialog({
                             placeholder="Session name"
                         />
                     </div>
-                    {sessionSettingsSection}
+                    {sessionSettingsSection && (
+                        <>
+                            <Divider />
+                            <div className="workspace-page__module-form-field">
+                                <Text variant="subheader-2" className="workspace-page__settings-label">
+                                    Session settings
+                                </Text>
+                            </div>
+                            {sessionSettingsSection}
+                        </>
+                    )}
                 </div>
             </Dialog.Body>
             <Dialog.Footer>

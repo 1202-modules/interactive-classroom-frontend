@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, DropdownMenu, Icon, Text } from '@gravity-ui/uikit';
+import { Button, Card, DropdownMenu, Icon, Text, Tooltip } from '@gravity-ui/uikit';
 import {
     Archive,
     ArrowRotateLeft,
@@ -125,23 +125,29 @@ export function SessionCard({
                         <Text variant="body-2" color="secondary">
                             Passcode:
                         </Text>
-                        <button
-                            type="button"
-                            className="workspace-session__mono workspace-session__mono_clickable"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const url = INVITE_URL(session.passcode || '');
-                                if (url) {
-                                    navigator.clipboard.writeText(url);
-                                    setPasscodeCopied(true);
-                                    setTimeout(() => setPasscodeCopied(false), 2000);
-                                }
-                            }}
-                            disabled={!session.passcode}
-                            title={session.passcode ? 'Copy session link' : undefined}
+                        <Tooltip
+                            content="Link copied!"
+                            open={passcodeCopied}
+                            onOpenChange={(o) => !o && setPasscodeCopied(false)}
                         >
-                            {passcodeCopied ? 'Link copied!' : session.passcode || '—'}
-                        </button>
+                            <button
+                                type="button"
+                                className="workspace-session__mono workspace-session__mono_clickable"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const url = INVITE_URL(session.passcode || '');
+                                    if (url) {
+                                        navigator.clipboard.writeText(url);
+                                        setPasscodeCopied(true);
+                                        setTimeout(() => setPasscodeCopied(false), 2000);
+                                    }
+                                }}
+                                disabled={!session.passcode}
+                                title={session.passcode ? 'Copy session link' : undefined}
+                            >
+                                {session.passcode || '—'}
+                            </button>
+                        </Tooltip>
                     </div>
                     <div className="workspace-session__detail">
                         <Text variant="body-2" color="secondary">

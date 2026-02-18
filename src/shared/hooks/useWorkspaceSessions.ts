@@ -25,6 +25,7 @@ export function useWorkspaceSessions(workspaceId: number) {
                 {
                     params: {
                         fields: fieldsToString(SESSION_FIELDS.LIST),
+                        _: Date.now(), // cache-bust so list is fresh after create/return
                     },
                 },
             );

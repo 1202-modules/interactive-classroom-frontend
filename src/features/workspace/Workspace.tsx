@@ -24,7 +24,7 @@ import { WorkspaceSessionsTab } from './WorkspaceSessionsTab';
 import { WorkspaceSettingsTab } from './WorkspaceSettingsTab';
 import { WorkspaceModulesTab } from './WorkspaceModulesTab';
 import { CreateSessionDialog } from './CreateSessionDialog';
-import { SessionDefaultsSummary } from './SessionDefaultsSummary';
+import { CreateSessionSettingsForm } from './CreateSessionSettingsForm';
 import { RenameModuleDialog } from './RenameModuleDialog';
 import './Workspace.css';
 
@@ -113,14 +113,16 @@ export default function WorkspacePage() {
     const createSession = useCreateSession({
         workspaceId,
         api,
-        onSuccess: async (session) => {
+        onSuccess: (session) => {
             if (session) {
                 workspaceSessions.addSession(session);
                 workspaceSessions.startSessionFilterTransition('active');
-                await workspaceSessions.refetch();
+                // Do not refetch here: it can return a list without the new session and overwrite addSession.
+                // List is refetched on mount when user returns to workspace (with cache-busting).
             }
         },
     });
+
 
     const saveSettings = useWorkspaceSaveSettings({
         workspaceId,
@@ -244,7 +246,15 @@ export default function WorkspacePage() {
                 <WorkspaceSessionsTab
                     workspaceId={workspaceId}
                     workspaceSessions={workspaceSessions}
-                    onCreateSession={createSession.open}
+                    onCreateSession={() => createSession.open({
+                        defaultSessionDuration: workspaceSettings.defaultSessionDuration,
+                        customSessionDuration: workspaceSettings.customSessionDuration,
+                        maxParticipants: workspaceSettings.maxParticipants,
+                        customMaxParticipants: workspaceSettings.customMaxParticipants,
+                        participantEntryMode: workspaceSettings.participantEntryMode,
+                        ssoOrganizationId: workspaceSettings.ssoOrganizationId,
+                        emailCodeDomainsWhitelist: workspaceSettings.emailCodeDomainsWhitelist,
+                    })}
                     onNavigate={(wId, sId) => navigate(`/workspace/${wId}/session/${sId}`)}
                 />
             )}
@@ -282,7 +292,16 @@ export default function WorkspacePage() {
                 onSubmit={createSession.submit}
                 nameInputId="create-session-name"
                 sessionSettingsSection={
-                    <SessionDefaultsSummary workspaceSettings={workspaceSettings} />
+                    createSession.sessionSettings ? (
+                        <CreateSessionSettingsForm
+                            workspaceSettings={workspaceSettings}
+                            sessionSettings={createSession.sessionSettings}
+                            onSessionSettingsChange={createSession.setSessionSettings}
+                            organizations={organizations}
+                            parseIntSafe={workspaceSettings.parseIntSafe}
+                            clamp={workspaceSettings.clamp}
+                        />
+                    ) : null
                 }
             />
 
