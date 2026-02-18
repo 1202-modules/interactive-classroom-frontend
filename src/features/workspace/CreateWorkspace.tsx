@@ -4,7 +4,6 @@ import {
     Alert,
     Breadcrumbs,
     Button,
-    Card,
     Text,
     TextArea,
     TextInput,
@@ -204,6 +203,20 @@ export default function CreateWorkspacePage() {
                                 rows={4}
                             />
                         </div>
+                        <div className="workspace-page__settings-actions">
+                            <Button view="outlined" size="l" onClick={handleReset}>
+                                Reset to defaults
+                            </Button>
+                            <Button
+                                view="action"
+                                size="l"
+                                onClick={handleCreate}
+                                loading={isSubmitting}
+                                disabled={!canSubmit}
+                            >
+                                Create workspace
+                            </Button>
+                        </div>
                     </SettingsCard>
 
                     <SessionDefaults
@@ -255,23 +268,6 @@ export default function CreateWorkspacePage() {
                             parseIntSafe={workspaceSettings.parseIntSafe}
                         />
                     )}
-
-                    <Card view="outlined" className="workspace-page__settings-card">
-                        <div className="workspace-page__settings-actions">
-                            <Button view="outlined" size="l" onClick={handleReset}>
-                                Reset to defaults
-                            </Button>
-                            <Button
-                                view="action"
-                                size="l"
-                                onClick={handleCreate}
-                                loading={isSubmitting}
-                                disabled={!canSubmit}
-                            >
-                                Create workspace
-                            </Button>
-                        </div>
-                    </Card>
                 </div>
             </div>
         </div>
