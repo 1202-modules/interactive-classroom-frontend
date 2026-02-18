@@ -25,3 +25,15 @@ export async function getParticipantsBySessionId(
     );
     return res.data;
 }
+
+export async function patchParticipant(
+    apiClient: AxiosInstance,
+    sessionId: number,
+    participantId: number,
+    body: { is_banned?: boolean },
+): Promise<void> {
+    await apiClient.patch(
+        `/sessions/${sessionId}/participants/${participantId}`,
+        body,
+    );
+}

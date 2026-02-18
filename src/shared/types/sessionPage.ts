@@ -31,6 +31,7 @@ export type Participant = {
     joined_at: string;
     is_active: boolean;
     auth_type: 'anonymous' | 'registered' | 'sso' | 'email';
+    is_banned?: boolean;
 };
 
 // Session module (в сессии)

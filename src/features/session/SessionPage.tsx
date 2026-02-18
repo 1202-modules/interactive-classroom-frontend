@@ -67,6 +67,7 @@ export default function SessionPage() {
         handleDragStart,
         handleDragEnd,
         fetchSessionModules,
+        fetchParticipants,
     } = useSessionDetail();
 
     const [editSessionModule, setEditSessionModule] = useState<SessionModule | null>(null);
@@ -223,7 +224,7 @@ export default function SessionPage() {
                 <TabProvider value={mainTab} onUpdate={(v: string) => setMainTab(v as MainTab)}>
                     <TabList size="l" className="session-page__main-tabs">
                         <Tab value="modules">Session modules</Tab>
-                        <Tab value="inspect">Inspect & Participants</Tab>
+                        <Tab value="inspect">Participants & Inspect</Tab>
                         <Tab value="settings">Settings</Tab>
                     </TabList>
                 </TabProvider>
@@ -267,7 +268,10 @@ export default function SessionPage() {
                         participantSearch={participantSearch}
                         onParticipantSearchChange={setParticipantSearch}
                         filteredParticipants={filteredParticipants}
-                        participantsOnly
+                        activeModule={activeModule}
+                        sessionId={String(sessionId ?? '')}
+                        sessionPasscode={sessionPasscode ?? undefined}
+                        onRefetchParticipants={fetchParticipants}
                     />
                 )}
 
@@ -278,8 +282,6 @@ export default function SessionPage() {
                             description="Configure preferences for this session."
                             sessionName={sessionSettings.sessionName}
                             onSessionNameChange={sessionSettings.setSessionName}
-                            onSave={sessionSettings.saveSession}
-                            isSaving={sessionSettings.isSaving}
                             saveError={sessionSettings.error}
                             defaultSessionDuration={sessionSettings.defaultSessionDuration}
                             onDefaultSessionDurationChange={

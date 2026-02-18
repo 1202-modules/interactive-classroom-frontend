@@ -23,9 +23,6 @@ interface SessionDefaultsProps {
     /** Session name (when editing a session) */
     sessionName?: string;
     onSessionNameChange?: (name: string) => void;
-    /** Save button (when editing a session) */
-    onSave?: () => void;
-    isSaving?: boolean;
     saveError?: string | null;
     defaultSessionDuration: '30' | '60' | '90' | '120' | '240' | 'custom';
     onDefaultSessionDurationChange: (
@@ -70,8 +67,6 @@ export function SessionDefaults({
     description: descriptionProp,
     sessionName,
     onSessionNameChange,
-    onSave,
-    isSaving,
     saveError,
     defaultSessionDuration,
     onDefaultSessionDurationChange,
@@ -147,7 +142,7 @@ export function SessionDefaults({
             }
         >
             {sessionName !== undefined && onSessionNameChange && (
-                <div className="workspace-page__settings-field">
+                <div className="workspace-page__settings-field session-page__settings-field-narrow">
                     <Text variant="body-1" className="workspace-page__settings-label">
                         Name
                     </Text>
@@ -349,7 +344,10 @@ export function SessionDefaults({
                     </div>
                 )}
                 {participantEntryMode === 'email_code' && (
-                    <div className="workspace-page__settings-field" style={{marginTop: 'var(--g-spacing-3)'}}>
+                    <div
+                        className={`workspace-page__settings-field ${sessionName !== undefined ? 'session-page__settings-field-narrow' : ''}`}
+                        style={{marginTop: 'var(--g-spacing-3)'}}
+                    >
                         <Text variant="body-1" className="workspace-page__settings-label">
                             Allowed email domains
                         </Text>
@@ -495,13 +493,6 @@ export function SessionDefaults({
                 </Text>
             </div>
 
-            {onSave && (
-                <div className="workspace-page__settings-field" style={{marginTop: 'var(--g-spacing-4)'}}>
-                    <Button view="action" onClick={onSave} loading={isSaving}>
-                        Save
-                    </Button>
-                </div>
-            )}
         </SettingsCard>
     );
 }

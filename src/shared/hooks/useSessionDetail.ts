@@ -100,6 +100,7 @@ export function useSessionDetail() {
                 joined_at: p.created_at ?? '',
                 is_active: p.is_active,
                 auth_type: p.participant_type as Participant['auth_type'],
+                is_banned: p.is_banned,
             }));
             setParticipants(items);
             setActiveParticipantsCount(res.active_count ?? items.filter((p) => p.is_active).length);
@@ -267,8 +268,10 @@ export function useSessionDetail() {
                 overId === 'module-queue-zone' || sessionModules.some((m) => m.id === overId);
             const overIsActive = overId === 'active-module-zone';
             const queueLength = sessionModules.filter((m) => !m.is_active).length;
+            const hasActive = sessionModules.some((m) => m.is_active);
             const canAddToQueue = queueLength < 3;
-            if (overIsActive) {
+            const canAddToActive = !hasActive || canAddToQueue;
+            if (overIsActive && canAddToActive) {
                 handleAddFromWorkspace(workspaceModuleId, {activate: true});
             } else if (overIsQueue && canAddToQueue) {
                 handleAddFromWorkspace(workspaceModuleId, {activate: false});
@@ -380,5 +383,6 @@ export function useSessionDetail() {
         handleRegeneratePasscode,
         regeneratePasscodeLoading,
         fetchSessionModules,
+        fetchParticipants,
     };
 }

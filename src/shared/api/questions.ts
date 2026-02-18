@@ -6,6 +6,20 @@ import type {
     QuestionMessageItem,
 } from '@/shared/types/questions';
 
+/** Lecturer: list messages with real author. Uses session id and auth. */
+export async function getQuestionMessagesLecturer(
+    apiClient: AxiosInstance,
+    sessionId: number,
+    moduleId: number,
+    params?: { limit?: number; offset?: number },
+): Promise<QuestionMessagesResponse> {
+    const res = await apiClient.get<QuestionMessagesResponse>(
+        `/sessions/${sessionId}/modules/${moduleId}/questions/messages`,
+        { params },
+    );
+    return res.data;
+}
+
 export async function getQuestionMessages(
     apiClient: AxiosInstance,
     passcode: string,
@@ -36,6 +50,21 @@ export async function createQuestionMessage(
         {
             headers: { Authorization: `Bearer ${authToken}` },
         },
+    );
+    return res.data;
+}
+
+/** Lecturer: patch message (is_answered, delete, pin, unpin). */
+export async function patchQuestionMessageLecturer(
+    apiClient: AxiosInstance,
+    sessionId: number,
+    moduleId: number,
+    msgId: number,
+    body: { is_answered?: boolean; delete?: boolean; pin?: boolean; unpin?: boolean },
+): Promise<QuestionMessageItem | { deleted: boolean }> {
+    const res = await apiClient.patch<QuestionMessageItem | { deleted: boolean }>(
+        `/sessions/${sessionId}/modules/${moduleId}/questions/${msgId}`,
+        body,
     );
     return res.data;
 }

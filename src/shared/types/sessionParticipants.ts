@@ -3,6 +3,7 @@ export interface SessionParticipantItem {
     display_name: string | null;
     participant_type: string;
     is_active: boolean;
+    is_banned?: boolean;
     created_at?: string | null;
 }
 

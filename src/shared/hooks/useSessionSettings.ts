@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {WeekDay} from '@/shared/types/workspace';
 import type {SessionInfo} from '@/shared/types/sessionPage';
 import {generateTimeOptions} from '@/shared/utils/timeOptions';
@@ -94,6 +94,9 @@ export function useSessionSettings(
 
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const justSyncedRef = useRef(true);
+    const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const DEBOUNCE_MS = 500;
 
     useEffect(() => {
         if (sessionInfo) {
@@ -131,6 +134,7 @@ export function useSessionSettings(
             if (Array.isArray(emailDomains)) {
                 setEmailCodeDomainsWhitelist(emailDomains.filter((d): d is string => typeof d === 'string'));
             }
+            justSyncedRef.current = true;
         }
     }, [sessionInfo]);
 
@@ -202,6 +206,35 @@ export function useSessionSettings(
         parseIntSafe,
         clamp,
         onSaved,
+    ]);
+
+    // Auto-save when user changes any setting (debounced); skip right after load from server
+    useEffect(() => {
+        if (!Number.isFinite(sessionId)) return;
+        if (justSyncedRef.current) {
+            justSyncedRef.current = false;
+            return;
+        }
+        if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+        saveDebounceRef.current = setTimeout(() => {
+            saveDebounceRef.current = null;
+            saveSession();
+        }, DEBOUNCE_MS);
+        return () => {
+            if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+        };
+    }, [
+        sessionId,
+        sessionName,
+        sessionDescription,
+        defaultSessionDuration,
+        customSessionDuration,
+        maxParticipants,
+        customMaxParticipants,
+        participantEntryMode,
+        ssoOrganizationId,
+        emailCodeDomainsWhitelist,
+        saveSession,
     ]);
 
     return {
