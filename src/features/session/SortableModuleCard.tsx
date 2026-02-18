@@ -1,4 +1,4 @@
-import {Card, Button, Icon, Label, Text} from '@gravity-ui/uikit';
+import {Card, Button, Icon, Text} from '@gravity-ui/uikit';
 import {Bars, CirclePlay, Pencil, TrashBin} from '@gravity-ui/icons';
 import {useSortable} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
@@ -9,9 +9,10 @@ type SortableModuleCardProps = {
     module: SessionModule;
     onActivate: () => void;
     onRemove: () => void;
+    onEdit: () => void;
 };
 
-export function SortableModuleCard({module, onActivate, onRemove}: SortableModuleCardProps) {
+export function SortableModuleCard({module, onActivate, onRemove, onEdit}: SortableModuleCardProps) {
     const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
         id: module.id,
     });
@@ -29,9 +30,7 @@ export function SortableModuleCard({module, onActivate, onRemove}: SortableModul
             ref={setNodeRef}
             style={style}
             view="outlined"
-            className={`session-page__module-card ${
-                module.is_active ? 'session-page__module-card_active' : ''
-            }`}
+            className="session-page__module-card"
             {...attributes}
             {...listeners}
         >
@@ -41,23 +40,16 @@ export function SortableModuleCard({module, onActivate, onRemove}: SortableModul
                 </div>
                 <Icon data={ModuleIcon} size={18} />
                 <Text variant="body-2">{module.name}</Text>
-                {module.is_active && (
-                    <Label theme="success" size="s">
-                        Active
-                    </Label>
-                )}
             </div>
             <div className="session-page__module-card-actions">
-                {!module.is_active && (
-                    <Button view="outlined-success" size="s" onClick={onActivate}>
-                        <Icon data={CirclePlay} size={14} />
-                        Activate
-                    </Button>
-                )}
-                <Button view="flat" size="s">
+                <Button view="outlined-success" size="s" onClick={(e) => { e.stopPropagation(); onActivate(); }}>
+                    <Icon data={CirclePlay} size={14} />
+                    To active
+                </Button>
+                <Button view="flat" size="s" onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit module">
                     <Icon data={Pencil} size={14} />
                 </Button>
-                <Button view="flat" size="s" onClick={onRemove}>
+                <Button view="flat" size="s" onClick={(e) => { e.stopPropagation(); onRemove(); }} title="Remove from queue">
                     <Icon data={TrashBin} size={14} />
                 </Button>
             </div>

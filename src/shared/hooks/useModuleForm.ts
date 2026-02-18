@@ -23,13 +23,14 @@ function getNextModuleName(
 ): string {
     const prefix = DEFAULT_PREFIX_BY_TYPE[type];
     const usedNumbers = new Set<number>();
+    const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (const name of existingNames) {
-        const match = name.match(new RegExp(`^${prefix}-(\\d+)$`));
+        const match = name.match(new RegExp(`^${escaped} \\((\\d+)\\)$`));
         if (match) usedNumbers.add(parseInt(match[1], 10));
     }
     let n = 1;
     while (usedNumbers.has(n)) n++;
-    return `${prefix}-${n}`;
+    return `${prefix} (${n})`;
 }
 
 export function useModuleForm(

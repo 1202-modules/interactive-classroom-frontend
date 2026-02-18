@@ -3,11 +3,14 @@ export type SessionInfo = {
     id: number;
     workspace_id: number;
     name: string;
+    description?: string | null;
     is_stopped: boolean;
     start_datetime?: string | null;
     end_datetime?: string | null;
     status?: string | null;
     passcode?: string | null;
+    /** Merged session settings (template + custom) */
+    settings?: Record<string, unknown> | null;
 };
 
 export type SessionModuleApi = {

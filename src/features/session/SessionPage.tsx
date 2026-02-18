@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     Button,
     Divider,
@@ -14,10 +14,14 @@ import {
 import {ArrowLeft, ArrowsRotateLeft, ChevronDown, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
 
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
+import {EditSessionModuleDialog} from './EditSessionModuleDialog';
 import {SessionModulesTab} from './SessionModulesTab';
 import {SessionPreviewTab} from './SessionPreviewTab';
 import {SessionInviteModal} from './SessionInviteModal';
+import type {SessionModule} from '@/shared/types/sessionPage';
+import type {WorkspaceActivityModule} from '@/shared/types/workspace';
 import {useSessionDetail, type MainTab} from '@/shared/hooks/useSessionDetail';
+import {useModuleForm} from '@/shared/hooks/useModuleForm';
 import '../workspace/Workspace.css';
 import './SessionPage.css';
 
@@ -25,6 +29,8 @@ export default function SessionPage() {
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
     const [passcodeCopied, setPasscodeCopied] = useState(false);
     const {
+        workspaceId,
+        sessionId,
         sessionInfo,
         sessionLoading,
         sessionModules,
@@ -52,12 +58,40 @@ export default function SessionPage() {
         handleOpenPresentation,
         handleCopyPresentationLink,
         handleBackToWorkspace,
+        handleOpenWorkspaceModuleEdit,
+        handleOpenWorkspaceModules,
         handleActivateModule,
         handleRemoveModule,
+        handleDeactivateModule,
         handleAddFromWorkspace,
         handleDragStart,
         handleDragEnd,
+        fetchSessionModules,
     } = useSessionDetail();
+
+    const [editSessionModule, setEditSessionModule] = useState<SessionModule | null>(null);
+
+    const editSessionFakeModule = useMemo((): WorkspaceActivityModule | undefined => {
+        if (!editSessionModule) return undefined;
+        return {
+            id: editSessionModule.module_id,
+            type: editSessionModule.type,
+            name: editSessionModule.name,
+            description: '',
+            updated_at: '',
+            enabled: true,
+            used_in_sessions: 0,
+            config: { ...editSessionModule.config, type: editSessionModule.type } as WorkspaceActivityModule['config'],
+        };
+    }, [editSessionModule]);
+
+    const editSessionForm = useModuleForm(
+        editSessionModule?.type ?? 'questions',
+        editSessionModule != null,
+        editSessionModule?.type ?? 'questions',
+        editSessionFakeModule,
+        [],
+    );
 
     const sessionTitle = sessionLoading ? 'Loading…' : sessionInfo?.name || 'Session';
 
@@ -195,21 +229,36 @@ export default function SessionPage() {
                 </TabProvider>
 
                 {mainTab === 'modules' && (
-                    <SessionModulesTab
-                        sensors={sensors}
-                        activeModule={activeModule}
-                        queueModules={queueModules}
-                        sessionModulesLoading={sessionModulesLoading}
-                        workspaceModules={workspaceModules}
-                        isModuleSupported={isModuleSupported}
-                        activeId={activeId}
-                        sessionModules={sessionModules}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                        onActivateModule={handleActivateModule}
-                        onRemoveModule={handleRemoveModule}
-                        onAddFromWorkspace={(id) => handleAddFromWorkspace(id)}
-                    />
+                    <>
+                        <SessionModulesTab
+                            workspaceId={String(workspaceId ?? '')}
+                            sensors={sensors}
+                            activeModule={activeModule}
+                            queueModules={queueModules}
+                            sessionModulesLoading={sessionModulesLoading}
+                            workspaceModules={workspaceModules}
+                            isModuleSupported={isModuleSupported}
+                            activeId={activeId}
+                            sessionModules={sessionModules}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            onActivateModule={handleActivateModule}
+                            onRemoveModule={handleRemoveModule}
+                            onDeactivateModule={handleDeactivateModule}
+                            onAddFromWorkspace={(id) => handleAddFromWorkspace(id)}
+                            onEditWorkspaceModule={handleOpenWorkspaceModuleEdit}
+                            onEditSessionModule={setEditSessionModule}
+                            onCreateNewModule={handleOpenWorkspaceModules}
+                        />
+                        <EditSessionModuleDialog
+                            open={editSessionModule != null}
+                            sessionId={String(sessionId ?? '')}
+                            module={editSessionModule}
+                            formState={editSessionForm}
+                            onClose={() => setEditSessionModule(null)}
+                            onSaved={fetchSessionModules}
+                        />
+                    </>
                 )}
 
                 {mainTab === 'inspect' && (
@@ -227,6 +276,11 @@ export default function SessionPage() {
                         <SessionDefaults
                             title="Session settings"
                             description="Configure preferences for this session."
+                            sessionName={sessionSettings.sessionName}
+                            onSessionNameChange={sessionSettings.setSessionName}
+                            onSave={sessionSettings.saveSession}
+                            isSaving={sessionSettings.isSaving}
+                            saveError={sessionSettings.error}
                             defaultSessionDuration={sessionSettings.defaultSessionDuration}
                             onDefaultSessionDurationChange={
                                 sessionSettings.setDefaultSessionDuration

@@ -1,5 +1,6 @@
 import {useState, useCallback} from 'react';
 import {
+    Alert,
     Button,
     Divider,
     Icon,
@@ -19,6 +20,13 @@ interface SessionDefaultsProps {
     title?: string;
     /** Override description when used in Session page Settings */
     description?: string;
+    /** Session name (when editing a session) */
+    sessionName?: string;
+    onSessionNameChange?: (name: string) => void;
+    /** Save button (when editing a session) */
+    onSave?: () => void;
+    isSaving?: boolean;
+    saveError?: string | null;
     defaultSessionDuration: '30' | '60' | '90' | '120' | '240' | 'custom';
     onDefaultSessionDurationChange: (
         duration: '30' | '60' | '90' | '120' | '240' | 'custom',
@@ -60,6 +68,11 @@ interface SessionDefaultsProps {
 export function SessionDefaults({
     title: titleProp,
     description: descriptionProp,
+    sessionName,
+    onSessionNameChange,
+    onSave,
+    isSaving,
+    saveError,
     defaultSessionDuration,
     onDefaultSessionDurationChange,
     customSessionDuration,
@@ -133,6 +146,22 @@ export function SessionDefaults({
                 'Set default values and preferences for new sessions in this workspace.'
             }
         >
+            {sessionName !== undefined && onSessionNameChange && (
+                <div className="workspace-page__settings-field">
+                    <Text variant="body-1" className="workspace-page__settings-label">
+                        Name
+                    </Text>
+                    <TextInput
+                        value={sessionName}
+                        onUpdate={onSessionNameChange}
+                        size="l"
+                        placeholder="Session name"
+                    />
+                </div>
+            )}
+            {saveError && (
+                <Alert theme="danger" title="Failed to save" message={saveError} />
+            )}
             <div className="workspace-page__settings-field">
                 <Text variant="body-1" className="workspace-page__settings-label">
                     Session duration
@@ -465,6 +494,14 @@ export function SessionDefaults({
                     Automatically start sessions on selected days within the configured time window.
                 </Text>
             </div>
+
+            {onSave && (
+                <div className="workspace-page__settings-field" style={{marginTop: 'var(--g-spacing-4)'}}>
+                    <Button view="action" onClick={onSave} loading={isSaving}>
+                        Save
+                    </Button>
+                </div>
+            )}
         </SettingsCard>
     );
 }

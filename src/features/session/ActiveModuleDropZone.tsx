@@ -1,19 +1,19 @@
 import {useDroppable} from '@dnd-kit/core';
-import {Icon, Label, Text} from '@gravity-ui/uikit';
+import {Icon, Text} from '@gravity-ui/uikit';
 import {CirclePlay} from '@gravity-ui/icons';
 import type {SessionModule} from '@/shared/types/sessionPage';
-import {getModuleIcon} from '@/shared/utils/sessionModuleUtils';
+import {ActiveModuleCardDraggable} from './ActiveModuleCardDraggable';
 
 type ActiveModuleDropZoneProps = {
     activeModule: SessionModule | undefined;
+    onEdit?: () => void;
+    onMoveToQueue?: () => void;
 };
 
-export function ActiveModuleDropZone({activeModule}: ActiveModuleDropZoneProps) {
+export function ActiveModuleDropZone({activeModule, onEdit, onMoveToQueue}: ActiveModuleDropZoneProps) {
     const {setNodeRef, isOver} = useDroppable({
         id: 'active-module-zone',
     });
-
-    const ModuleIcon = activeModule ? getModuleIcon(activeModule.type) : CirclePlay;
 
     return (
         <div
@@ -23,11 +23,11 @@ export function ActiveModuleDropZone({activeModule}: ActiveModuleDropZoneProps) 
             } ${activeModule ? 'session-page__active-zone_filled' : ''}`}
         >
             {activeModule ? (
-                <>
-                    <Icon data={ModuleIcon} size={24} />
-                    <Text variant="header-2">{activeModule.name}</Text>
-                    <Label theme="success">Active</Label>
-                </>
+                <ActiveModuleCardDraggable
+                    module={activeModule}
+                    onEdit={onEdit}
+                    onMoveToQueue={onMoveToQueue}
+                />
             ) : (
                 <>
                     <Icon data={CirclePlay} size={32} />

@@ -31,11 +31,13 @@ export const SESSION_FIELDS = {
         'id',
         'workspace_id',
         'name',
+        'description',
         'is_stopped',
         'start_datetime',
         'end_datetime',
         'status',
         'passcode',
+        'settings',
     ] as const,
     UPDATE: [
         'id',

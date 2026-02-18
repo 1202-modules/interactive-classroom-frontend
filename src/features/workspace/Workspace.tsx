@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     Breadcrumbs,
@@ -148,12 +148,34 @@ export default function WorkspacePage() {
         return () => window.clearTimeout(timer);
     }, [activeTab]);
 
+    const editParamOpenedRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (activeTab !== 'modules') return;
+        const editId = searchParams.get('edit');
+        if (!editId || editParamOpenedRef.current === editId) return;
+        const id = parseInt(editId, 10);
+        if (!Number.isFinite(id)) return;
+        const module = workspaceModules.modules.find((m) => m.id === id);
+        if (module) {
+            editParamOpenedRef.current = editId;
+            setEditModule({type: module.type, module});
+            setIsEditModuleOpen(true);
+            setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete('edit');
+                return next;
+            });
+        }
+    }, [activeTab, searchParams, workspaceModules.modules, setSearchParams]);
+
     const handleEditModuleOpen = (module: WorkspaceActivityModule) => {
         setEditModule({type: module.type, module});
         setIsEditModuleOpen(true);
     };
 
     const handleEditModuleClose = () => {
+        editParamOpenedRef.current = null;
         setIsEditModuleOpen(false);
         setEditModule(null);
     };

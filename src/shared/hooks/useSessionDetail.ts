@@ -12,7 +12,7 @@ import {arrayMove} from '@dnd-kit/sortable';
 import type {Participant, SessionInfo, SessionModule, SessionModuleApi} from '@/shared/types/sessionPage';
 import type {WorkspaceActivityModule} from '@/shared/types/workspace';
 import {mapSessionModule} from '@/shared/utils/sessionModuleUtils';
-import {useWorkspaceSettings} from './useWorkspaceSettings';
+import {useSessionSettings} from './useSessionSettings';
 import {useWorkspaceModules} from './useWorkspaceModules';
 import {useApi} from '@/shared/hooks/useApi';
 import {SESSION_FIELDS, SESSION_MODULE_FIELDS, fieldsToString} from '@/shared/api/fields';
@@ -42,7 +42,6 @@ export function useSessionDetail() {
     const [participantSearch, setParticipantSearch] = useState('');
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    const sessionSettings = useWorkspaceSettings(undefined);
     const workspaceModules = useWorkspaceModules(workspaceIdNumber);
 
     const fetchSessionInfo = useCallback(async () => {
@@ -59,6 +58,10 @@ export function useSessionDetail() {
             setSessionLoading(false);
         }
     }, [api, isSessionIdValid, sessionIdNumber]);
+
+    const sessionSettings = useSessionSettings(sessionIdNumber, sessionInfo, {
+        onSaved: fetchSessionInfo,
+    });
 
     const fetchSessionModules = useCallback(async () => {
         if (!isSessionIdValid) return;
@@ -162,6 +165,17 @@ export function useSessionDetail() {
         navigate(`/workspace/${workspaceId}`);
     }, [navigate, workspaceId]);
 
+    const handleOpenWorkspaceModuleEdit = useCallback(
+        (workspaceModuleId: number) => {
+            navigate(`/workspace/${workspaceId}?tab=modules&edit=${workspaceModuleId}`);
+        },
+        [navigate, workspaceId],
+    );
+
+    const handleOpenWorkspaceModules = useCallback(() => {
+        navigate(`/workspace/${workspaceId}?tab=modules`);
+    }, [navigate, workspaceId]);
+
     const handleActivateModule = useCallback(async (moduleId: string) => {
         if (!isSessionIdValid) return;
         const numericId = Number(moduleId);
@@ -223,6 +237,16 @@ export function useSessionDetail() {
         }
     }, [api, isSessionIdValid, sessionIdNumber, workspaceModules.modules, handleActivateModule, fetchSessionModules]);
 
+    const handleDeactivateModule = useCallback(async () => {
+        if (!isSessionIdValid) return;
+        try {
+            await api.post(`/sessions/${sessionIdNumber}/modules/deactivate-active`);
+            await fetchSessionModules();
+        } catch {
+            await fetchSessionModules();
+        }
+    }, [api, isSessionIdValid, sessionIdNumber, fetchSessionModules]);
+
     const handleDragStart = useCallback((event: DragStartEvent) => {
         setActiveId(event.active.id as string);
     }, []);
@@ -242,14 +266,28 @@ export function useSessionDetail() {
             const overIsQueue =
                 overId === 'module-queue-zone' || sessionModules.some((m) => m.id === overId);
             const overIsActive = overId === 'active-module-zone';
-            if (overIsQueue || overIsActive) {
-                handleAddFromWorkspace(workspaceModuleId, {activate: overIsActive});
+            const queueLength = sessionModules.filter((m) => !m.is_active).length;
+            const canAddToQueue = queueLength < 3;
+            if (overIsActive) {
+                handleAddFromWorkspace(workspaceModuleId, {activate: true});
+            } else if (overIsQueue && canAddToQueue) {
+                handleAddFromWorkspace(workspaceModuleId, {activate: false});
             }
             return;
         }
 
         if (overId === 'active-module-zone') {
             handleActivateModule(activeIdStr);
+            return;
+        }
+
+        if (overId === 'remove-queue-zone') {
+            handleRemoveModule(activeIdStr);
+            return;
+        }
+
+        if (overId === 'module-queue-zone' && sessionModules.some((m) => m.id === activeIdStr && m.is_active)) {
+            handleDeactivateModule();
             return;
         }
 
@@ -267,7 +305,7 @@ export function useSessionDetail() {
                 return active ? [active, ...newQueue] : newQueue;
             });
         }
-    }, [sessionModules, workspaceModules.modules, handleActivateModule, handleAddFromWorkspace]);
+    }, [sessionModules, workspaceModules.modules, handleActivateModule, handleAddFromWorkspace, handleRemoveModule, handleDeactivateModule]);
 
     const filteredParticipants = useMemo(() => {
         if (!participantSearch) return participants;
@@ -326,8 +364,11 @@ export function useSessionDetail() {
         handleOpenPresentation,
         handleCopyPresentationLink,
         handleBackToWorkspace,
+        handleOpenWorkspaceModuleEdit,
+        handleOpenWorkspaceModules,
         handleActivateModule,
         handleRemoveModule,
+        handleDeactivateModule,
         handleAddFromWorkspace,
         handleDragStart,
         handleDragEnd,
@@ -338,5 +379,6 @@ export function useSessionDetail() {
         handleCopySessionLink,
         handleRegeneratePasscode,
         regeneratePasscodeLoading,
+        fetchSessionModules,
     };
 }
