@@ -113,10 +113,10 @@ export default function WorkspacePage() {
     const createSession = useCreateSession({
         workspaceId,
         api,
-        onSuccess: (session) => {
+        onSuccess: async (session) => {
             if (session) {
-                workspaceSessions.addSession(session);
                 workspaceSessions.startSessionFilterTransition('active');
+                await workspaceSessions.refetch(session);
             }
         },
     });
@@ -197,13 +197,6 @@ export default function WorkspacePage() {
     return (
         <div className="workspace-page">
             <div className="workspace-page__top">
-                <div className="workspace-page__breadcrumbs">
-                    <Breadcrumbs>
-                        <Breadcrumbs.Item onClick={() => navigate('/dashboard')}>
-                            Dashboard
-                        </Breadcrumbs.Item>
-                    </Breadcrumbs>
-                </div>
                 <PageHeader
                     title={workspace.name}
                     subtitle={workspace.description || 'No description'}
@@ -243,15 +236,26 @@ export default function WorkspacePage() {
                 <WorkspaceSessionsTab
                     workspaceId={workspaceId}
                     workspaceSessions={workspaceSessions}
-                    onCreateSession={() => createSession.open({
-                        defaultSessionDuration: workspaceSettings.defaultSessionDuration,
-                        customSessionDuration: workspaceSettings.customSessionDuration,
-                        maxParticipants: workspaceSettings.maxParticipants,
-                        customMaxParticipants: workspaceSettings.customMaxParticipants,
-                        participantEntryMode: workspaceSettings.participantEntryMode,
-                        ssoOrganizationId: workspaceSettings.ssoOrganizationId,
-                        emailCodeDomainsWhitelist: workspaceSettings.emailCodeDomainsWhitelist,
-                    })}
+                    onCreateSession={() => {
+                        const allSessions = workspaceSessions.sessions;
+                        const lastSession = allSessions.length > 0
+                            ? [...allSessions].sort((a, b) => 
+                                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                            )[0]
+                            : null;
+                        createSession.open(
+                            {
+                                defaultSessionDuration: workspaceSettings.defaultSessionDuration,
+                                customSessionDuration: workspaceSettings.customSessionDuration,
+                                maxParticipants: workspaceSettings.maxParticipants,
+                                customMaxParticipants: workspaceSettings.customMaxParticipants,
+                                participantEntryMode: workspaceSettings.participantEntryMode,
+                                ssoOrganizationId: workspaceSettings.ssoOrganizationId,
+                                emailCodeDomainsWhitelist: workspaceSettings.emailCodeDomainsWhitelist,
+                            },
+                            lastSession?.name
+                        );
+                    }}
                     onNavigate={(wId, sId) => navigate(`/workspace/${wId}/session/${sId}`)}
                 />
             )}

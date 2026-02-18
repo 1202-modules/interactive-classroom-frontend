@@ -94,7 +94,7 @@ export function useSessionDetail() {
             const items = res.participants.map((p) => ({
                 id: p.id,
                 name: p.display_name ?? 'Anonymous',
-                joined_at: '',
+                joined_at: p.created_at ?? '',
                 is_active: p.is_active,
                 auth_type: p.participant_type as Participant['auth_type'],
             }));

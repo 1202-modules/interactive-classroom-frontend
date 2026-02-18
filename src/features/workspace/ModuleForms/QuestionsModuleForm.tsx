@@ -6,8 +6,6 @@ interface QuestionsModuleFormProps {
     onNameChange: (name: string) => void;
     description: string;
     onDescriptionChange: (description: string) => void;
-    enabled: boolean;
-    onEnabledChange: (enabled: boolean) => void;
     likesEnabled: boolean;
     onLikesEnabledChange: (enable: boolean) => void;
     allowAnonymous: boolean;
@@ -25,8 +23,6 @@ export function QuestionsModuleForm({
     onNameChange,
     description,
     onDescriptionChange,
-    enabled,
-    onEnabledChange,
     likesEnabled,
     onLikesEnabledChange,
     allowAnonymous,
@@ -40,7 +36,7 @@ export function QuestionsModuleForm({
 }: QuestionsModuleFormProps) {
     return (
         <div className="workspace-page__module-form">
-            <div className="workspace-page__module-form-row-2">
+            <div className="workspace-page__module-form-fields-column">
                 <div className="workspace-page__module-form-field">
                     <Text variant="body-1" className="workspace-page__settings-label">
                         Name
@@ -64,54 +60,55 @@ export function QuestionsModuleForm({
                     />
                 </div>
             </div>
-            <div className="workspace-page__module-form-switches">
-                <Switch
-                    checked={enabled}
-                    onUpdate={onEnabledChange}
-                    content="Enabled"
-                    size="l"
-                />
-                <Switch
-                    checked={likesEnabled}
-                    onUpdate={onLikesEnabledChange}
-                    content="Enable upvotes"
-                    size="l"
-                />
-                <Switch
-                    checked={allowAnonymous}
-                    onUpdate={onAllowAnonymousChange}
-                    content="Allow semi-anonymous questions"
-                    size="l"
-                />
-            </div>
-            <div className="workspace-page__module-form-field workspace-page__module-form-field-inline">
-                <Switch
-                    checked={cooldownEnabled}
-                    onUpdate={onCooldownEnabledChange}
-                    content="Cooldown"
-                    size="l"
-                />
-                {cooldownEnabled && (
-                    <TextInput
-                        value={String(cooldownSeconds)}
-                        onUpdate={(v) =>
-                            onCooldownSecondsChange(
-                                Math.min(300, Math.max(0, parseInt(v, 10) || 0)),
-                            )
-                        }
+            <div className="workspace-page__module-form-switches workspace-page__module-form-switches-column">
+                <div className="workspace-page__module-form-switch-row">
+                    <Switch
+                        checked={likesEnabled}
+                        onUpdate={onLikesEnabledChange}
+                        content="Enable upvotes"
                         size="l"
-                        type="number"
-                        placeholder="30"
-                        className="workspace-page__settings-inline-input"
-                        endContent={
-                            <Text variant="body-2" color="secondary">
-                                sec
-                            </Text>
-                        }
                     />
-                )}
+                </div>
+                <div className="workspace-page__module-form-switch-row">
+                    <Switch
+                        checked={allowAnonymous}
+                        onUpdate={onAllowAnonymousChange}
+                        content="Allow semi-anonymous questions"
+                        size="l"
+                    />
+                    <Text variant="body-1" color="secondary">
+                        Participants can submit questions without revealing their name.
+                    </Text>
+                </div>
+                <div className="workspace-page__module-form-switch-row workspace-page__module-form-field-inline">
+                    <Switch
+                        checked={cooldownEnabled}
+                        onUpdate={onCooldownEnabledChange}
+                        content="Cooldown"
+                        size="l"
+                    />
+                    {cooldownEnabled && (
+                        <TextInput
+                            value={String(cooldownSeconds)}
+                            onUpdate={(v) =>
+                                onCooldownSecondsChange(
+                                    Math.min(300, Math.max(0, parseInt(v, 10) || 0)),
+                                )
+                            }
+                            size="l"
+                            type="number"
+                            placeholder="30"
+                            className="workspace-page__settings-inline-input"
+                            endContent={
+                                <Text variant="body-2" color="secondary">
+                                    sec
+                                </Text>
+                            }
+                        />
+                    )}
+                </div>
             </div>
-            <div className="workspace-page__module-form-field">
+            <div className="workspace-page__module-form-field workspace-page__module-form-segmented-fit">
                 <Text variant="body-1" className="workspace-page__settings-label">
                     Max message length
                 </Text>
@@ -120,9 +117,9 @@ export function QuestionsModuleForm({
                     value={lengthLimitMode}
                     onUpdate={(v) => onLengthLimitModeChange(v as QuestionsLengthLimitMode)}
                     options={[
-                        {value: 'compact', content: 'Compact (100)'},
-                        {value: 'moderate', content: 'Moderate (250)'},
-                        {value: 'extended', content: 'Extended (500)'},
+                        {value: 'compact', content: 'Compact'},
+                        {value: 'moderate', content: 'Moderate'},
+                        {value: 'extended', content: 'Extended'},
                     ]}
                 />
             </div>

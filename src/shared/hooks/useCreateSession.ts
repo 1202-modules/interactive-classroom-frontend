@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '@/shared/hooks/useApi';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
+import { SESSION_FIELDS, fieldsToString } from '@/shared/api/fields';
 import type { Session } from '@/shared/types/session';
 import type { AxiosInstance } from 'axios';
 
@@ -19,7 +20,11 @@ function normalizeCreatedSession(data: Partial<Session> & { id: number }, worksp
         description: data.description ?? null,
         status: data.status ?? 'active',
         is_stopped: data.is_stopped ?? true,
+        passcode: data.passcode,
         participant_count: data.participant_count ?? 0,
+        stopped_participant_count: data.stopped_participant_count,
+        start_datetime: data.start_datetime ?? null,
+        end_datetime: data.end_datetime ?? null,
         created_at: data.created_at ?? new Date().toISOString(),
         updated_at: data.updated_at ?? new Date().toISOString(),
         is_deleted: data.is_deleted ?? false,
@@ -54,9 +59,9 @@ export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessi
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
-    const open = useCallback((initialSettings?: CreateSessionSettings) => {
+    const open = useCallback((initialSettings?: CreateSessionSettings, initialName?: string) => {
         setError(null);
-        setName('');
+        setName(initialName || '');
         setSessionSettings(initialSettings ?? defaultSessionSettings);
         setIsOpen(true);
     }, []);
@@ -115,6 +120,10 @@ export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessi
             const res = await api.post<Session>(`/workspaces/${workspaceId}/sessions`, {
                 name: trimmedName,
                 ...(settings ? {settings} : {}),
+            }, {
+                params: {
+                    fields: fieldsToString(SESSION_FIELDS.LIST),
+                },
             });
             const created = res?.data ?? null;
             const newSessionId = created?.id;
@@ -122,9 +131,8 @@ export function useCreateSession({ workspaceId, api, onSuccess }: UseCreateSessi
             if (onSuccess && created?.id) {
                 await onSuccess(normalizeCreatedSession(created as Partial<Session> & { id: number }, workspaceId));
             }
-            if (newSessionId) {
-                navigate(`/workspace/${workspaceId}/session/${newSessionId}`);
-            }
+            // Don't navigate immediately - let user see the new session in the list
+            // User can click on the session to open it if needed
         } catch (err: unknown) {
             const message = parseBackendError(
                 (err as { response?: { data?: unknown } })?.response?.data,

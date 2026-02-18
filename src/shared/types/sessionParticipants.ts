@@ -3,6 +3,7 @@ export interface SessionParticipantItem {
     display_name: string | null;
     participant_type: string;
     is_active: boolean;
+    created_at?: string | null;
 }
 
 export interface SessionParticipantsResponse {

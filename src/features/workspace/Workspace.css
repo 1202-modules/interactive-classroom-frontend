@@ -374,8 +374,43 @@
   text-align: center;
 }
 
+/* Module dialog (Create/Edit Questions, Timer, etc.): adaptive width like Create session */
 .workspace-page__module-dialog {
-  --g-dialog-width: 720px;
+  --g-dialog-width: fit-content;
+}
+
+.workspace-page__module-dialog .g-dialog {
+  width: fit-content !important;
+  min-width: 460px;
+  max-width: calc(100vw - 2 * var(--g-spacing-6));
+}
+
+.workspace-page__module-dialog .g-dialog-body {
+  width: fit-content;
+  box-sizing: border-box;
+}
+
+.workspace-page__module-dialog .workspace-page__module-form {
+  width: fit-content;
+}
+
+/* Narrow fields (Name, Description): same max width as in Create session */
+.workspace-page__module-dialog .workspace-page__module-form-field:not(:has(.workspace-page__settings-inline)) {
+  max-width: 260px;
+}
+
+.workspace-page__module-dialog .workspace-page__module-form-fields-column {
+  max-width: 260px;
+}
+
+.workspace-page__module-dialog .workspace-page__module-form-row-2 {
+  max-width: 520px;
+}
+
+/* Inline rows (Duration, etc.): fit content, same as Create session */
+.workspace-page__module-dialog .workspace-page__module-form .workspace-page__settings-inline {
+  width: fit-content;
+  max-width: 100%;
 }
 
 .workspace-page__module-dialog .g-dialog-footer__children {
@@ -474,11 +509,28 @@
   align-items: start;
 }
 
+.workspace-page__module-form-fields-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-5);
+}
+
 .workspace-page__module-form-switches {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--g-spacing-4);
+}
+
+.workspace-page__module-form-switches-column {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.workspace-page__module-form-switch-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--g-spacing-1);
 }
 
 .workspace-page__module-form-field-inline {
@@ -491,6 +543,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-2);
+}
+
+.workspace-page__module-form-segmented-fit {
+  width: fit-content;
+}
+
+.workspace-page__module-form-segmented-fit :global(.g-segmented-control) {
+  width: auto;
 }
 
 .workspace-page__module-options,
@@ -628,6 +688,12 @@
 .workspace-page__settings-switch-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--g-spacing-5);
+}
+
+.workspace-page__settings-switch-list {
+  display: flex;
+  flex-direction: column;
   gap: var(--g-spacing-5);
 }
 

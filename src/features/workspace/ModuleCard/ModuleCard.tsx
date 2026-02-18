@@ -70,7 +70,6 @@ export function ModuleCard({
                                             text: module.enabled ? 'Disable' : 'Enable',
                                             action: () => onToggleEnabled(module.id),
                                         },
-                                        {text: 'Rename', action: () => onRename(module)},
                                         {text: 'Duplicate', action: () => onDuplicate(module)},
                                     ],
                                     [

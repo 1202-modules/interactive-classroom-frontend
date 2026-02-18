@@ -226,7 +226,7 @@ export default function SessionPage() {
                     <div className="session-page__settings-grid">
                         <SessionDefaults
                             title="Session settings"
-                            description="Configure preferences for this session (inherited from workspace defaults)."
+                            description="Configure preferences for this session."
                             defaultSessionDuration={sessionSettings.defaultSessionDuration}
                             onDefaultSessionDurationChange={
                                 sessionSettings.setDefaultSessionDuration

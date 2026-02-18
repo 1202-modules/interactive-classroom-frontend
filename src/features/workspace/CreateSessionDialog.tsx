@@ -71,7 +71,7 @@ export function CreateSessionDialog({
                     loading={isLoading}
                     disabled={name.trim().length === 0}
                 >
-                    Create session
+                    Create
                 </Button>
             </Dialog.Footer>
         </Dialog>

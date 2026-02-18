@@ -88,8 +88,6 @@ export function CreateModuleDialog({
                         onNameChange={formState.setModuleName}
                         description={formState.moduleDescription}
                         onDescriptionChange={formState.setModuleDescription}
-                        enabled={formState.moduleEnabled}
-                        onEnabledChange={formState.setModuleEnabled}
                         likesEnabled={formState.questionsLikesEnabled}
                         onLikesEnabledChange={formState.setQuestionsLikesEnabled}
                         allowAnonymous={formState.questionsAllowAnonymous}
@@ -107,8 +105,6 @@ export function CreateModuleDialog({
                     <TimerModuleForm
                         name={formState.moduleName}
                         onNameChange={formState.setModuleName}
-                        enabled={formState.moduleEnabled}
-                        onEnabledChange={formState.setModuleEnabled}
                         duration={formState.timerDuration}
                         onDurationChange={formState.setTimerDuration}
                         customDurationSec={formState.timerCustomDurationSec}

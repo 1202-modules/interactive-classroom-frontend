@@ -5,8 +5,6 @@ import {ModuleFormCommon} from './ModuleFormCommon';
 interface TimerModuleFormProps {
     name: string;
     onNameChange: (name: string) => void;
-    enabled: boolean;
-    onEnabledChange: (enabled: boolean) => void;
     duration: TimerDuration;
     onDurationChange: (duration: TimerDuration) => void;
     customDurationSec: string;
@@ -18,8 +16,6 @@ interface TimerModuleFormProps {
 export function TimerModuleForm({
     name,
     onNameChange,
-    enabled,
-    onEnabledChange,
     duration,
     onDurationChange,
     customDurationSec,
@@ -32,9 +28,8 @@ export function TimerModuleForm({
             <ModuleFormCommon
                 name={name}
                 onNameChange={onNameChange}
-                enabled={enabled}
-                onEnabledChange={onEnabledChange}
                 showDescription={false}
+                showEnabled={false}
             />
             <div className="workspace-page__module-form-field">
                 <Text variant="body-1" className="workspace-page__settings-label">

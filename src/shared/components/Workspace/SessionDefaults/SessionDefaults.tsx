@@ -135,7 +135,7 @@ export function SessionDefaults({
         >
             <div className="workspace-page__settings-field">
                 <Text variant="body-1" className="workspace-page__settings-label">
-                    Default session duration
+                    Session duration
                 </Text>
                 <div className="workspace-page__settings-inline">
                     <SegmentedRadioGroup
@@ -179,7 +179,7 @@ export function SessionDefaults({
 
             <div className="workspace-page__settings-field">
                 <Text variant="body-1" className="workspace-page__settings-label">
-                    Maximum participants per session
+                    Maximum participants
                 </Text>
                 <div className="workspace-page__settings-inline">
                     <SegmentedRadioGroup
@@ -217,7 +217,7 @@ export function SessionDefaults({
             </div>
 
             <div className="workspace-page__settings-field">
-                <div className="workspace-page__settings-switch-grid">
+                <div className="workspace-page__settings-switch-list">
                     <div className="workspace-page__settings-switch">
                         <div className="workspace-page__settings-switch-row">
                             <Switch

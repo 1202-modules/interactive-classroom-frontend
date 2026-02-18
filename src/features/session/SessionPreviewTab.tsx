@@ -1,10 +1,8 @@
-import {Card, Icon, Label, Text, TextInput} from '@gravity-ui/uikit';
-import type {Participant, SessionModule} from '@/shared/types/sessionPage';
+import {Card, Label, Text, TextInput} from '@gravity-ui/uikit';
+import type {Participant} from '@/shared/types/sessionPage';
 import {formatShortDate} from '@/shared/utils/date';
-import {getModuleIcon} from '@/shared/utils/sessionModuleUtils';
 
 type SessionPreviewTabProps = {
-    activeModule?: SessionModule | undefined;
     participants: Participant[];
     participantSearch: string;
     onParticipantSearchChange: (value: string) => void;
@@ -14,7 +12,6 @@ type SessionPreviewTabProps = {
 };
 
 export function SessionPreviewTab({
-    activeModule,
     participants,
     participantSearch,
     onParticipantSearchChange,
@@ -66,37 +63,7 @@ export function SessionPreviewTab({
     }
 
     return (
-        <div className="session-page__preview-grid">
-            <Card view="outlined" className="session-page__preview-card">
-                <Text variant="subheader-1">Preview</Text>
-                <Text variant="body-2" color="secondary">
-                    How it looks on participant phones
-                </Text>
-                <div className="session-page__preview-content">
-                    {activeModule ? (
-                        <>
-                            <Icon data={getModuleIcon(activeModule.type)} size={48} />
-                            <Text variant="header-2">{activeModule.name}</Text>
-                            <Text variant="body-1" color="secondary">
-                                Students see this module on their devices
-                            </Text>
-                            <Label theme="info" size="m">
-                                WIP: Module rendering
-                            </Label>
-                        </>
-                    ) : (
-                        <>
-                            <Text variant="display-1" color="secondary">
-                                No active module
-                            </Text>
-                            <Text variant="body-1" color="secondary">
-                                Activate a module to show content to students
-                            </Text>
-                        </>
-                    )}
-                </div>
-            </Card>
-
+        <div className="session-page__inspect-panel">
             <Card view="outlined" className="session-page__participants-card">
                 <Text variant="subheader-1">
                     Participants ({participants.length})
@@ -139,3 +106,4 @@ export function SessionPreviewTab({
         </div>
     );
 }
+

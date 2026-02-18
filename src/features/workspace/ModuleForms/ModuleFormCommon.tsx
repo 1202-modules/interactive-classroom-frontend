@@ -5,12 +5,14 @@ interface ModuleFormCommonProps {
     onNameChange: (name: string) => void;
     description?: string;
     onDescriptionChange?: (description: string) => void;
-    enabled: boolean;
-    onEnabledChange: (enabled: boolean) => void;
+    enabled?: boolean;
+    onEnabledChange?: (enabled: boolean) => void;
     /** Optional slot to the right of Enabled (e.g. Enable upvotes for Questions) */
     rightOfEnabled?: React.ReactNode;
     /** Hide description field (e.g. for Timer) */
     showDescription?: boolean;
+    /** Hide Enabled switch (e.g. for Timer in create form) */
+    showEnabled?: boolean;
 }
 
 export function ModuleFormCommon({
@@ -18,10 +20,11 @@ export function ModuleFormCommon({
     onNameChange,
     description = '',
     onDescriptionChange,
-    enabled,
+    enabled = false,
     onEnabledChange,
     rightOfEnabled,
     showDescription = true,
+    showEnabled = true,
 }: ModuleFormCommonProps) {
     return (
         <div className="workspace-page__module-form">
@@ -51,15 +54,17 @@ export function ModuleFormCommon({
                     </div>
                 )}
             </div>
-            <div className="workspace-page__module-form-switches">
-                <Switch
-                    checked={enabled}
-                    onUpdate={onEnabledChange}
-                    content="Enabled"
-                    size="l"
-                />
-                {rightOfEnabled}
-            </div>
+            {showEnabled && onEnabledChange && (
+                <div className="workspace-page__module-form-switches">
+                    <Switch
+                        checked={enabled}
+                        onUpdate={onEnabledChange}
+                        content="Enabled"
+                        size="l"
+                    />
+                    {rightOfEnabled}
+                </div>
+            )}
         </div>
     );
 }

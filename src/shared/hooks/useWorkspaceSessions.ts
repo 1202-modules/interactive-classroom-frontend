@@ -19,7 +19,7 @@ export function useWorkspaceSessions(
     const [error, setError] = useState<string | null>(null);
     const [updatingSessionId, setUpdatingSessionId] = useState<number | null>(null);
 
-    const fetchSessions = useCallback(async () => {
+    const fetchSessions = useCallback(async (ensureSession?: Session) => {
         if (!workspaceId) return;
         setError(null);
         setIsSessionsLoading(true);
@@ -33,7 +33,13 @@ export function useWorkspaceSessions(
                     },
                 },
             );
-            setSessions(res.data?.sessions || []);
+            const fetchedSessions = res.data?.sessions || [];
+            // If ensureSession is provided and not in fetched list, add it
+            if (ensureSession && !fetchedSessions.some((s) => s.id === ensureSession.id)) {
+                setSessions([ensureSession, ...fetchedSessions]);
+            } else {
+                setSessions(fetchedSessions);
+            }
         } catch (err: unknown) {
             setError(
                 parseBackendError(
