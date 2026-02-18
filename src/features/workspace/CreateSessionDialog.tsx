@@ -1,31 +1,27 @@
-import { Alert, Button, Dialog, Text, TextArea, TextInput } from '@gravity-ui/uikit';
+import { Alert, Button, Dialog, Text, TextInput } from '@gravity-ui/uikit';
 
 interface CreateSessionDialogProps {
     open: boolean;
     onClose: () => void;
     name: string;
-    description: string;
     error: string | null;
     isLoading: boolean;
     onNameChange: (name: string) => void;
-    onDescriptionChange: (description: string) => void;
     onSubmit: () => void;
     nameInputId: string;
-    descriptionInputId: string;
+    sessionSettingsSection: React.ReactNode;
 }
 
 export function CreateSessionDialog({
     open,
     onClose,
     name,
-    description,
     error,
     isLoading,
     onNameChange,
-    onDescriptionChange,
     onSubmit,
     nameInputId,
-    descriptionInputId,
+    sessionSettingsSection,
 }: CreateSessionDialogProps) {
     return (
         <Dialog
@@ -52,19 +48,7 @@ export function CreateSessionDialog({
                             placeholder="Session name"
                         />
                     </div>
-                    <div className="workspace-page__module-form-field">
-                        <Text variant="body-1" className="workspace-page__settings-label">
-                            Description
-                        </Text>
-                        <TextArea
-                            id={descriptionInputId}
-                            value={description}
-                            onUpdate={onDescriptionChange}
-                            size="l"
-                            rows={4}
-                            placeholder="Optional description"
-                        />
-                    </div>
+                    {sessionSettingsSection}
                 </div>
             </Dialog.Body>
             <Dialog.Footer>

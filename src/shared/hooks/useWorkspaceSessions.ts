@@ -83,8 +83,8 @@ export function useWorkspaceSessions(workspaceId: number) {
             if (!sessionQuery.trim()) return true;
             const q = sessionQuery.toLowerCase();
             const nameMatch = session.name.toLowerCase().includes(q);
-            const descMatch = (session.description || '').toLowerCase().includes(q);
-            return nameMatch || descMatch;
+            const passcodeMatch = (session.passcode || '').toLowerCase().includes(q);
+            return nameMatch || passcodeMatch;
         });
     }, [sessions, displayedSessionStatus, sessionQuery]);
 

@@ -1,4 +1,5 @@
-import { Button, Card, ClipboardButton, DropdownMenu, Icon, Text } from '@gravity-ui/uikit';
+import { useState } from 'react';
+import { Button, Card, DropdownMenu, Icon, Text } from '@gravity-ui/uikit';
 import {
     Archive,
     ArrowRotateLeft,
@@ -22,6 +23,9 @@ interface SessionCardProps {
     isUpdating?: boolean;
 }
 
+const INVITE_URL = (passcode: string) =>
+    passcode ? `${window.location.origin}/s/${passcode}` : '';
+
 export function SessionCard({
     session,
     workspaceId,
@@ -32,6 +36,7 @@ export function SessionCard({
     onDelete,
     isUpdating,
 }: SessionCardProps) {
+    const [passcodeCopied, setPasscodeCopied] = useState(false);
     const isLive = session.status === 'active' && !session.is_stopped;
     const isTrash = session.is_deleted === true;
     const isArchive = session.status === 'archive' && !isTrash;
@@ -120,19 +125,23 @@ export function SessionCard({
                         <Text variant="body-2" color="secondary">
                             Passcode:
                         </Text>
-                        <Text variant="body-2" className="workspace-session__mono">
-                            {session.passcode || '—'}
-                        </Text>
-                        <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                            <ClipboardButton
-                                text={`${window.location.origin}/s/${session.passcode || ''}`}
-                                view="flat"
-                                size="s"
-                                tooltipSuccessText="Copied link"
-                            >
-                                Copy
-                            </ClipboardButton>
-                        </div>
+                        <button
+                            type="button"
+                            className="workspace-session__mono workspace-session__mono_clickable"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const url = INVITE_URL(session.passcode || '');
+                                if (url) {
+                                    navigator.clipboard.writeText(url);
+                                    setPasscodeCopied(true);
+                                    setTimeout(() => setPasscodeCopied(false), 2000);
+                                }
+                            }}
+                            disabled={!session.passcode}
+                            title={session.passcode ? 'Copy session link' : undefined}
+                        >
+                            {passcodeCopied ? 'Link copied!' : session.passcode || '—'}
+                        </button>
                     </div>
                     <div className="workspace-session__detail">
                         <Text variant="body-2" color="secondary">

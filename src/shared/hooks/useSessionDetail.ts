@@ -18,7 +18,7 @@ import {useApi} from '@/shared/hooks/useApi';
 import {SESSION_FIELDS, SESSION_MODULE_FIELDS, fieldsToString} from '@/shared/api/fields';
 import {getParticipantsBySessionId} from '@/shared/api/sessionParticipants';
 
-export type MainTab = 'modules' | 'preview' | 'settings';
+export type MainTab = 'modules' | 'inspect' | 'settings';
 
 function isModuleSupported(type: SessionModule['type']) {
     return type === 'questions' || type === 'timer';

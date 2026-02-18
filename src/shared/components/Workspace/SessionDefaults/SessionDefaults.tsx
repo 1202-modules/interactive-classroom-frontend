@@ -15,6 +15,10 @@ import type {WeekDay} from '@/shared/types/workspace';
 import {SettingsCard} from '../SettingsCard/SettingsCard';
 
 interface SessionDefaultsProps {
+    /** Override title when used in Session page Settings */
+    title?: string;
+    /** Override description when used in Session page Settings */
+    description?: string;
     defaultSessionDuration: '30' | '60' | '90' | '120' | '240' | 'custom';
     onDefaultSessionDurationChange: (
         duration: '30' | '60' | '90' | '120' | '240' | 'custom',
@@ -54,6 +58,8 @@ interface SessionDefaultsProps {
 }
 
 export function SessionDefaults({
+    title: titleProp,
+    description: descriptionProp,
     defaultSessionDuration,
     onDefaultSessionDurationChange,
     customSessionDuration,
@@ -121,8 +127,11 @@ export function SessionDefaults({
     );
     return (
         <SettingsCard
-            title="Session defaults"
-            description="Set default values and preferences for new sessions in this workspace."
+            title={titleProp ?? 'Session defaults'}
+            description={
+                descriptionProp ??
+                'Set default values and preferences for new sessions in this workspace.'
+            }
         >
             <div className="workspace-page__settings-field">
                 <Text variant="body-1" className="workspace-page__settings-label">

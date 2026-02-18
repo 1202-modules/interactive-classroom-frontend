@@ -143,6 +143,25 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+.workspace-session__mono_clickable {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.workspace-session__mono_clickable:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.workspace-session__mono_clickable:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 .workspace-session__side {
   display: flex;
   align-items: center;

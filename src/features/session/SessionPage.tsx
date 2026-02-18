@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
     Button,
-    ClipboardButton,
     Divider,
     DropdownMenu,
     Icon,
@@ -11,18 +10,19 @@ import {
     TabProvider,
     Text,
 } from '@gravity-ui/uikit';
-import {ArrowLeft, ChevronDown, Play, Stop, Tv} from '@gravity-ui/icons';
+import {ArrowLeft, ChevronDown, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
 
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
 import {SessionModulesTab} from './SessionModulesTab';
 import {SessionPreviewTab} from './SessionPreviewTab';
 import {SessionInviteModal} from './SessionInviteModal';
-import {useSessionDetail} from '@/shared/hooks/useSessionDetail';
+import {useSessionDetail, type MainTab} from '@/shared/hooks/useSessionDetail';
 import '../workspace/Workspace.css';
 import './SessionPage.css';
 
 export default function SessionPage() {
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
+    const [passcodeCopied, setPasscodeCopied] = useState(false);
     const {
         sessionInfo,
         sessionLoading,
@@ -77,10 +77,15 @@ export default function SessionPage() {
                                 {sessionTitle}
                             </Text>
                             {canCopyPasscode && (
-                                <ClipboardButton
-                                    text={`${window.location.origin}/s/${sessionPasscode}`}
+                                <Button
+                                    view="flat"
                                     size="s"
-                                />
+                                    onClick={() => setInviteModalOpen(true)}
+                                    title="Copy session link"
+                                    aria-label="Copy session link"
+                                >
+                                    <Icon data={Copy} size={16} />
+                                </Button>
                             )}
                         </div>
                         <div className="session-page__header-meta">
@@ -95,11 +100,15 @@ export default function SessionPage() {
                             <button
                                 type="button"
                                 className={`session-page__passcode-badge${canCopyPasscode ? ' session-page__passcode-badge_clickable' : ''}`}
-                                onClick={canCopyPasscode ? handleCopySessionLink : undefined}
+                                onClick={canCopyPasscode ? async () => {
+                                    await handleCopySessionLink();
+                                    setPasscodeCopied(true);
+                                    setTimeout(() => setPasscodeCopied(false), 2000);
+                                } : undefined}
                                 disabled={!canCopyPasscode}
                                 title={canCopyPasscode ? 'Copy session link' : undefined}
                             >
-                                Code: {sessionPasscode}
+                                {passcodeCopied ? 'Link copied!' : `Code: ${sessionPasscode}`}
                             </button>
                         </div>
                     </div>
@@ -114,16 +123,27 @@ export default function SessionPage() {
                         {sessionInfo?.is_stopped ? 'Start Session' : 'Stop Session'}
                     </Button>
                     <div className="session-page__presentation-split">
-                        <Button view="outlined" size="l" onClick={handleOpenPresentation}>
+                        <button
+                            type="button"
+                            className="session-page__presentation-main"
+                            onClick={handleOpenPresentation}
+                        >
                             <Icon data={Tv} size={18} />
                             Presentation
-                        </Button>
+                        </button>
+                        <div className="session-page__presentation-divider" aria-hidden />
                         <DropdownMenu
                             items={[[{text: 'Copy link', action: handleCopyPresentationLink}]]}
+                            switcherWrapperClassName="session-page__presentation-dropdown-wrap"
                             renderSwitcher={(props) => (
-                                <Button view="outlined" size="l" {...props} title="More options">
+                                <button
+                                    type="button"
+                                    className="session-page__presentation-chevron"
+                                    {...props}
+                                    title="More options"
+                                >
                                     <Icon data={ChevronDown} size={18} />
-                                </Button>
+                                </button>
                             )}
                         />
                     </div>
@@ -140,10 +160,10 @@ export default function SessionPage() {
             <Divider />
 
             <div className="session-page__content">
-                <TabProvider value={mainTab} onUpdate={(v: string) => setMainTab(v as 'modules' | 'preview' | 'settings')}>
+                <TabProvider value={mainTab} onUpdate={(v: string) => setMainTab(v as MainTab)}>
                     <TabList size="l" className="session-page__main-tabs">
                         <Tab value="modules">Session modules</Tab>
-                        <Tab value="preview">Preview & Participants</Tab>
+                        <Tab value="inspect">Inspect & Participants</Tab>
                         <Tab value="settings">Settings</Tab>
                     </TabList>
                 </TabProvider>
@@ -166,19 +186,21 @@ export default function SessionPage() {
                     />
                 )}
 
-                {mainTab === 'preview' && (
+                {mainTab === 'inspect' && (
                     <SessionPreviewTab
-                        activeModule={activeModule}
                         participants={participants}
                         participantSearch={participantSearch}
                         onParticipantSearchChange={setParticipantSearch}
                         filteredParticipants={filteredParticipants}
+                        participantsOnly
                     />
                 )}
 
                 {mainTab === 'settings' && (
                     <div className="session-page__settings-grid">
                         <SessionDefaults
+                            title="Session settings"
+                            description="Configure preferences for this session (inherited from workspace defaults)."
                             defaultSessionDuration={sessionSettings.defaultSessionDuration}
                             onDefaultSessionDurationChange={
                                 sessionSettings.setDefaultSessionDuration

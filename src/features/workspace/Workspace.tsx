@@ -24,6 +24,7 @@ import { WorkspaceSessionsTab } from './WorkspaceSessionsTab';
 import { WorkspaceSettingsTab } from './WorkspaceSettingsTab';
 import { WorkspaceModulesTab } from './WorkspaceModulesTab';
 import { CreateSessionDialog } from './CreateSessionDialog';
+import { SessionDefaultsSummary } from './SessionDefaultsSummary';
 import { RenameModuleDialog } from './RenameModuleDialog';
 import './Workspace.css';
 
@@ -112,9 +113,13 @@ export default function WorkspacePage() {
     const createSession = useCreateSession({
         workspaceId,
         api,
-        onSuccess: (session) => {
-                    if (session) workspaceSessions.addSession(session);
-                },
+        onSuccess: async (session) => {
+            if (session) {
+                workspaceSessions.addSession(session);
+                workspaceSessions.startSessionFilterTransition('active');
+                await workspaceSessions.refetch();
+            }
+        },
     });
 
     const saveSettings = useWorkspaceSaveSettings({
@@ -271,14 +276,14 @@ export default function WorkspacePage() {
                 open={createSession.isOpen}
                 onClose={createSession.close}
                 name={createSession.name}
-                description={createSession.description}
                 error={createSession.error}
                 isLoading={createSession.isLoading}
                 onNameChange={createSession.setName}
-                onDescriptionChange={createSession.setDescription}
                 onSubmit={createSession.submit}
                 nameInputId="create-session-name"
-                descriptionInputId="create-session-description"
+                sessionSettingsSection={
+                    <SessionDefaultsSummary workspaceSettings={workspaceSettings} />
+                }
             />
 
             <RenameModuleDialog
