@@ -28,7 +28,7 @@ export function CreateSessionDialog({
             open={open}
             onClose={onClose}
             size="m"
-            className="workspace-page__module-rename-dialog"
+            className="create-session-dialog"
         >
             <Dialog.Header caption="Create session" />
             <Dialog.Body>

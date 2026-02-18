@@ -11,7 +11,7 @@ import {
     Text,
     Tooltip,
 } from '@gravity-ui/uikit';
-import {ArrowLeft, ChevronDown, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
+import {ArrowLeft, ArrowsRotateLeft, ChevronDown, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
 
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
 import {SessionModulesTab} from './SessionModulesTab';
@@ -45,6 +45,8 @@ export default function SessionPage() {
         sessionPasscode,
         canCopyPasscode,
         handleCopySessionLink,
+        handleRegeneratePasscode,
+        regeneratePasscodeLoading,
         filteredParticipants,
         handleStartStop,
         handleOpenPresentation,
@@ -117,6 +119,23 @@ export default function SessionPage() {
                                     Code: {sessionPasscode}
                                 </button>
                             </Tooltip>
+                            {canCopyPasscode && (
+                                <Tooltip content="Regenerate code (current link will stop working)">
+                                    <span>
+                                        <Button
+                                            view="flat"
+                                            size="s"
+                                            onClick={handleRegeneratePasscode}
+                                            loading={regeneratePasscodeLoading}
+                                            disabled={regeneratePasscodeLoading}
+                                            title="Regenerate code"
+                                            aria-label="Regenerate code"
+                                        >
+                                            <Icon data={ArrowsRotateLeft} size={16} />
+                                        </Button>
+                                    </span>
+                                </Tooltip>
+                            )}
                         </div>
                     </div>
                 </div>

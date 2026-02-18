@@ -284,6 +284,25 @@ export function useSessionDetail() {
         await navigator.clipboard.writeText(sessionInviteUrl);
     }, [sessionInviteUrl, sessionInfo?.passcode]);
 
+    const [regeneratePasscodeLoading, setRegeneratePasscodeLoading] = useState(false);
+    const handleRegeneratePasscode = useCallback(async () => {
+        if (!isSessionIdValid || !sessionInfo?.passcode) return;
+        setRegeneratePasscodeLoading(true);
+        try {
+            const res = await api.post<{ passcode: string }>(
+                `/sessions/${sessionIdNumber}/passcode/regenerate`,
+            );
+            const newPasscode = res.data?.passcode;
+            if (newPasscode) {
+                setSessionInfo((prev) =>
+                    prev ? { ...prev, passcode: newPasscode } : null,
+                );
+            }
+        } finally {
+            setRegeneratePasscodeLoading(false);
+        }
+    }, [api, isSessionIdValid, sessionIdNumber, sessionInfo?.passcode]);
+
     return {
         workspaceId,
         sessionId,
@@ -317,5 +336,7 @@ export function useSessionDetail() {
         sessionPasscode,
         canCopyPasscode,
         handleCopySessionLink,
+        handleRegeneratePasscode,
+        regeneratePasscodeLoading,
     };
 }

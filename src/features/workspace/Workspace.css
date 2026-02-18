@@ -758,4 +758,9 @@
   }
 }
 
+/* Create session dialog: width limited to Session duration row + padding */
+.create-session-dialog {
+  --g-dialog-width: min(460px, calc(100vw - 2 * var(--g-spacing-6)));
+}
+
 
