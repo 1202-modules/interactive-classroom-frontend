@@ -204,7 +204,6 @@ export default function WorkspacePage() {
                         <Breadcrumbs.Item onClick={() => navigate('/dashboard')}>
                             Dashboard
                         </Breadcrumbs.Item>
-                        <Breadcrumbs.Item>{workspace.name}</Breadcrumbs.Item>
                     </Breadcrumbs>
                 </div>
                 <PageHeader
