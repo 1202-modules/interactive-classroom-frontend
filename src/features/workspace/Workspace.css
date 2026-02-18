@@ -359,6 +359,10 @@
   --g-dialog-width: 720px;
 }
 
+.workspace-page__module-dialog .g-dialog-footer__children {
+  gap: var(--g-spacing-3);
+}
+
 .workspace-page__module-drawer {
   z-index: 100;
 }

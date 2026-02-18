@@ -60,6 +60,21 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--g-color-text-primary);
+  border: none;
+  font-family: inherit;
+  cursor: default;
+}
+
+.session-page__passcode-badge_clickable {
+  cursor: pointer;
+}
+
+.session-page__passcode-badge_clickable:hover {
+  background: var(--g-color-base-generic-hover);
+}
+
+.session-page__passcode-badge:disabled {
+  opacity: 0.6;
 }
 
 .session-page__header-actions {

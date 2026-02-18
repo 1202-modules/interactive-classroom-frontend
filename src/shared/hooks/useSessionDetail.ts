@@ -277,6 +277,12 @@ export function useSessionDetail() {
 
     const sessionPasscode = sessionInfo?.passcode ?? '—';
     const canCopyPasscode = Boolean(sessionInfo?.passcode);
+    const sessionInviteUrl = `${window.location.origin}/s/${sessionPasscode}`;
+
+    const handleCopySessionLink = useCallback(async () => {
+        if (!sessionInfo?.passcode) return;
+        await navigator.clipboard.writeText(sessionInviteUrl);
+    }, [sessionInviteUrl, sessionInfo?.passcode]);
 
     return {
         workspaceId,
@@ -310,5 +316,6 @@ export function useSessionDetail() {
         activeParticipantsCount,
         sessionPasscode,
         canCopyPasscode,
+        handleCopySessionLink,
     };
 }

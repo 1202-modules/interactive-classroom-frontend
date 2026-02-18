@@ -43,6 +43,7 @@ export default function SessionPage() {
         activeParticipantsCount,
         sessionPasscode,
         canCopyPasscode,
+        handleCopySessionLink,
         filteredParticipants,
         handleStartStop,
         handleOpenPresentation,
@@ -91,9 +92,15 @@ export default function SessionPage() {
                                     ? `${participants.length} participants`
                                     : `${activeParticipantsCount} active · ${participants.length} total participants`}
                             </Text>
-                            <span className="session-page__passcode-badge">
+                            <button
+                                type="button"
+                                className={`session-page__passcode-badge${canCopyPasscode ? ' session-page__passcode-badge_clickable' : ''}`}
+                                onClick={canCopyPasscode ? handleCopySessionLink : undefined}
+                                disabled={!canCopyPasscode}
+                                title={canCopyPasscode ? 'Copy session link' : undefined}
+                            >
                                 Code: {sessionPasscode}
-                            </span>
+                            </button>
                         </div>
                     </div>
                 </div>

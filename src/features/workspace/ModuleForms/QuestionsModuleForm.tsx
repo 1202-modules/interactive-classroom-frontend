@@ -1,6 +1,5 @@
 import {SegmentedRadioGroup, Switch, Text, TextInput} from '@gravity-ui/uikit';
 import type {QuestionsLengthLimitMode} from '@/shared/types/workspace';
-import {ModuleFormCommon} from './ModuleFormCommon';
 
 interface QuestionsModuleFormProps {
     name: string;
@@ -41,73 +40,91 @@ export function QuestionsModuleForm({
 }: QuestionsModuleFormProps) {
     return (
         <div className="workspace-page__module-form">
-            <ModuleFormCommon
-                name={name}
-                onNameChange={onNameChange}
-                description={description}
-                onDescriptionChange={onDescriptionChange}
-                enabled={enabled}
-                onEnabledChange={onEnabledChange}
-                rightOfEnabled={
-                    <>
-                        <Switch
-                            checked={likesEnabled}
-                            onUpdate={onLikesEnabledChange}
-                            content="Enable upvotes"
-                            size="l"
-                        />
-                        <Switch
-                            checked={allowAnonymous}
-                            onUpdate={onAllowAnonymousChange}
-                            content="Allow semi-anonymous questions"
-                            size="l"
-                        />
-                    </>
-                }
-            />
             <div className="workspace-page__module-form-row-2">
-                <div className="workspace-page__module-form-field workspace-page__module-form-field-inline">
-                    <Switch
-                        checked={cooldownEnabled}
-                        onUpdate={onCooldownEnabledChange}
-                        content="Cooldown"
+                <div className="workspace-page__module-form-field">
+                    <Text variant="body-1" className="workspace-page__settings-label">
+                        Name
+                    </Text>
+                    <TextInput
+                        value={name}
+                        onUpdate={onNameChange}
                         size="l"
+                        placeholder="Module name"
                     />
-                    {cooldownEnabled && (
-                        <TextInput
-                            value={String(cooldownSeconds)}
-                            onUpdate={(v) =>
-                                onCooldownSecondsChange(
-                                    Math.min(300, Math.max(0, parseInt(v, 10) || 0)),
-                                )
-                            }
-                            size="l"
-                            type="number"
-                            placeholder="30"
-                            className="workspace-page__settings-inline-input"
-                            endContent={
-                                <Text variant="body-2" color="secondary">
-                                    sec
-                                </Text>
-                            }
-                        />
-                    )}
                 </div>
                 <div className="workspace-page__module-form-field">
                     <Text variant="body-1" className="workspace-page__settings-label">
-                        Max message length
+                        Description
                     </Text>
-                    <SegmentedRadioGroup
+                    <TextInput
+                        value={description}
+                        onUpdate={onDescriptionChange}
                         size="l"
-                        value={lengthLimitMode}
-                        onUpdate={(v) => onLengthLimitModeChange(v as QuestionsLengthLimitMode)}
-                        options={[
-                            {value: 'compact', content: 'Compact (100)'},
-                            {value: 'moderate', content: 'Moderate (250)'},
-                            {value: 'extended', content: 'Extended (500)'},
-                        ]}
+                        placeholder="Short description"
                     />
                 </div>
+            </div>
+            <div className="workspace-page__module-form-switches">
+                <Switch
+                    checked={enabled}
+                    onUpdate={onEnabledChange}
+                    content="Enabled"
+                    size="l"
+                />
+                <Switch
+                    checked={likesEnabled}
+                    onUpdate={onLikesEnabledChange}
+                    content="Enable upvotes"
+                    size="l"
+                />
+                <Switch
+                    checked={allowAnonymous}
+                    onUpdate={onAllowAnonymousChange}
+                    content="Allow semi-anonymous questions"
+                    size="l"
+                />
+            </div>
+            <div className="workspace-page__module-form-field workspace-page__module-form-field-inline">
+                <Switch
+                    checked={cooldownEnabled}
+                    onUpdate={onCooldownEnabledChange}
+                    content="Cooldown"
+                    size="l"
+                />
+                {cooldownEnabled && (
+                    <TextInput
+                        value={String(cooldownSeconds)}
+                        onUpdate={(v) =>
+                            onCooldownSecondsChange(
+                                Math.min(300, Math.max(0, parseInt(v, 10) || 0)),
+                            )
+                        }
+                        size="l"
+                        type="number"
+                        placeholder="30"
+                        className="workspace-page__settings-inline-input"
+                        endContent={
+                            <Text variant="body-2" color="secondary">
+                                sec
+                            </Text>
+                        }
+                    />
+                )}
+            </div>
+            <div className="workspace-page__module-form-field">
+                <Text variant="body-1" className="workspace-page__settings-label">
+                    Max message length
+                </Text>
+                <SegmentedRadioGroup
+                    size="l"
+                    value={lengthLimitMode}
+                    onUpdate={(v) => onLengthLimitModeChange(v as QuestionsLengthLimitMode)}
+                    options={[
+                        {value: 'compact', content: 'Compact (100)'},
+                        {value: 'moderate', content: 'Moderate (250)'},
+                        {value: 'extended', content: 'Extended (500)'},
+                    ]}
+                />
             </div>
         </div>
     );

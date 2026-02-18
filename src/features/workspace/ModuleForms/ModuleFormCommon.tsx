@@ -3,26 +3,29 @@ import {Switch, Text, TextInput} from '@gravity-ui/uikit';
 interface ModuleFormCommonProps {
     name: string;
     onNameChange: (name: string) => void;
-    description: string;
-    onDescriptionChange: (description: string) => void;
+    description?: string;
+    onDescriptionChange?: (description: string) => void;
     enabled: boolean;
     onEnabledChange: (enabled: boolean) => void;
     /** Optional slot to the right of Enabled (e.g. Enable upvotes for Questions) */
     rightOfEnabled?: React.ReactNode;
+    /** Hide description field (e.g. for Timer) */
+    showDescription?: boolean;
 }
 
 export function ModuleFormCommon({
     name,
     onNameChange,
-    description,
+    description = '',
     onDescriptionChange,
     enabled,
     onEnabledChange,
     rightOfEnabled,
+    showDescription = true,
 }: ModuleFormCommonProps) {
     return (
         <div className="workspace-page__module-form">
-            <div className="workspace-page__module-form-row-2">
+            <div className={showDescription ? 'workspace-page__module-form-row-2' : 'workspace-page__module-form-field'}>
                 <div className="workspace-page__module-form-field">
                     <Text variant="body-1" className="workspace-page__settings-label">
                         Name
@@ -34,17 +37,19 @@ export function ModuleFormCommon({
                         placeholder="Module name"
                     />
                 </div>
-                <div className="workspace-page__module-form-field">
-                    <Text variant="body-1" className="workspace-page__settings-label">
-                        Description
-                    </Text>
-                    <TextInput
-                        value={description}
-                        onUpdate={onDescriptionChange}
-                        size="l"
-                        placeholder="Short description"
-                    />
-                </div>
+                {showDescription && onDescriptionChange && (
+                    <div className="workspace-page__module-form-field">
+                        <Text variant="body-1" className="workspace-page__settings-label">
+                            Description
+                        </Text>
+                        <TextInput
+                            value={description}
+                            onUpdate={onDescriptionChange}
+                            size="l"
+                            placeholder="Short description"
+                        />
+                    </div>
+                )}
             </div>
             <div className="workspace-page__module-form-switches">
                 <Switch

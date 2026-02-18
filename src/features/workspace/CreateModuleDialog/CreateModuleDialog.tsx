@@ -107,8 +107,6 @@ export function CreateModuleDialog({
                     <TimerModuleForm
                         name={formState.moduleName}
                         onNameChange={formState.setModuleName}
-                        description={formState.moduleDescription}
-                        onDescriptionChange={formState.setModuleDescription}
                         enabled={formState.moduleEnabled}
                         onEnabledChange={formState.setModuleEnabled}
                         duration={formState.timerDuration}
