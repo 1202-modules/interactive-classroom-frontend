@@ -14,6 +14,12 @@ const MODULE_CLUSTERS = [
         isWip: false,
     },
     {
+        type: 'timer' as const,
+        title: 'Timer',
+        subtitle: 'Keep activities on time with a shared countdown.',
+        isWip: false,
+    },
+    {
         type: 'poll' as const,
         title: 'Poll',
         subtitle: 'Gather opinions with flexible answer modes.',
@@ -24,12 +30,6 @@ const MODULE_CLUSTERS = [
         title: 'Quiz',
         subtitle: 'Run quizzes with options and time limits.',
         isWip: true,
-    },
-    {
-        type: 'timer' as const,
-        title: 'Timer',
-        subtitle: 'Keep activities on time with a shared countdown.',
-        isWip: false,
     },
 ] as const;
 

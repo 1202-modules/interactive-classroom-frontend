@@ -67,14 +67,22 @@ export function useWorkspaceSaveSettings({
                 templateSettings.email_code_domains_whitelist = workspaceSettings.emailCodeDomainsWhitelist;
             }
 
-            const res = await api.put(`/workspaces/${workspaceId}`, {
-                name: workspaceSettings.workspaceName,
-                description: workspaceSettings.workspaceDescription || null,
-                template_settings: templateSettings,
-            });
+            const res = await api.put(
+                `/workspaces/${workspaceId}`,
+                {
+                    name: workspaceSettings.workspaceName,
+                    description: workspaceSettings.workspaceDescription || null,
+                    template_settings: templateSettings,
+                },
+                {
+                    params: {
+                        fields: 'id,name,description,status,template_settings,created_at,updated_at,participant_count,session_count,has_live_session',
+                    },
+                }
+            );
 
-            if (res.data && onSuccess) {
-                onSuccess(res.data);
+            if (res.data && typeof res.data === 'object' && Object.keys(res.data).length > 0 && onSuccess) {
+                onSuccess(res.data as Workspace);
             }
         } catch (err: unknown) {
             const message = parseBackendError(

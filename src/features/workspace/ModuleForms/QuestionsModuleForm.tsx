@@ -54,7 +54,7 @@ export function QuestionsModuleForm({
                         size="l"
                     />
                     <Text variant="body-2" color="secondary">
-                        When enabled, participants can choose to submit questions semi-anonymously. The lecturer will see who asked, but other participants won't.
+                        When enabled, participants can choose to submit questions semi-anonymously. You will still see who wrote each question in the Inspect Module tab.
                     </Text>
                 </div>
                 <div className="workspace-page__module-form-field">

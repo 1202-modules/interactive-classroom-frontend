@@ -265,55 +265,6 @@ export function SessionDefaults({
             </div>
 
             <div className="workspace-page__settings-field">
-                <div className="workspace-page__settings-label-row">
-                    <Text variant="body-1" className="workspace-page__settings-label">
-                        Auto-expire sessions after (days)
-                    </Text>
-                    <Label
-                        theme="warning"
-                        size="s"
-                        className="workspace-page__wip-label"
-                        title="Work In Progress - This feature is currently under development"
-                    >
-                        <span className="workspace-page__wip-icon-wrapper">
-                            <Icon data={Clock} size={14} />
-                        </span>
-                        <span>WIP</span>
-                    </Label>
-                </div>
-                <Switch
-                    checked={autoExpireEnabled}
-                    onUpdate={(v) => {
-                        onAutoExpireEnabledChange(v);
-                        if (!v) onAutoExpireDaysChange('0');
-                        if (v && parseIntSafe(autoExpireDays, 0) === 0)
-                            onAutoExpireDaysChange('30');
-                    }}
-                    content="Enable auto-expire"
-                    size="l"
-                />
-                {autoExpireEnabled && (
-                    <div
-                        className="workspace-page__settings-field"
-                        style={{marginTop: 'var(--g-spacing-3)'}}
-                    >
-                        <TextInput
-                            value={autoExpireDays}
-                            onUpdate={(v) =>
-                                onAutoExpireDaysChange(String(clamp(parseIntSafe(v, 0), 0, 3650)))
-                            }
-                            size="l"
-                            type="number"
-                            placeholder="30"
-                            className="workspace-page__auto-expire-input"
-                        />
-                    </div>
-                )}
-            </div>
-
-            <Divider />
-
-            <div className="workspace-page__settings-field">
                 <Text variant="body-1" className="workspace-page__settings-label">
                     Participant entry mode
                 </Text>
@@ -428,6 +379,53 @@ export function SessionDefaults({
                                 ))}
                             </div>
                         )}
+                    </div>
+                )}
+            </div>
+
+            <div className="workspace-page__settings-field">
+                <div className="workspace-page__settings-label-row">
+                    <Text variant="body-1" className="workspace-page__settings-label">
+                        Auto-expire sessions after (days)
+                    </Text>
+                    <Label
+                        theme="warning"
+                        size="s"
+                        className="workspace-page__wip-label"
+                        title="Work In Progress - This feature is currently under development"
+                    >
+                        <span className="workspace-page__wip-icon-wrapper">
+                            <Icon data={Clock} size={14} />
+                        </span>
+                        <span>WIP</span>
+                    </Label>
+                </div>
+                <Switch
+                    checked={autoExpireEnabled}
+                    onUpdate={(v) => {
+                        onAutoExpireEnabledChange(v);
+                        if (!v) onAutoExpireDaysChange('0');
+                        if (v && parseIntSafe(autoExpireDays, 0) === 0)
+                            onAutoExpireDaysChange('30');
+                    }}
+                    content="Enable auto-expire"
+                    size="l"
+                />
+                {autoExpireEnabled && (
+                    <div
+                        className="workspace-page__settings-field"
+                        style={{marginTop: 'var(--g-spacing-3)'}}
+                    >
+                        <TextInput
+                            value={autoExpireDays}
+                            onUpdate={(v) =>
+                                onAutoExpireDaysChange(String(clamp(parseIntSafe(v, 0), 0, 3650)))
+                            }
+                            size="l"
+                            type="number"
+                            placeholder="30"
+                            className="workspace-page__auto-expire-input"
+                        />
                     </div>
                 )}
             </div>

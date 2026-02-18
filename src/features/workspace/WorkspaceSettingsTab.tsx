@@ -47,6 +47,14 @@ export function WorkspaceSettingsTab({
                             rows={4}
                         />
                     </div>
+                    <div className="workspace-page__settings-actions">
+                        <Button view="outlined" size="l">
+                            Reset to defaults
+                        </Button>
+                        <Button view="action" size="l" onClick={onSave} loading={isSavingSettings}>
+                            Save changes
+                        </Button>
+                    </div>
                 </SettingsCard>
 
                 <SessionDefaults
@@ -94,14 +102,6 @@ export function WorkspaceSettingsTab({
                 {settingsError && (
                     <Alert theme="danger" title="Failed to save settings" message={settingsError} />
                 )}
-                <div className="workspace-page__settings-actions">
-                    <Button view="outlined" size="l">
-                        Reset to defaults
-                    </Button>
-                    <Button view="action" size="l" onClick={onSave} loading={isSavingSettings}>
-                        Save changes
-                    </Button>
-                </div>
             </div>
         </div>
     );
