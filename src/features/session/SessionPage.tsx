@@ -113,7 +113,7 @@ export default function SessionPage() {
 
             <div className="session-page__content">
                 <TabProvider value={mainTab} onUpdate={(v: string) => setMainTab(v as 'modules' | 'preview' | 'settings')}>
-                    <TabList className="session-page__main-tabs">
+                    <TabList size="l" className="session-page__main-tabs">
                         <Tab value="modules">Session modules</Tab>
                         <Tab value="preview">Preview & Participants</Tab>
                         <Tab value="settings">Settings</Tab>

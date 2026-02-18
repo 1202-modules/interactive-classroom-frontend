@@ -225,7 +225,7 @@ export default function WorkspacePage() {
                     });
                 }}
             >
-                <TabList className="workspace-page__tabs">
+                <TabList size="l" className="workspace-page__tabs">
                     <Tab value="sessions">Sessions</Tab>
                     <Tab value="settings">Workspace Settings</Tab>
                     <Tab value="modules">Activity Modules</Tab>
