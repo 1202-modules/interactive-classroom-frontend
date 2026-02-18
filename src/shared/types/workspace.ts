@@ -22,15 +22,18 @@ export type PollAnswerMode = 'options' | 'free' | 'mixed';
 
 export type QuizTimeLimit = '30' | '60' | '90' | 'custom';
 
-export type TimerDuration = '60' | '120' | '300' | 'custom';
+export type TimerDuration = '60' | '300' | '600' | 'custom';
+
+export type QuestionsLengthLimitMode = 'compact' | 'moderate' | 'extended';
 
 export type ActivityModuleConfig =
     | {
         type: 'questions';
+        length_limit_mode: QuestionsLengthLimitMode;
+        likes_enabled: boolean;
         allow_anonymous: boolean;
-        enable_upvotes: boolean;
-        max_length: number;
-        cooldown_sec: number;
+        cooldown_enabled: boolean;
+        cooldown_seconds: number;
     }
     | {
         type: 'poll';
@@ -48,9 +51,8 @@ export type ActivityModuleConfig =
     }
     | {
         type: 'timer';
-        duration_sec: number;
-        enable_sound: boolean;
-        allow_pause: boolean;
+        duration_seconds: number;
+        sound_notification_enabled: boolean;
     };
 
 export interface WorkspaceActivityModule {

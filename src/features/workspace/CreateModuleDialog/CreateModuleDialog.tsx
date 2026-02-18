@@ -90,14 +90,16 @@ export function CreateModuleDialog({
                         onDescriptionChange={formState.setModuleDescription}
                         enabled={formState.moduleEnabled}
                         onEnabledChange={formState.setModuleEnabled}
+                        likesEnabled={formState.questionsLikesEnabled}
+                        onLikesEnabledChange={formState.setQuestionsLikesEnabled}
                         allowAnonymous={formState.questionsAllowAnonymous}
                         onAllowAnonymousChange={formState.setQuestionsAllowAnonymous}
-                        enableUpvotes={formState.questionsEnableUpvotes}
-                        onEnableUpvotesChange={formState.setQuestionsEnableUpvotes}
-                        maxLength={formState.questionsMaxLength}
-                        onMaxLengthChange={formState.setQuestionsMaxLength}
-                        cooldownSec={formState.questionsCooldownSec}
-                        onCooldownSecChange={formState.setQuestionsCooldownSec}
+                        lengthLimitMode={formState.questionsLengthLimitMode}
+                        onLengthLimitModeChange={formState.setQuestionsLengthLimitMode}
+                        cooldownEnabled={formState.questionsCooldownEnabled}
+                        onCooldownEnabledChange={formState.setQuestionsCooldownEnabled}
+                        cooldownSeconds={formState.questionsCooldownSeconds}
+                        onCooldownSecondsChange={formState.setQuestionsCooldownSeconds}
                     />
                 );
             case 'timer':
@@ -113,10 +115,8 @@ export function CreateModuleDialog({
                         onDurationChange={formState.setTimerDuration}
                         customDurationSec={formState.timerCustomDurationSec}
                         onCustomDurationSecChange={formState.setTimerCustomDurationSec}
-                        enableSound={formState.timerEnableSound}
-                        onEnableSoundChange={formState.setTimerEnableSound}
-                        allowPause={formState.timerAllowPause}
-                        onAllowPauseChange={formState.setTimerAllowPause}
+                        soundNotificationEnabled={formState.timerEnableSound}
+                        onSoundNotificationEnabledChange={formState.setTimerEnableSound}
                     />
                 );
         }

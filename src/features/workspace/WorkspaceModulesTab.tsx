@@ -1,7 +1,6 @@
 import { Alert, Card, Skeleton, Text } from '@gravity-ui/uikit';
 import { ModuleCluster } from './ModuleCluster/ModuleCluster';
 import { CreateModuleDialog } from './CreateModuleDialog/CreateModuleDialog';
-import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 import type { ActivityModuleType, WorkspaceActivityModule } from '@/shared/types/workspace';
 import type { useWorkspaceModules } from '@/shared/hooks/useWorkspaceModules';
 import type { useModuleForm } from '@/shared/hooks/useModuleForm';
@@ -135,7 +134,7 @@ export function WorkspaceModulesTab({
                                     onToggleEnabled={workspaceModules.toggleModuleEnabled}
                                     onRename={workspaceModules.openRenameModule}
                                     onDuplicate={workspaceModules.duplicateModule}
-                                    onDelete={workspaceModules.setDeleteModuleId}
+                                    onDelete={(id) => workspaceModules.deleteModule(id)}
                                     onCreate={workspaceModules.openCreateModule}
                                 />
                             );
@@ -171,17 +170,6 @@ export function WorkspaceModulesTab({
                 onCreate={onEditModuleSave}
             />
 
-            <ConfirmDialog
-                open={workspaceModules.deleteModuleId != null}
-                title="Delete permanently?"
-                message="This action cannot be undone."
-                cancelText="Cancel"
-                confirmText="Delete permanently"
-                onCancel={() => workspaceModules.setDeleteModuleId(null)}
-                onConfirm={() =>
-                    workspaceModules.deleteModule(workspaceModules.deleteModuleId!)
-                }
-            />
         </div>
     );
 }

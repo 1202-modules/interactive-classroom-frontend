@@ -1,4 +1,5 @@
-import {Divider, Switch, Text, TextInput} from '@gravity-ui/uikit';
+import {SegmentedRadioGroup, Switch, Text, TextInput} from '@gravity-ui/uikit';
+import type {QuestionsLengthLimitMode} from '@/shared/types/workspace';
 import {ModuleFormCommon} from './ModuleFormCommon';
 
 interface QuestionsModuleFormProps {
@@ -8,14 +9,16 @@ interface QuestionsModuleFormProps {
     onDescriptionChange: (description: string) => void;
     enabled: boolean;
     onEnabledChange: (enabled: boolean) => void;
+    likesEnabled: boolean;
+    onLikesEnabledChange: (enable: boolean) => void;
     allowAnonymous: boolean;
-    onAllowAnonymousChange: (allow: boolean) => void;
-    enableUpvotes: boolean;
-    onEnableUpvotesChange: (enable: boolean) => void;
-    maxLength: string;
-    onMaxLengthChange: (length: string) => void;
-    cooldownSec: string;
-    onCooldownSecChange: (cooldown: string) => void;
+    onAllowAnonymousChange: (enable: boolean) => void;
+    lengthLimitMode: QuestionsLengthLimitMode;
+    onLengthLimitModeChange: (mode: QuestionsLengthLimitMode) => void;
+    cooldownEnabled: boolean;
+    onCooldownEnabledChange: (enable: boolean) => void;
+    cooldownSeconds: number;
+    onCooldownSecondsChange: (seconds: number) => void;
 }
 
 export function QuestionsModuleForm({
@@ -25,14 +28,16 @@ export function QuestionsModuleForm({
     onDescriptionChange,
     enabled,
     onEnabledChange,
+    likesEnabled,
+    onLikesEnabledChange,
     allowAnonymous,
     onAllowAnonymousChange,
-    enableUpvotes,
-    onEnableUpvotesChange,
-    maxLength,
-    onMaxLengthChange,
-    cooldownSec,
-    onCooldownSecChange,
+    lengthLimitMode,
+    onLengthLimitModeChange,
+    cooldownEnabled,
+    onCooldownEnabledChange,
+    cooldownSeconds,
+    onCooldownSecondsChange,
 }: QuestionsModuleFormProps) {
     return (
         <div className="workspace-page__module-form">
@@ -43,66 +48,64 @@ export function QuestionsModuleForm({
                 onDescriptionChange={onDescriptionChange}
                 enabled={enabled}
                 onEnabledChange={onEnabledChange}
+                rightOfEnabled={
+                    <>
+                        <Switch
+                            checked={likesEnabled}
+                            onUpdate={onLikesEnabledChange}
+                            content="Enable upvotes"
+                            size="l"
+                        />
+                        <Switch
+                            checked={allowAnonymous}
+                            onUpdate={onAllowAnonymousChange}
+                            content="Allow semi-anonymous questions"
+                            size="l"
+                        />
+                    </>
+                }
             />
-            <Divider />
-            <div className="workspace-page__module-form-grid">
-                <div className="workspace-page__module-form-field">
+            <div className="workspace-page__module-form-row-2">
+                <div className="workspace-page__module-form-field workspace-page__module-form-field-inline">
                     <Switch
-                        checked={allowAnonymous}
-                        onUpdate={onAllowAnonymousChange}
-                        content="Allow semi-anonymous questions"
+                        checked={cooldownEnabled}
+                        onUpdate={onCooldownEnabledChange}
+                        content="Cooldown"
                         size="l"
                     />
-                    <Text variant="body-2" color="secondary">
-                        When enabled, participants can choose to submit questions semi-anonymously. You will still see who wrote each question in the Inspect Module tab.
-                    </Text>
+                    {cooldownEnabled && (
+                        <TextInput
+                            value={String(cooldownSeconds)}
+                            onUpdate={(v) =>
+                                onCooldownSecondsChange(
+                                    Math.min(300, Math.max(0, parseInt(v, 10) || 0)),
+                                )
+                            }
+                            size="l"
+                            type="number"
+                            placeholder="30"
+                            className="workspace-page__settings-inline-input"
+                            endContent={
+                                <Text variant="body-2" color="secondary">
+                                    sec
+                                </Text>
+                            }
+                        />
+                    )}
                 </div>
-                <div className="workspace-page__module-form-field">
-                    <Switch
-                        checked={enableUpvotes}
-                        onUpdate={onEnableUpvotesChange}
-                        content="Enable upvotes"
-                        size="l"
-                    />
-                    <Text variant="body-2" color="secondary">
-                        Participants can upvote questions to raise popular ones.
-                    </Text>
-                </div>
-            </div>
-
-            <div className="workspace-page__module-form-grid">
                 <div className="workspace-page__module-form-field">
                     <Text variant="body-1" className="workspace-page__settings-label">
                         Max message length
                     </Text>
-                    <TextInput
-                        value={maxLength}
-                        onUpdate={onMaxLengthChange}
+                    <SegmentedRadioGroup
                         size="l"
-                        type="number"
-                        placeholder="240"
-                        endContent={
-                            <Text variant="body-2" color="secondary">
-                                chars
-                            </Text>
-                        }
-                    />
-                </div>
-                <div className="workspace-page__module-form-field">
-                    <Text variant="body-1" className="workspace-page__settings-label">
-                        Cooldown
-                    </Text>
-                    <TextInput
-                        value={cooldownSec}
-                        onUpdate={onCooldownSecChange}
-                        size="l"
-                        type="number"
-                        placeholder="0"
-                        endContent={
-                            <Text variant="body-2" color="secondary">
-                                sec
-                            </Text>
-                        }
+                        value={lengthLimitMode}
+                        onUpdate={(v) => onLengthLimitModeChange(v as QuestionsLengthLimitMode)}
+                        options={[
+                            {value: 'compact', content: 'Compact (100)'},
+                            {value: 'moderate', content: 'Moderate (250)'},
+                            {value: 'extended', content: 'Extended (500)'},
+                        ]}
                     />
                 </div>
             </div>

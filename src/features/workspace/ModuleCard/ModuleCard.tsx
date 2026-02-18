@@ -43,9 +43,26 @@ export function ModuleCard({
                             className="workspace-page__module-card-title-right"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <Label theme={module.enabled ? 'success' : 'info'} size="s">
-                                {module.enabled ? 'Enabled' : 'Disabled'}
-                            </Label>
+                            <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleEnabled(module.id);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        onToggleEnabled(module.id);
+                                    }
+                                }}
+                                style={{cursor: 'pointer'}}
+                            >
+                                <Label theme={module.enabled ? 'success' : 'danger'} size="s">
+                                    {module.enabled ? 'Enabled' : 'Disabled'}
+                                </Label>
+                            </span>
                             <DropdownMenu
                                 items={[
                                     [

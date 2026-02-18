@@ -1,4 +1,4 @@
-import {Divider, SegmentedRadioGroup, Switch, Text, TextInput} from '@gravity-ui/uikit';
+import {SegmentedRadioGroup, Switch, Text, TextInput} from '@gravity-ui/uikit';
 import type {TimerDuration} from '@/shared/types/workspace';
 import {ModuleFormCommon} from './ModuleFormCommon';
 
@@ -13,10 +13,8 @@ interface TimerModuleFormProps {
     onDurationChange: (duration: TimerDuration) => void;
     customDurationSec: string;
     onCustomDurationSecChange: (duration: string) => void;
-    enableSound: boolean;
-    onEnableSoundChange: (enable: boolean) => void;
-    allowPause: boolean;
-    onAllowPauseChange: (allow: boolean) => void;
+    soundNotificationEnabled: boolean;
+    onSoundNotificationEnabledChange: (enable: boolean) => void;
 }
 
 export function TimerModuleForm({
@@ -30,10 +28,8 @@ export function TimerModuleForm({
     onDurationChange,
     customDurationSec,
     onCustomDurationSecChange,
-    enableSound,
-    onEnableSoundChange,
-    allowPause,
-    onAllowPauseChange,
+    soundNotificationEnabled,
+    onSoundNotificationEnabledChange,
 }: TimerModuleFormProps) {
     return (
         <div className="workspace-page__module-form">
@@ -45,63 +41,48 @@ export function TimerModuleForm({
                 enabled={enabled}
                 onEnabledChange={onEnabledChange}
             />
-            <Divider />
-            <div className="workspace-page__module-form-grid">
-                <div className="workspace-page__module-form-field">
-                    <Text variant="body-1" className="workspace-page__settings-label">
-                        Duration
-                    </Text>
-                    <div className="workspace-page__settings-inline">
-                        <SegmentedRadioGroup
-                            size="l"
-                            value={duration}
-                            onUpdate={(v) => onDurationChange(v as TimerDuration)}
-                            options={[
-                                {value: '60', content: '1 min'},
-                                {value: '120', content: '2 min'},
-                                {value: '300', content: '5 min'},
-                                {value: 'custom', content: 'Custom'},
-                            ]}
-                        />
-                        {duration === 'custom' && (
-                            <TextInput
-                                value={customDurationSec}
-                                onUpdate={onCustomDurationSecChange}
-                                size="l"
-                                type="number"
-                                placeholder="180"
-                                className="workspace-page__settings-inline-input"
-                                endContent={
-                                    <Text variant="body-2" color="secondary">
-                                        sec
-                                    </Text>
-                                }
-                            />
-                        )}
-                    </div>
-                </div>
-                <div className="workspace-page__module-form-field">
-                    <Switch
-                        checked={enableSound}
-                        onUpdate={onEnableSoundChange}
-                        content="Enable sound"
+            <div className="workspace-page__module-form-field">
+                <Text variant="body-1" className="workspace-page__settings-label">
+                    Duration
+                </Text>
+                <div className="workspace-page__settings-inline">
+                    <SegmentedRadioGroup
                         size="l"
+                        value={duration}
+                        onUpdate={(v) => onDurationChange(v as TimerDuration)}
+                        options={[
+                            {value: '60', content: '1 min'},
+                            {value: '300', content: '5 min'},
+                            {value: '600', content: '10 min'},
+                            {value: 'custom', content: 'Custom'},
+                        ]}
                     />
-                    <Text variant="body-2" color="secondary">
-                        Play a short sound when time is up.
-                    </Text>
+                    {duration === 'custom' && (
+                        <TextInput
+                            value={customDurationSec}
+                            onUpdate={onCustomDurationSecChange}
+                            size="l"
+                            type="number"
+                            placeholder="180"
+                            className="workspace-page__settings-inline-input"
+                            endContent={
+                                <Text variant="body-2" color="secondary">
+                                    sec
+                                </Text>
+                            }
+                        />
+                    )}
                 </div>
             </div>
-
             <div className="workspace-page__module-form-field">
                 <Switch
-                    checked={allowPause}
-                    onUpdate={onAllowPauseChange}
-                    content="Allow pause/resume"
+                    checked={soundNotificationEnabled}
+                    onUpdate={onSoundNotificationEnabledChange}
+                    content="Enable sound"
                     size="l"
                 />
                 <Text variant="body-2" color="secondary">
-                    Let the teacher pause and resume the timer.
+                    Play a short sound when time is up.
                 </Text>
             </div>
         </div>

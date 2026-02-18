@@ -99,6 +99,8 @@ export default function WorkspacePage() {
         workspaceModules.createModuleType,
         workspaceModules.isCreateModuleOpen,
         workspaceModules.createModuleType,
+        null,
+        workspaceModules.modules,
     );
     const editModuleForm = useModuleForm(
         editModule?.type || 'questions',
@@ -117,6 +119,7 @@ export default function WorkspacePage() {
 
     const saveSettings = useWorkspaceSaveSettings({
         workspaceId,
+        workspace,
         workspaceSettings,
         onSuccess: setWorkspace,
     });
@@ -246,7 +249,7 @@ export default function WorkspacePage() {
                     organizations={organizations}
                     settingsError={saveSettings.error}
                     isSavingSettings={saveSettings.isSaving}
-                    onSave={saveSettings.save}
+                    onSave={saveSettings.saveBasics}
                 />
             )}
             {activeTab === 'modules' && (

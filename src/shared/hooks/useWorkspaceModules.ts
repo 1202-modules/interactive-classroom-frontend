@@ -29,10 +29,11 @@ type ModuleDefaultsByType = {
 const defaultConfigByType: ModuleDefaultsByType = {
     questions: {
         type: 'questions',
+        length_limit_mode: 'moderate',
+        likes_enabled: true,
         allow_anonymous: false,
-        enable_upvotes: true,
-        max_length: 240,
-        cooldown_sec: 0,
+        cooldown_enabled: false,
+        cooldown_seconds: 30,
     },
     poll: {
         type: 'poll',
@@ -50,9 +51,8 @@ const defaultConfigByType: ModuleDefaultsByType = {
     },
     timer: {
         type: 'timer',
-        duration_sec: 120,
-        enable_sound: true,
-        allow_pause: true,
+        duration_seconds: 600,
+        sound_notification_enabled: true,
     },
 };
 
@@ -67,21 +67,41 @@ const normalizeConfig = (
     settings: Record<string, unknown>,
 ): ActivityModuleConfig => {
     switch (type) {
-        case 'questions':
+        case 'questions': {
             const questionsDefaults = defaultConfigByType.questions;
+            const mode = settings.length_limit_mode;
+            const validModes = ['compact', 'moderate', 'extended'] as const;
+            let lengthLimitMode: (typeof validModes)[number] = questionsDefaults.length_limit_mode;
+            if (validModes.includes(mode as (typeof validModes)[number])) {
+                lengthLimitMode = mode as (typeof validModes)[number];
+            } else if (typeof settings.max_length === 'number') {
+                if (settings.max_length <= 100) lengthLimitMode = 'compact';
+                else if (settings.max_length <= 250) lengthLimitMode = 'moderate';
+                else lengthLimitMode = 'extended';
+            }
+            const cooldownSec = getNumber(
+                settings.cooldown_seconds ?? settings.cooldown_sec,
+                questionsDefaults.cooldown_seconds,
+            );
+            const cooldownEnabled =
+                settings.cooldown_enabled !== undefined
+                    ? Boolean(settings.cooldown_enabled)
+                    : cooldownSec > 0;
             return {
                 type: 'questions',
+                length_limit_mode: lengthLimitMode,
+                likes_enabled: getBoolean(
+                    settings.likes_enabled ?? settings.enable_upvotes,
+                    questionsDefaults.likes_enabled,
+                ),
                 allow_anonymous: getBoolean(
                     settings.allow_anonymous,
                     questionsDefaults.allow_anonymous,
                 ),
-                enable_upvotes: getBoolean(
-                    settings.enable_upvotes,
-                    questionsDefaults.enable_upvotes,
-                ),
-                max_length: getNumber(settings.max_length, questionsDefaults.max_length),
-                cooldown_sec: getNumber(settings.cooldown_sec, questionsDefaults.cooldown_sec),
+                cooldown_enabled: cooldownEnabled,
+                cooldown_seconds: cooldownSec,
             };
+        }
         case 'poll':
             const pollDefaults = defaultConfigByType.poll;
             return {
@@ -109,14 +129,20 @@ const normalizeConfig = (
                     ? (settings.options as Array<{text: string; correct: boolean}>)
                     : quizDefaults.options,
             };
-        case 'timer':
+        case 'timer': {
             const timerDefaults = defaultConfigByType.timer;
             return {
                 type: 'timer',
-                duration_sec: getNumber(settings.duration_sec, timerDefaults.duration_sec),
-                enable_sound: getBoolean(settings.enable_sound, timerDefaults.enable_sound),
-                allow_pause: getBoolean(settings.allow_pause, timerDefaults.allow_pause),
+                duration_seconds: getNumber(
+                    settings.duration_seconds ?? settings.duration_sec,
+                    timerDefaults.duration_seconds,
+                ),
+                sound_notification_enabled: getBoolean(
+                    settings.sound_notification_enabled ?? settings.enable_sound,
+                    timerDefaults.sound_notification_enabled,
+                ),
             };
+        }
     }
 };
 

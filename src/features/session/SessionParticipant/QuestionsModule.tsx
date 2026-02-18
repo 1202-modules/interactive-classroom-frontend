@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, Label, Text, TextInput } from '@gravity-ui/uikit';
+import { Button, Card, Checkbox, Label, Text, TextInput } from '@gravity-ui/uikit';
 import { Heart } from '@gravity-ui/icons';
 import type { QuestionMessageItem, QuestionsModuleSettings } from '@/shared/types/questions';
 import { getQuestionMessages, createQuestionMessage, likeQuestionMessage } from '@/shared/api/questions';
@@ -24,6 +24,7 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
     const [likingIds, setLikingIds] = useState<Set<number>>(new Set());
+    const [postAsAnonymous, setPostAsAnonymous] = useState(false);
 
     const fetchMessages = useCallback(async () => {
         setIsLoading(true);
@@ -73,7 +74,10 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
         setIsSubmitting(true);
         setError(null);
         try {
-            await createQuestionMessage(api, passcode, moduleId, authToken, { content: trimmed });
+            await createQuestionMessage(api, passcode, moduleId, authToken, {
+                content: trimmed,
+                is_anonymous: settings?.allow_anonymous ? postAsAnonymous : false,
+            });
             setQuestionText('');
             if (settings?.cooldown_enabled && settings?.cooldown_seconds) {
                 setCooldownUntil(Date.now() + settings.cooldown_seconds * 1000);
@@ -180,26 +184,38 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
             )}
 
             {canCreateQuestion && (
-                <div className="participant-page__question-form">
-                    <TextInput
-                        placeholder="Ask a question"
-                        size="l"
-                        value={questionText}
-                        onUpdate={(value) => {
-                            if (!settings || value.length <= settings.max_length) {
-                                setQuestionText(value);
-                            }
-                        }}
-                        disabled={isSubmitting || (cooldownUntil !== null && cooldownUntil > Date.now())}
-                    />
-                    <Button
-                        view="action"
-                        size="l"
-                        onClick={handleSubmitQuestion}
-                        disabled={isSubmitting || !questionText.trim() || (cooldownUntil !== null && cooldownUntil > Date.now())}
-                    >
-                        Send
-                    </Button>
+                <div>
+                    <div className="participant-page__question-form">
+                        <TextInput
+                            placeholder="Ask a question"
+                            size="l"
+                            value={questionText}
+                            onUpdate={(value) => {
+                                if (!settings || value.length <= settings.max_length) {
+                                    setQuestionText(value);
+                                }
+                            }}
+                            disabled={isSubmitting || (cooldownUntil !== null && cooldownUntil > Date.now())}
+                        />
+                        <Button
+                            view="action"
+                            size="l"
+                            onClick={handleSubmitQuestion}
+                            disabled={isSubmitting || !questionText.trim() || (cooldownUntil !== null && cooldownUntil > Date.now())}
+                        >
+                            Send
+                        </Button>
+                    </div>
+                    {settings?.allow_anonymous && (
+                        <div style={{ marginTop: 'var(--g-spacing-2)' }}>
+                            <Checkbox
+                                checked={postAsAnonymous}
+                                onUpdate={setPostAsAnonymous}
+                                content="Post as anonymous (others won't see your name)"
+                                size="l"
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 

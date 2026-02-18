@@ -1,6 +1,17 @@
 import { useState } from 'react';
-import {Button, ClipboardButton, Divider, Icon, Label, Tab, TabList, TabProvider, Text} from '@gravity-ui/uikit';
-import {ArrowLeft, Gear, Play, Stop, Tv} from '@gravity-ui/icons';
+import {
+    Button,
+    ClipboardButton,
+    Divider,
+    DropdownMenu,
+    Icon,
+    Label,
+    Tab,
+    TabList,
+    TabProvider,
+    Text,
+} from '@gravity-ui/uikit';
+import {ArrowLeft, ChevronDown, Play, Stop, Tv} from '@gravity-ui/icons';
 
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
 import {SessionModulesTab} from './SessionModulesTab';
@@ -35,6 +46,7 @@ export default function SessionPage() {
         filteredParticipants,
         handleStartStop,
         handleOpenPresentation,
+        handleCopyPresentationLink,
         handleBackToWorkspace,
         handleActivateModule,
         handleRemoveModule,
@@ -71,11 +83,13 @@ export default function SessionPage() {
                             )}
                         </div>
                         <div className="session-page__header-meta">
-                            <Label theme={sessionInfo?.is_stopped ? 'normal' : 'success'} size="m">
+                            <Label theme={sessionInfo?.is_stopped ? 'normal' : 'danger'} size="m">
                                 {sessionInfo?.is_stopped ? 'Stopped' : 'Live'}
                             </Label>
                             <Text variant="body-1" color="secondary">
-                                {activeParticipantsCount} active participants
+                                {sessionInfo?.is_stopped
+                                    ? `${participants.length} participants`
+                                    : `${activeParticipantsCount} active · ${participants.length} total participants`}
                             </Text>
                             <span className="session-page__passcode-badge">
                                 Code: {sessionPasscode}
@@ -92,13 +106,20 @@ export default function SessionPage() {
                         <Icon data={sessionInfo?.is_stopped ? Play : Stop} size={18} />
                         {sessionInfo?.is_stopped ? 'Start Session' : 'Stop Session'}
                     </Button>
-                    <Button view="flat" size="l">
-                        <Icon data={Gear} size={18} />
-                    </Button>
-                    <Button view="outlined" size="l" onClick={handleOpenPresentation}>
-                        <Icon data={Tv} size={18} />
-                        Presentation
-                    </Button>
+                    <div className="session-page__presentation-split">
+                        <Button view="outlined" size="l" onClick={handleOpenPresentation}>
+                            <Icon data={Tv} size={18} />
+                            Presentation
+                        </Button>
+                        <DropdownMenu
+                            items={[[{text: 'Copy link', action: handleCopyPresentationLink}]]}
+                            renderSwitcher={(props) => (
+                                <Button view="outlined" size="l" {...props} title="More options">
+                                    <Icon data={ChevronDown} size={18} />
+                                </Button>
+                            )}
+                        />
+                    </div>
                 </div>
             </div>
 

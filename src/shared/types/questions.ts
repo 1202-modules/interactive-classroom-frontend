@@ -1,5 +1,6 @@
 export interface QuestionsModuleSettings {
     likes_enabled: boolean;
+    allow_anonymous?: boolean;
     allow_participant_answers: boolean;
     length_limit_mode: 'compact' | 'moderate' | 'extended' | string;
     max_length: number;
@@ -29,5 +30,6 @@ export interface QuestionMessagesResponse {
 export interface CreateQuestionMessageRequest {
     content: string;
     parent_id?: number;
+    is_anonymous?: boolean;
 }
 

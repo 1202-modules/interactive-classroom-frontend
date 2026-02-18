@@ -145,9 +145,18 @@ export function useSessionDetail() {
         }
     }, [api, isSessionIdValid, sessionIdNumber, sessionInfo, fetchSessionInfo]);
 
+    const presentationUrl = useMemo(
+        () => `${window.location.origin}/workspace/${workspaceId}/session/${sessionId}/presentation`,
+        [workspaceId, sessionId],
+    );
+
     const handleOpenPresentation = useCallback(() => {
-        navigate(`/workspace/${workspaceId}/session/${sessionId}/presentation`);
-    }, [navigate, workspaceId, sessionId]);
+        window.open(presentationUrl, '_blank');
+    }, [presentationUrl]);
+
+    const handleCopyPresentationLink = useCallback(async () => {
+        await navigator.clipboard.writeText(presentationUrl);
+    }, [presentationUrl]);
 
     const handleBackToWorkspace = useCallback(() => {
         navigate(`/workspace/${workspaceId}`);
@@ -290,6 +299,7 @@ export function useSessionDetail() {
         isModuleSupported,
         handleStartStop,
         handleOpenPresentation,
+        handleCopyPresentationLink,
         handleBackToWorkspace,
         handleActivateModule,
         handleRemoveModule,

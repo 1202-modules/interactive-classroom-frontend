@@ -3,17 +3,41 @@ import type {
     ActivityModuleConfig,
     ActivityModuleType,
     PollAnswerMode,
+    QuestionsLengthLimitMode,
     QuizTimeLimit,
     TimerDuration,
     WorkspaceActivityModule,
 } from '@/shared/types/workspace';
 import {moduleService} from '@/features/workspace/services/moduleService';
 
+const DEFAULT_PREFIX_BY_TYPE: Record<ActivityModuleType, string> = {
+    questions: 'Questions',
+    timer: 'Timer',
+    poll: 'Poll',
+    quiz: 'Quiz',
+};
+
+function getNextModuleName(
+    type: ActivityModuleType,
+    existingNames: string[],
+): string {
+    const prefix = DEFAULT_PREFIX_BY_TYPE[type];
+    const usedNumbers = new Set<number>();
+    for (const name of existingNames) {
+        const match = name.match(new RegExp(`^${prefix}-(\\d+)$`));
+        if (match) usedNumbers.add(parseInt(match[1], 10));
+    }
+    let n = 1;
+    while (usedNumbers.has(n)) n++;
+    return `${prefix}-${n}`;
+}
+
 export function useModuleForm(
     moduleType: ActivityModuleType,
     isOpen: boolean,
     createModuleType?: ActivityModuleType,
     existingModule?: WorkspaceActivityModule | null,
+    existingModules?: WorkspaceActivityModule[],
 ) {
     const actualType = createModuleType ?? moduleType;
     const [moduleEnabled, setModuleEnabled] = useState(true);
@@ -38,16 +62,17 @@ export function useModuleForm(
     ]);
 
     // Questions
+    const [questionsLengthLimitMode, setQuestionsLengthLimitMode] =
+        useState<QuestionsLengthLimitMode>('moderate');
+    const [questionsLikesEnabled, setQuestionsLikesEnabled] = useState(true);
     const [questionsAllowAnonymous, setQuestionsAllowAnonymous] = useState(false);
-    const [questionsEnableUpvotes, setQuestionsEnableUpvotes] = useState(true);
-    const [questionsMaxLength, setQuestionsMaxLength] = useState('240');
-    const [questionsCooldownSec, setQuestionsCooldownSec] = useState('0');
+    const [questionsCooldownEnabled, setQuestionsCooldownEnabled] = useState(false);
+    const [questionsCooldownSeconds, setQuestionsCooldownSeconds] = useState(30);
 
     // Timer
-    const [timerDuration, setTimerDuration] = useState<TimerDuration>('120');
-    const [timerCustomDurationSec, setTimerCustomDurationSec] = useState('180');
+    const [timerDuration, setTimerDuration] = useState<TimerDuration>('600');
+    const [timerCustomDurationSec, setTimerCustomDurationSec] = useState('420');
     const [timerEnableSound, setTimerEnableSound] = useState(true);
-    const [timerAllowPause, setTimerAllowPause] = useState(true);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -60,20 +85,20 @@ export function useModuleForm(
 
             const config = existingModule.config;
             if (config.type === 'questions') {
+                setQuestionsLengthLimitMode(config.length_limit_mode);
+                setQuestionsLikesEnabled(config.likes_enabled);
                 setQuestionsAllowAnonymous(config.allow_anonymous);
-                setQuestionsEnableUpvotes(config.enable_upvotes);
-                setQuestionsMaxLength(String(config.max_length));
-                setQuestionsCooldownSec(String(config.cooldown_sec));
+                setQuestionsCooldownEnabled(config.cooldown_enabled);
+                setQuestionsCooldownSeconds(config.cooldown_seconds);
             } else if (config.type === 'timer') {
-                const durationSec = config.duration_sec;
-                if ([60, 120, 300].includes(durationSec)) {
+                const durationSec = config.duration_seconds;
+                if ([60, 300, 600].includes(durationSec)) {
                     setTimerDuration(String(durationSec) as TimerDuration);
                 } else {
                     setTimerDuration('custom');
                     setTimerCustomDurationSec(String(durationSec));
                 }
-                setTimerEnableSound(config.enable_sound);
-                setTimerAllowPause(config.allow_pause);
+                setTimerEnableSound(config.sound_notification_enabled);
             } else if (config.type === 'poll') {
                 setPollQuestion(config.question);
                 setPollAnswerMode(config.answer_mode);
@@ -94,16 +119,12 @@ export function useModuleForm(
             return;
         }
 
-        // Default values for new module
-        const defaultNameByType: Record<ActivityModuleType, string> = {
-            questions: 'Questions-1',
-            poll: 'Poll-2',
-            quiz: 'Quiz-1',
-            timer: 'Timer-2',
-        };
+        // Default values for new module - unique name across all modules
+        const existingNames = (existingModules ?? []).map((m) => m.name);
+        const defaultName = getNextModuleName(actualType, existingNames);
 
         setModuleEnabled(true);
-        setModuleName(defaultNameByType[actualType]);
+        setModuleName(defaultName);
         setModuleDescription('');
 
         setPollQuestion("What do you think about today's topic?");
@@ -121,16 +142,16 @@ export function useModuleForm(
             {text: 'Option 3', correct: false},
         ]);
 
+        setQuestionsLengthLimitMode('moderate');
+        setQuestionsLikesEnabled(true);
         setQuestionsAllowAnonymous(false);
-        setQuestionsEnableUpvotes(true);
-        setQuestionsMaxLength('240');
-        setQuestionsCooldownSec('0');
+        setQuestionsCooldownEnabled(false);
+        setQuestionsCooldownSeconds(30);
 
-        setTimerDuration('120');
+        setTimerDuration('600');
         setTimerCustomDurationSec('180');
         setTimerEnableSound(true);
-        setTimerAllowPause(true);
-    }, [actualType, isOpen, existingModule]);
+    }, [actualType, isOpen, existingModule, existingModules]);
 
     const getModuleConfig = (): ActivityModuleConfig => {
         switch (actualType) {
@@ -151,17 +172,17 @@ export function useModuleForm(
                 );
             case 'questions':
                 return moduleService.buildQuestionsConfig(
+                    questionsLengthLimitMode,
+                    questionsLikesEnabled,
                     questionsAllowAnonymous,
-                    questionsEnableUpvotes,
-                    questionsMaxLength,
-                    questionsCooldownSec,
+                    questionsCooldownEnabled,
+                    questionsCooldownSeconds,
                 );
             case 'timer':
                 return moduleService.buildTimerConfig(
                     timerDuration,
                     timerCustomDurationSec,
                     timerEnableSound,
-                    timerAllowPause,
                 );
             default:
                 throw new Error('Unknown module type');
@@ -193,22 +214,22 @@ export function useModuleForm(
         setQuizCustomTimeLimit,
         quizOptions,
         setQuizOptions,
+        questionsLengthLimitMode,
+        setQuestionsLengthLimitMode,
+        questionsLikesEnabled,
+        setQuestionsLikesEnabled,
         questionsAllowAnonymous,
         setQuestionsAllowAnonymous,
-        questionsEnableUpvotes,
-        setQuestionsEnableUpvotes,
-        questionsMaxLength,
-        setQuestionsMaxLength,
-        questionsCooldownSec,
-        setQuestionsCooldownSec,
+        questionsCooldownEnabled,
+        setQuestionsCooldownEnabled,
+        questionsCooldownSeconds,
+        setQuestionsCooldownSeconds,
         timerDuration,
         setTimerDuration,
         timerCustomDurationSec,
         setTimerCustomDurationSec,
         timerEnableSound,
         setTimerEnableSound,
-        timerAllowPause,
-        setTimerAllowPause,
         getModuleConfig,
     };
 }

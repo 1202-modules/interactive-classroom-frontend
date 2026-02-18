@@ -68,6 +68,26 @@
   gap: var(--g-spacing-2);
 }
 
+.session-page__presentation-split {
+  display: flex;
+  align-items: stretch;
+}
+
+.session-page__presentation-split > .g-button:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.session-page__presentation-split > [class*='dropdown'] {
+  margin-left: -1px;
+}
+
+.session-page__presentation-split > [class*='dropdown'] .g-button {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 0 var(--g-spacing-2);
+}
+
 /* Main Content */
 .session-page__content {
   display: flex;

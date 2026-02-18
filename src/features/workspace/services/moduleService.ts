@@ -159,41 +159,41 @@ export class ModuleService {
     }
 
     /**
-     * Build config for questions module
+     * Build config for questions module (backend format)
      */
     buildQuestionsConfig(
+        lengthLimitMode: 'compact' | 'moderate' | 'extended',
+        likesEnabled: boolean,
         allowAnonymous: boolean,
-        enableUpvotes: boolean,
-        maxLength: string,
-        cooldownSec: string,
+        cooldownEnabled: boolean,
+        cooldownSeconds: number,
     ): ActivityModuleConfig {
         return {
             type: 'questions',
+            length_limit_mode: lengthLimitMode,
+            likes_enabled: likesEnabled,
             allow_anonymous: allowAnonymous,
-            enable_upvotes: enableUpvotes,
-            max_length: Number.parseInt(maxLength, 10) || 240,
-            cooldown_sec: Number.parseInt(cooldownSec, 10) || 0,
+            cooldown_enabled: cooldownEnabled,
+            cooldown_seconds: cooldownSeconds,
         };
     }
 
     /**
-     * Build config for timer module
+     * Build config for timer module (backend format)
      */
     buildTimerConfig(
         duration: TimerDuration,
         customDurationSec: string,
-        enableSound: boolean,
-        allowPause: boolean,
+        soundNotificationEnabled: boolean,
     ): ActivityModuleConfig {
-        const durationSec =
+        const durationSeconds =
             duration === 'custom'
-                ? Number.parseInt(customDurationSec, 10) || 120
+                ? Number.parseInt(customDurationSec, 10) || 600
                 : Number.parseInt(duration, 10);
         return {
             type: 'timer',
-            duration_sec: durationSec,
-            enable_sound: enableSound,
-            allow_pause: allowPause,
+            duration_seconds: durationSeconds,
+            sound_notification_enabled: soundNotificationEnabled,
         };
     }
 }
