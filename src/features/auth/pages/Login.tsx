@@ -1,19 +1,37 @@
 import { useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Alert, Button, Card, Checkbox, Text, TextInput } from '@gravity-ui/uikit';
+import { Alert, Button, Card, Checkbox, Text, TextInput, Tooltip } from '@gravity-ui/uikit';
 import { AxiosError } from 'axios';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/shared/store/store';
 import { setCredentials } from '@/shared/store/authSlice';
-import { useAuth } from '../useAuth';
 import { setUser, setUserError, setUserLoading } from '@/shared/store/userSlice';
 import { api } from '@/shared/api/api';
+import { useAuth } from '../useAuth';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { isValidEmail, validateEmail, validatePasswordMinLength } from '@/shared/utils/validation';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { PasswordInput } from '../components/PasswordInput';
 import { SocialAuthButtons } from '../components/SocialAuthButtons';
 import './Auth.css';
+
+const WIP_TOOLTIP = 'WIP (Work In Progress)';
+const TOOLTIP_SHOW_MS = 2000;
+
+function ForgotPasswordButton() {
+    const [open, setOpen] = useState(false);
+    const handleClick = () => {
+        setOpen(true);
+        window.setTimeout(() => setOpen(false), TOOLTIP_SHOW_MS);
+    };
+    return (
+        <Tooltip content={WIP_TOOLTIP} open={open} onOpenChange={(o: boolean) => !o && setOpen(false)}>
+            <Button view="flat" size="s" className="auth-page__link" onClick={handleClick}>
+                Forgot password?
+            </Button>
+        </Tooltip>
+    );
+}
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -26,7 +44,7 @@ export default function LoginPage() {
 
     const [email, setEmail] = useState(prefilledEmail ?? '');
     const [password, setPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(true);
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -91,11 +109,11 @@ export default function LoginPage() {
                 if (!profile.first_name || !profile.last_name) {
                     navigate('/profile', { replace: true });
                 } else {
-                    navigate(from, { replace: true });
+                    navigate('/dashboard', { replace: true });
                 }
             } catch {
                 dispatch(setUserError('Failed to load user'));
-                navigate(from, { replace: true });
+                navigate('/dashboard', { replace: true });
             } finally {
                 dispatch(setUserLoading(false));
             }
@@ -147,9 +165,7 @@ export default function LoginPage() {
                         <Checkbox checked={rememberMe} onUpdate={setRememberMe} size="l">
                             Remember me
                         </Checkbox>
-                        <Button view="flat" size="s" className="auth-page__link" title="WIP">
-                            Forgot password?
-                        </Button>
+                        <ForgotPasswordButton />
                     </div>
 
                     <div className="auth-page__actions">

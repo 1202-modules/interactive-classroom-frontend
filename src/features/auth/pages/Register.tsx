@@ -2,6 +2,10 @@ import { useMemo, useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Checkbox, Divider, Text, TextInput } from '@gravity-ui/uikit';
 import { AxiosError } from 'axios';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/shared/store/store';
+import { setCredentials } from '@/shared/store/authSlice';
+import { setUser, setUserLoading, setUserError } from '@/shared/store/userSlice';
 import { useAuth } from '../useAuth';
 import { api } from '@/shared/api/api';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
@@ -45,6 +49,7 @@ export default function RegisterPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const from = (location.state as { from?: string })?.from || '/';
+    const dispatch = useDispatch<AppDispatch>();
     const { accessToken } = useAuth();
 
     const [firstName, setFirstName] = useState('');
@@ -185,11 +190,26 @@ export default function RegisterPage() {
         setConfirmError('');
         await api
             .post('/auth/verify-email', { email: email.trim(), code: verificationCode })
-            .then(() => {
+            .then((res) => {
                 setConfirmError('');
                 setIsCodeLoading(false);
                 trySaveCredentials(email.trim(), password);
-                navigate('/login', { state: { prefilledEmail: email.trim() } });
+                const { access_token: token, user_id: userId, email: userEmail } = res.data;
+                dispatch(setCredentials({ accessToken: token, userId, email: userEmail }));
+                api.defaults.headers.common.Authorization = `Bearer ${token}`;
+                dispatch(setUserLoading(true));
+                api
+                    .get('/users/me', { headers: { Authorization: `Bearer ${token}` } })
+                    .then((userRes) => {
+                        dispatch(setUser(userRes.data));
+                        dispatch(setUserError(null));
+                        navigate('/profile', { replace: true });
+                    })
+                    .catch(() => {
+                        dispatch(setUserError('Failed to load user'));
+                        navigate('/profile', { replace: true });
+                    })
+                    .finally(() => dispatch(setUserLoading(false)));
             })
             .catch((err: AxiosError<{ detail?: string | Array<{ msg?: string }> }>) => {
                 const message = parseBackendError(err.response?.data, 'Error');

@@ -24,8 +24,19 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
     const { accessToken } = useAuth();
     const { data: user, loading: userLoading } = useUser();
     const dispatch = useDispatch<AppDispatch>();
+    const path = location.pathname;
     const isAuthRoute =
-        location.pathname.startsWith('/login') || location.pathname.startsWith('/register');
+        path.startsWith('/login') || path.startsWith('/register');
+    const isPublicRoute =
+        path === '/' ||
+        path.startsWith('/login') ||
+        path.startsWith('/register') ||
+        path === '/terms' ||
+        path === '/privacy' ||
+        path === '/support';
+    const isHomePage = path === '/';
+    const isPublicWithHeader =
+        isHomePage || path === '/terms' || path === '/privacy' || path === '/support';
 
     useEffect(() => {
         // Simulate page load for 0.2 seconds on every route change
@@ -38,7 +49,6 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
     }, [location.pathname]);
 
     const getPageTitle = (): string => {
-        const path = location.pathname;
         if (path.startsWith('/login')) return 'Login';
         if (path.startsWith('/register')) return 'Register';
         if (path.startsWith('/profile')) return 'Profile';
@@ -119,7 +129,7 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                             view="flat"
                             size="m"
                             onClick={() =>
-                                navigate(isAuthRoute ? '/login' : '/dashboard')
+                                navigate(isPublicRoute ? '/' : '/dashboard')
                             }
                             className="layout-header__logo"
                         >
@@ -132,7 +142,7 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                                 <Text variant="subheader-3" className="layout-header__logo-title">
                                     Interactive Classroom Platform
                                 </Text>
-                                {!isAuthRoute && (
+                                {!isPublicRoute && (
                                     <Text
                                         variant="body-1"
                                         color="secondary"
@@ -156,7 +166,83 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                         >
                             <Icon data={theme === 'light' ? Moon : Sun} size={24} />
                         </Button>
-                        {isAuthRoute ? null : isPageLoading || (accessToken && userLoading) ? (
+                        {isAuthRoute ? (
+                            path === '/login' ? (
+                                <Button
+                                    view="outlined"
+                                    size="l"
+                                    onClick={() => navigate('/register')}
+                                >
+                                    Sign Up
+                                </Button>
+                            ) : path === '/register' ? (
+                                <Button
+                                    view="outlined"
+                                    size="l"
+                                    onClick={() => navigate('/login')}
+                                >
+                                    Log in
+                                </Button>
+                            ) : null
+                        ) : isPublicWithHeader ? (
+                            isPageLoading || (accessToken && userLoading) ? (
+                                <div className="layout-header__user-skeleton">
+                                    <Skeleton style={{ width: 32, height: 32, borderRadius: '50%' }} />
+                                    <Skeleton style={{ width: 80, height: 16, borderRadius: 4 }} />
+                                </div>
+                            ) : accessToken && user ? (
+                                <>
+                                    <Button
+                                        view="action"
+                                        size="l"
+                                        onClick={() => navigate('/dashboard')}
+                                    >
+                                        Dashboard
+                                    </Button>
+                                    <DropdownMenu
+                                        items={userMenuItems}
+                                        switcherWrapperClassName="layout-header__user-wrap"
+                                        popupProps={{ placement: 'bottom-end' }}
+                                        renderSwitcher={(props) => (
+                                            <Button
+                                                {...props}
+                                                view="flat"
+                                                size="l"
+                                                className="layout-header__user"
+                                            >
+                                                <Avatar
+                                                    size="m"
+                                                    text={userInitials}
+                                                    theme="brand"
+                                                    imgUrl={user.avatar_url || undefined}
+                                                    className="layout-header__user-avatar"
+                                                />
+                                                <Text variant="body-1" className="layout-header__user-name">
+                                                    {userDisplayName}
+                                                </Text>
+                                            </Button>
+                                        )}
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        view="outlined"
+                                        size="l"
+                                        onClick={() => navigate('/login')}
+                                    >
+                                        Log in
+                                    </Button>
+                                    <Button
+                                        view="outlined"
+                                        size="l"
+                                        onClick={() => navigate('/register')}
+                                    >
+                                        Sign Up
+                                    </Button>
+                                </>
+                            )
+                        ) : isPageLoading || (accessToken && userLoading) ? (
                             <div className="layout-header__user-skeleton">
                                 <Skeleton style={{ width: 32, height: 32, borderRadius: '50%' }} />
                                 <Skeleton style={{ width: 80, height: 16, borderRadius: 4 }} />
@@ -187,8 +273,12 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                                 )}
                             />
                         ) : (
-                            <Button view="flat" size="l" onClick={() => navigate('/login')}>
-                                <Text variant="body-1">Log in</Text>
+                            <Button
+                                view="outlined"
+                                size="l"
+                                onClick={() => navigate('/login')}
+                            >
+                                Log in
                             </Button>
                         )}
                     </div>

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@gravity-ui/uikit';
 import Layout from '@/shared/components/Layout';
 import Dashboard from '@/features/dashboard/Dashboard';
@@ -10,6 +10,7 @@ import PresentationPage from '@/features/session/PresentationPage';
 import ParticipantPage from '@/features/session/ParticipantPage';
 import ProfilePage from '@/features/profile/Profile';
 import SettingsPage from '@/features/settings/Settings';
+import HomePage from '@/features/home/HomePage';
 import LoginPage from '@/features/auth/pages/Login';
 import RegisterPage from '@/features/auth/pages/Register';
 import { useFetchUser } from '@/features/auth/useFetchUser';
@@ -25,7 +26,7 @@ function AppLayout() {
         <ThemeProvider theme={theme}>
             <Layout theme={theme} onToggleTheme={toggleTheme}>
                 <Routes>
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/s/:code" element={<ParticipantPage />} />

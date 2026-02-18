@@ -2,13 +2,17 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--g-spacing-10) var(--g-spacing-5);
+  padding: var(--g-spacing-8) var(--g-spacing-5);
 }
 
 .auth-page__card {
   width: 100%;
   max-width: 380px;
-  padding: var(--g-spacing-7);
+  padding: var(--g-spacing-6);
+}
+
+.auth-page .page-header {
+  margin-bottom: var(--g-spacing-4);
 }
 
 .auth-page .page-header__subtitle {
@@ -52,7 +56,7 @@
 }
 
 .auth-page__footer {
-  margin-top: var(--g-spacing-6);
+  margin-top: var(--g-spacing-4);
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-2);
