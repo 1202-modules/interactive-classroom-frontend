@@ -11,17 +11,20 @@ import { api } from '@/shared/api/api';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { isValidEmail, validateEmail, validatePasswordMinLength } from '@/shared/utils/validation';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { PasswordInput } from '../components/PasswordInput';
+import { SocialAuthButtons } from '../components/SocialAuthButtons';
 import './Auth.css';
 
 export default function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const from = (location.state as { from?: string })?.from || '/';
+    const prefilledEmail = (location.state as { prefilledEmail?: string })?.prefilledEmail;
 
     const dispatch = useDispatch<AppDispatch>();
     const { accessToken } = useAuth();
 
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(prefilledEmail ?? '');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export default function LoginPage() {
             const res = await api.post('/auth/login', {
                 email: e,
                 password,
+                remember_me: rememberMe,
             });
 
             const {
@@ -131,11 +135,10 @@ export default function LoginPage() {
 
                     <div className="auth-page__field">
                         <Text variant="body-1">Password</Text>
-                        <TextInput
+                        <PasswordInput
                             value={password}
                             onUpdate={setPassword}
                             size="l"
-                            type="password"
                             placeholder="Enter your password"
                         />
                     </div>
@@ -159,9 +162,9 @@ export default function LoginPage() {
                         >
                             Log in
                         </Button>
-                        <Button view="outlined" size="l" title="WIP">
-                            Continue with Google (WIP)
-                        </Button>
+                        <div className="auth-page__social-row">
+                            <SocialAuthButtons />
+                        </div>
                     </div>
                 </div>
 
@@ -170,9 +173,10 @@ export default function LoginPage() {
                         Don’t have an account?
                     </Text>
                     <Button
-                        view="flat"
-                        size="s"
-                        className="auth-page__link"
+                        view="outlined"
+                        size="l"
+                        width="max"
+                        className="auth-page__link auth-page__link--primary"
                         onClick={() => navigate('/register')}
                     >
                         Create an account
