@@ -28,6 +28,7 @@ export type SessionModuleApi = {
 export type Participant = {
     id: number;
     name: string;
+    guest_email?: string | null;
     joined_at: string;
     is_active: boolean;
     auth_type: 'anonymous' | 'registered' | 'sso' | 'email';

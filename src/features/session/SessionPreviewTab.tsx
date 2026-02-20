@@ -2,10 +2,10 @@ import {useCallback, useEffect, useState} from 'react';
 import {Button, Card, Label, Text, TextInput} from '@gravity-ui/uikit';
 import type {Participant, SessionModule} from '@/shared/types/sessionPage';
 import type {QuestionMessageItem} from '@/shared/types/questions';
-import {formatShortDate} from '@/shared/utils/date';
+import {formatShortDateTime} from '@/shared/utils/date';
 import {useApi} from '@/shared/hooks/useApi';
 import {getQuestionMessagesLecturer, patchQuestionMessageLecturer} from '@/shared/api/questions';
-import {patchParticipant} from '@/shared/api/sessionParticipants';
+import {patchParticipant, kickParticipant} from '@/shared/api/sessionParticipants';
 import {
     getTimerState,
     timerStart,
@@ -20,6 +20,7 @@ type SessionPreviewTabProps = {
     participantSearch: string;
     onParticipantSearchChange: (value: string) => void;
     filteredParticipants: Participant[];
+    maxParticipants: number | null;
     activeModule: SessionModule | undefined;
     sessionId: string;
     sessionPasscode?: string;
@@ -58,6 +59,8 @@ function InspectModuleContent({
     useEffect(() => {
         if (activeModule.type !== 'questions') return;
         fetchMessages();
+        const interval = setInterval(fetchMessages, 5000);
+        return () => clearInterval(interval);
     }, [activeModule.type, activeModule.id, fetchMessages]);
 
     const handlePin = useCallback(
@@ -324,16 +327,51 @@ export function SessionPreviewTab({
     participantSearch,
     onParticipantSearchChange,
     filteredParticipants,
+    maxParticipants,
     activeModule,
     sessionId,
     sessionPasscode,
     onRefetchParticipants,
 }: SessionPreviewTabProps) {
+    const api = useApi();
+    const sessionIdNum = Number(sessionId);
+    const [kickingId, setKickingId] = useState<number | null>(null);
+    const [banningId, setBanningId] = useState<number | null>(null);
+
+    const handleKick = useCallback(
+        (participantId: number) => {
+            if (!Number.isFinite(sessionIdNum)) return;
+            setKickingId(participantId);
+            kickParticipant(api, sessionIdNum, participantId)
+                .then(() => onRefetchParticipants?.())
+                .finally(() => setKickingId(null));
+        },
+        [api, sessionIdNum, onRefetchParticipants],
+    );
+
+    const handleBanUnban = useCallback(
+        (participantId: number, isBanned: boolean) => {
+            if (!Number.isFinite(sessionIdNum)) return;
+            setBanningId(participantId);
+            patchParticipant(api, sessionIdNum, participantId, { is_banned: !isBanned })
+                .then(() => onRefetchParticipants?.())
+                .finally(() => setBanningId(null));
+        },
+        [api, sessionIdNum, onRefetchParticipants],
+    );
+
+    const participantsTitle =
+        maxParticipants != null
+            ? `Participants (${participants.length}/${maxParticipants})`
+            : `Participants (${participants.length})`;
+
     return (
         <div className="session-page__inspect-panel">
             <div className="session-page__inspect-column session-page__inspect-column_participants">
                 <Card view="outlined" className="session-page__participants-card">
-                    <Text variant="subheader-1">Participants ({participants.length})</Text>
+                    <Text variant="subheader-1" className="session-page__inspect-panel-title">
+                        {participantsTitle}
+                    </Text>
                     <TextInput
                         placeholder="Search participants..."
                         value={participantSearch}
@@ -348,26 +386,59 @@ export function SessionPreviewTab({
                                 view="outlined"
                                 className="session-page__participant-card"
                             >
-                                <div className="session-page__participant-info">
-                                    <Text variant="body-2">{participant.name}</Text>
-                                    <div className="session-page__participant-meta">
-                                        {participant.is_banned && (
-                                            <Label theme="danger" size="xs">
-                                                Banned
-                                            </Label>
-                                        )}
-                                        <Label
-                                            theme={participant.is_active ? 'success' : 'normal'}
-                                            size="xs"
-                                        >
-                                            {participant.is_active ? 'Active' : 'Inactive'}
-                                        </Label>
-                                        <Label theme="utility" size="xs">
-                                            {participant.auth_type}
-                                        </Label>
-                                        <Text variant="caption-2" color="secondary">
-                                            Joined {formatShortDate(participant.joined_at)}
+                                <div className="session-page__participant-row">
+                                    <div className="session-page__participant-info">
+                                        <Text variant="body-2">
+                                            {participant.auth_type === 'email' && participant.guest_email
+                                                ? participant.name && participant.name !== 'Anonymous'
+                                                    ? participant.name
+                                                    : participant.guest_email
+                                                : participant.name}
                                         </Text>
+                                        {participant.auth_type === 'email' && participant.guest_email && participant.name && participant.name !== 'Anonymous' && (
+                                            <Text variant="caption-2" color="secondary">
+                                                {participant.guest_email}
+                                            </Text>
+                                        )}
+                                        <div className="session-page__participant-meta">
+                                            {participant.is_banned && (
+                                                <Label theme="danger" size="xs">
+                                                    Banned
+                                                </Label>
+                                            )}
+                                            <Label
+                                                theme={participant.is_active ? 'success' : 'normal'}
+                                                size="xs"
+                                            >
+                                                {participant.is_active ? 'Active' : 'Inactive'}
+                                            </Label>
+                                            <Label theme="utility" size="xs">
+                                                {participant.auth_type}
+                                            </Label>
+                                            <Text variant="caption-2" color="secondary">
+                                                Joined {formatShortDateTime(participant.joined_at)}
+                                            </Text>
+                                        </div>
+                                    </div>
+                                    <div className="session-page__participant-actions">
+                                        <Button
+                                            view="outlined"
+                                            size="xs"
+                                            loading={kickingId === participant.id}
+                                            onClick={() => handleKick(participant.id)}
+                                            title="Remove from session"
+                                        >
+                                            Kick
+                                        </Button>
+                                        <Button
+                                            view="outlined"
+                                            size="xs"
+                                            loading={banningId === participant.id}
+                                            onClick={() => handleBanUnban(participant.id, !!participant.is_banned)}
+                                            title={participant.is_banned ? 'Unban' : 'Ban (no interact, no chat)'}
+                                        >
+                                            {participant.is_banned ? 'Unban' : 'Ban'}
+                                        </Button>
                                     </div>
                                 </div>
                             </Card>
@@ -377,7 +448,9 @@ export function SessionPreviewTab({
             </div>
             <div className="session-page__inspect-column session-page__inspect-column_module">
                 <Card view="outlined" className="session-page__inspect-module-card">
-                    <Text variant="subheader-1">Inspect Module</Text>
+                    <Text variant="subheader-1" className="session-page__inspect-panel-title">
+                        Inspect Module
+                    </Text>
                     {!activeModule ? (
                         <Text variant="body-2" color="secondary">
                             No active module. Activate a module on the Session modules tab to

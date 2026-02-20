@@ -54,6 +54,7 @@ export default function SessionPage() {
         handleRegeneratePasscode,
         regeneratePasscodeLoading,
         filteredParticipants,
+        maxParticipants,
         handleStartStop,
         handleOpenPresentation,
         handleCopyPresentationLink,
@@ -268,6 +269,7 @@ export default function SessionPage() {
                         participantSearch={participantSearch}
                         onParticipantSearchChange={setParticipantSearch}
                         filteredParticipants={filteredParticipants}
+                        maxParticipants={maxParticipants}
                         activeModule={activeModule}
                         sessionId={String(sessionId ?? '')}
                         sessionPasscode={sessionPasscode ?? undefined}

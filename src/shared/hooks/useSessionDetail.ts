@@ -38,6 +38,7 @@ export function useSessionDetail() {
     const [sessionModulesLoading, setSessionModulesLoading] = useState(false);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [activeParticipantsCount, setActiveParticipantsCount] = useState(0);
+    const [maxParticipants, setMaxParticipants] = useState<number | null>(null);
     const [mainTab, setMainTab] = useState<MainTab>('modules');
     const [participantSearch, setParticipantSearch] = useState('');
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -97,16 +98,19 @@ export function useSessionDetail() {
             const items = res.participants.map((p) => ({
                 id: p.id,
                 name: p.display_name ?? 'Anonymous',
+                guest_email: p.guest_email ?? null,
                 joined_at: p.created_at ?? '',
                 is_active: p.is_active,
-                auth_type: p.participant_type as Participant['auth_type'],
+                auth_type: (p.participant_type === 'guest_email' ? 'email' : p.participant_type === 'user' ? 'registered' : p.participant_type) as Participant['auth_type'],
                 is_banned: p.is_banned,
             }));
             setParticipants(items);
             setActiveParticipantsCount(res.active_count ?? items.filter((p) => p.is_active).length);
+            setMaxParticipants(res.max_participants ?? null);
         } catch {
             setParticipants([]);
             setActiveParticipantsCount(0);
+            setMaxParticipants(null);
         }
     }, [api, isSessionIdValid, sessionIdNumber]);
 
@@ -377,6 +381,7 @@ export function useSessionDetail() {
         handleDragEnd,
         filteredParticipants,
         activeParticipantsCount,
+        maxParticipants,
         sessionPasscode,
         canCopyPasscode,
         handleCopySessionLink,

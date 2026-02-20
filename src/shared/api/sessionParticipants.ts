@@ -37,3 +37,11 @@ export async function patchParticipant(
         body,
     );
 }
+
+export async function kickParticipant(
+    apiClient: AxiosInstance,
+    sessionId: number,
+    participantId: number,
+): Promise<void> {
+    await apiClient.delete(`/sessions/${sessionId}/participants/${participantId}`);
+}
