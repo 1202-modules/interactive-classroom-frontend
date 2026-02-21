@@ -31,19 +31,24 @@ function InspectModuleContent({
     activeModule,
     sessionId,
     sessionPasscode,
+    participants,
     onRefetchParticipants,
 }: {
     activeModule: SessionModule;
     sessionId: string;
     sessionPasscode?: string;
+    participants: Participant[];
     onRefetchParticipants?: () => void;
 }) {
     const api = useApi();
     const [messages, setMessages] = useState<QuestionMessageItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [pinningId, setPinningId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [banningId, setBanningId] = useState<number | null>(null);
     const sessionIdNum = Number(sessionId);
     const moduleIdNum = Number(activeModule.id);
+    const bannedParticipantIds = new Set(participants.filter((p) => p.is_banned).map((p) => p.id));
 
     const fetchMessages = useCallback(() => {
         if (activeModule.type !== 'questions' || !Number.isFinite(sessionIdNum) || !Number.isFinite(moduleIdNum)) {
@@ -59,7 +64,7 @@ function InspectModuleContent({
     useEffect(() => {
         if (activeModule.type !== 'questions') return;
         fetchMessages();
-        const interval = setInterval(fetchMessages, 5000);
+        const interval = setInterval(fetchMessages, 1000);
         return () => clearInterval(interval);
     }, [activeModule.type, activeModule.id, fetchMessages]);
 
@@ -74,12 +79,22 @@ function InspectModuleContent({
         [api, sessionIdNum, moduleIdNum, fetchMessages],
     );
 
-    const [banningId, setBanningId] = useState<number | null>(null);
-    const handleBan = useCallback(
-        (participantId: number) => {
+    const handleDelete = useCallback(
+        (msgId: number) => {
+            if (!Number.isFinite(sessionIdNum) || !Number.isFinite(moduleIdNum)) return;
+            setDeletingId(msgId);
+            patchQuestionMessageLecturer(api, sessionIdNum, moduleIdNum, msgId, { delete: true })
+                .then(() => fetchMessages())
+                .finally(() => setDeletingId(null));
+        },
+        [api, sessionIdNum, moduleIdNum, fetchMessages],
+    );
+
+    const handleBanUnban = useCallback(
+        (participantId: number, isBanned: boolean) => {
             if (!Number.isFinite(sessionIdNum)) return;
             setBanningId(participantId);
-            patchParticipant(api, sessionIdNum, participantId, { is_banned: true })
+            patchParticipant(api, sessionIdNum, participantId, { is_banned: !isBanned })
                 .then(() => {
                     fetchMessages();
                     onRefetchParticipants?.();
@@ -94,15 +109,6 @@ function InspectModuleContent({
             <div className="session-page__inspect-questions">
                 <div className="session-page__inspect-questions-header">
                     <Text variant="subheader-1">{activeModule.name}</Text>
-                    <Button
-                        view="flat"
-                        size="s"
-                        onClick={fetchMessages}
-                        loading={loading}
-                        title="Refresh list"
-                    >
-                        Refresh
-                    </Button>
                 </div>
                 {loading ? (
                     <Text variant="body-2" color="secondary">Loading…</Text>
@@ -110,49 +116,66 @@ function InspectModuleContent({
                     <Text variant="body-2" color="secondary">No questions yet.</Text>
                 ) : (
                     <div className="session-page__inspect-messages-list">
-                        {messages.map((msg) => (
-                            <Card
-                                key={msg.id}
-                                view="outlined"
-                                className="session-page__inspect-message-card"
-                            >
-                                <Text variant="body-2" className="session-page__inspect-message-content">
-                                    {msg.content}
-                                </Text>
-                                <div className="session-page__inspect-message-meta">
-                                    <Text variant="caption-2" color="secondary">
-                                        {msg.parent_id ? 'Reply' : 'Question'} by{' '}
-                                        {msg.author_display_name ?? 'Unknown'}
-                                    </Text>
-                                    {msg.parent_id && (
-                                        <Text variant="caption-2" color="secondary">
-                                            Reply to question #{msg.parent_id}
-                                        </Text>
-                                    )}
-                                </div>
-                                <div className="session-page__inspect-message-actions">
-                                    <Button
-                                        view="flat"
-                                        size="xs"
-                                        loading={banningId === msg.participant_id}
-                                        onClick={() => handleBan(msg.participant_id)}
-                                        title="Ban this participant for the session"
-                                    >
-                                        Ban
-                                    </Button>
-                                    {!msg.parent_id && (
-                                        <Button
-                                            view="flat"
-                                            size="xs"
-                                            loading={pinningId === msg.id}
-                                            onClick={() => handlePin(msg.id)}
-                                        >
-                                            Pin to top
-                                        </Button>
-                                    )}
-                                </div>
-                            </Card>
-                        ))}
+                        {messages.map((msg) => {
+                            const isBanned = bannedParticipantIds.has(msg.participant_id);
+                            return (
+                                <Card
+                                    key={msg.id}
+                                    view="outlined"
+                                    className="session-page__inspect-message-card"
+                                >
+                                    <div className="session-page__inspect-message-row">
+                                        <div className="session-page__inspect-message-body">
+                                            <Text variant="body-2" className="session-page__inspect-message-content">
+                                                {msg.content}
+                                            </Text>
+                                            <div className="session-page__inspect-message-meta">
+                                                <Text variant="caption-2" color="secondary">
+                                                    {msg.parent_id ? 'Reply' : 'Question'} by{' '}
+                                                    {msg.author_display_name ?? 'Unknown'}
+                                                </Text>
+                                                {msg.parent_id && (
+                                                    <Text variant="caption-2" color="secondary">
+                                                        Reply to question #{msg.parent_id}
+                                                    </Text>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="session-page__inspect-message-actions">
+                                            {!msg.parent_id && (
+                                                <Button
+                                                    view="flat"
+                                                    size="xs"
+                                                    loading={pinningId === msg.id}
+                                                    onClick={() => handlePin(msg.id)}
+                                                    title="Pin to top"
+                                                >
+                                                    Pin
+                                                </Button>
+                                            )}
+                                            <Button
+                                                view="flat"
+                                                size="xs"
+                                                loading={deletingId === msg.id}
+                                                onClick={() => handleDelete(msg.id)}
+                                                title="Delete message"
+                                            >
+                                                Delete
+                                            </Button>
+                                            <Button
+                                                view="flat"
+                                                size="xs"
+                                                loading={banningId === msg.participant_id}
+                                                onClick={() => handleBanUnban(msg.participant_id, isBanned)}
+                                                title={isBanned ? 'Unban' : 'Ban this participant'}
+                                            >
+                                                {isBanned ? 'Unban' : 'Ban'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -401,16 +424,21 @@ export function SessionPreviewTab({
                                             </Text>
                                         )}
                                         <div className="session-page__participant-meta">
-                                            {participant.is_banned && (
-                                                <Label theme="danger" size="xs">
-                                                    Banned
-                                                </Label>
-                                            )}
                                             <Label
-                                                theme={participant.is_active ? 'success' : 'normal'}
+                                                theme={
+                                                    participant.is_banned
+                                                        ? 'danger'
+                                                        : participant.is_active
+                                                          ? 'success'
+                                                          : 'normal'
+                                                }
                                                 size="xs"
                                             >
-                                                {participant.is_active ? 'Active' : 'Inactive'}
+                                                {participant.is_banned
+                                                    ? 'Banned'
+                                                    : participant.is_active
+                                                      ? 'Active'
+                                                      : 'Inactive'}
                                             </Label>
                                             <Label theme="utility" size="xs">
                                                 {participant.auth_type}
@@ -420,7 +448,7 @@ export function SessionPreviewTab({
                                             </Text>
                                         </div>
                                     </div>
-                                    <div className="session-page__participant-actions">
+                                    <div className="session-page__participant-actions session-page__participant-actions_vertical">
                                         <Button
                                             view="outlined"
                                             size="xs"
@@ -461,6 +489,7 @@ export function SessionPreviewTab({
                             activeModule={activeModule}
                             sessionId={sessionId}
                             sessionPasscode={sessionPasscode}
+                            participants={participants}
                             onRefetchParticipants={onRefetchParticipants}
                         />
                     )}
