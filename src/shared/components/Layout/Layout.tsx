@@ -35,8 +35,9 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
         path === '/privacy' ||
         path === '/support';
     const isHomePage = path === '/';
+    const isSessionJoinRoute = path.startsWith('/s');
     const isPublicWithHeader =
-        isHomePage || path === '/terms' || path === '/privacy' || path === '/support';
+        isHomePage || path === '/terms' || path === '/privacy' || path === '/support' || isSessionJoinRoute;
 
     useEffect(() => {
         // Simulate page load for 0.2 seconds on every route change
@@ -129,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                             view="flat"
                             size="m"
                             onClick={() =>
-                                navigate(isPublicRoute ? '/' : '/dashboard')
+                                navigate(isPublicRoute || isSessionJoinRoute ? '/' : '/dashboard')
                             }
                             className="layout-header__logo"
                         >
@@ -139,10 +140,13 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
                                 className="layout-header__logo-icon"
                             />
                             <div className="layout-header__logo-text">
-                                <Text variant="subheader-3" className="layout-header__logo-title">
+                                <Text variant="subheader-3" className="layout-header__logo-title layout-header__logo-title_desktop">
                                     Interactive Classroom Platform
                                 </Text>
-                                {!isPublicRoute && (
+                                <Text variant="subheader-3" className="layout-header__logo-title layout-header__logo-title_mobile">
+                                    ICPlatform
+                                </Text>
+                                {!isPublicRoute && !isSessionJoinRoute && (
                                     <Text
                                         variant="body-1"
                                         color="secondary"
@@ -298,7 +302,19 @@ const Layout: React.FC<LayoutProps> = ({ children, theme, onToggleTheme }) => {
             <footer className="layout-footer">
                 <div className="layout-footer__inner">
                     <Text variant="body-2" color="secondary">
-                        © 2026 Interactive Classroom Platform. All rights reserved.
+                        © 2026{' '}
+                        <a href="/" className="layout-footer__brand-link">
+                            Interactive Classroom Platform
+                        </a>
+                        . All rights reserved.{' '}
+                        <a
+                            href="https://t.me/corp1202"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="layout-footer__corp-link"
+                        >
+                            By 1202 corp.
+                        </a>
                     </Text>
                     <div className="layout-footer__links">
                             <Button view="flat" size="s" onClick={() => navigate('/terms')}>

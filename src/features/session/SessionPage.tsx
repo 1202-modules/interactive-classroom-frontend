@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
     Button,
     Divider,
-    DropdownMenu,
     Icon,
     Label,
     Tab,
@@ -11,7 +10,7 @@ import {
     Text,
     Tooltip,
 } from '@gravity-ui/uikit';
-import {ArrowLeft, ArrowsRotateLeft, ChevronDown, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
+import {ArrowLeft, ArrowsRotateLeft, Copy, Play, Stop, Tv} from '@gravity-ui/icons';
 
 import { AutoStartSchedule, SessionDefaults } from '@/shared/components/Workspace';
 import {EditSessionModuleDialog} from './EditSessionModuleDialog';
@@ -33,14 +32,12 @@ export default function SessionPage() {
         sessionId,
         sessionInfo,
         sessionLoading,
-        sessionModules,
         sessionModulesLoading,
         participants,
         mainTab,
         setMainTab,
         participantSearch,
         setParticipantSearch,
-        activeId,
         sessionSettings,
         workspaceModules,
         sensors,
@@ -184,30 +181,26 @@ export default function SessionPage() {
                         <Icon data={sessionInfo?.is_stopped ? Play : Stop} size={18} />
                         {sessionInfo?.is_stopped ? 'Start Session' : 'Stop Session'}
                     </Button>
-                    <div className="session-page__presentation-split">
+                    <div className="session-page__presentation-split" role="group" aria-label="Presentation actions">
                         <button
                             type="button"
                             className="session-page__presentation-main"
                             onClick={handleOpenPresentation}
+                            title="Open presentation"
                         >
                             <Icon data={Tv} size={18} />
                             Presentation
                         </button>
-                        <div className="session-page__presentation-divider" aria-hidden />
-                        <DropdownMenu
-                            items={[[{text: 'Copy link', action: handleCopyPresentationLink}]]}
-                            switcherWrapperClassName="session-page__presentation-dropdown-wrap"
-                            renderSwitcher={(props) => (
-                                <button
-                                    type="button"
-                                    className="session-page__presentation-chevron"
-                                    {...props}
-                                    title="More options"
-                                >
-                                    <Icon data={ChevronDown} size={18} />
-                                </button>
-                            )}
-                        />
+                        <span className="session-page__presentation-divider" />
+                        <button
+                            type="button"
+                            className="session-page__presentation-chevron"
+                            onClick={handleCopyPresentationLink}
+                            title="Copy presentation link"
+                            aria-label="Copy presentation link"
+                        >
+                            <Icon data={Copy} size={16} />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -240,8 +233,6 @@ export default function SessionPage() {
                             sessionModulesLoading={sessionModulesLoading}
                             workspaceModules={workspaceModules}
                             isModuleSupported={isModuleSupported}
-                            activeId={activeId}
-                            sessionModules={sessionModules}
                             onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
                             onActivateModule={handleActivateModule}

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Card, Label, Text } from '@gravity-ui/uikit';
-import { getTimerState } from '@/shared/api/timer';
-import { parseBackendError } from '@/shared/utils/parseBackendError';
+import { Card, Text } from '@gravity-ui/uikit';
 import type { AxiosInstance } from 'axios';
+
+import { getTimerState } from '@/shared/api/timer';
 import type { TimerStateResponse } from '@/shared/types/timer';
+import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { beep } from '@/shared/utils/beep';
 import { getSoundEnabled } from '@/shared/utils/soundPreferences';
 
@@ -24,128 +25,101 @@ export function TimerModule({ api, passcode, moduleId }: TimerModuleProps) {
     const [state, setState] = useState<TimerStateResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+    const [now, setNow] = useState<number>(Date.now());
+    const initialLoadRef = useRef(true);
     const soundPlayedRef = useRef(false);
-    const intervalRef = useRef<number | null>(null);
-
-    const fetchTimerState = async () => {
-        try {
-            const timerState = await getTimerState(api, passcode, moduleId);
-            setState(timerState);
-            setError(null);
-
-            // Calculate remaining seconds
-            if (!timerState.is_paused && timerState.end_at) {
-                const endTime = new Date(timerState.end_at).getTime();
-                const now = Date.now();
-                const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-                setRemainingSeconds(remaining);
-
-                // Play sound when timer reaches 0 (only if module + user sound enabled)
-                if (
-                    remaining === 0 &&
-                    timerState.sound_notification_enabled &&
-                    getSoundEnabled() &&
-                    !soundPlayedRef.current
-                ) {
-                    beep(0.5, 440);
-                    soundPlayedRef.current = true;
-                } else if (remaining > 0) {
-                    soundPlayedRef.current = false;
-                }
-            } else if (timerState.is_paused && timerState.remaining_seconds !== null) {
-                setRemainingSeconds(timerState.remaining_seconds);
-            } else {
-                setRemainingSeconds(null);
-            }
-        } catch (err: unknown) {
-            const message = parseBackendError(
-                (err as { response?: { data?: unknown } })?.response?.data,
-                'Failed to load timer'
-            );
-            setError(message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     useEffect(() => {
-        fetchTimerState();
-        // Poll every second for accurate countdown
-        intervalRef.current = window.setInterval(fetchTimerState, 1000);
+        const tick = window.setInterval(() => setNow(Date.now()), 250);
+        return () => clearInterval(tick);
+    }, []);
 
-        return () => {
-            if (intervalRef.current !== null) {
-                clearInterval(intervalRef.current);
+    useEffect(() => {
+        const fetchTimerState = async () => {
+            try {
+                const timerState = await getTimerState(api, passcode, moduleId);
+                setState(timerState);
+                setError(null);
+            } catch (err: unknown) {
+                if (initialLoadRef.current) {
+                    const message = parseBackendError(
+                        (err as { response?: { data?: unknown } })?.response?.data,
+                        'Failed to load timer',
+                    );
+                    setError(message);
+                }
+            } finally {
+                if (initialLoadRef.current) {
+                    initialLoadRef.current = false;
+                    setIsLoading(false);
+                }
             }
         };
+
+        fetchTimerState();
+        const interval = window.setInterval(fetchTimerState, 3000);
+        return () => clearInterval(interval);
     }, [api, passcode, moduleId]);
 
-    const displayTime = useMemo(() => {
-        if (remainingSeconds === null) return '00:00';
-        return formatDuration(remainingSeconds);
-    }, [remainingSeconds]);
+    const remainingSeconds = useMemo(() => {
+        if (!state) return null;
+        if (state.is_paused) return state.remaining_seconds;
+        if (!state.end_at) return null;
+        const endMs = new Date(state.end_at).getTime();
+        return Math.max(0, Math.floor((endMs - now) / 1000));
+    }, [state, now]);
 
-    const statusLabel = useMemo(() => {
-        if (!state) return 'stopped';
-        if (state.is_paused) return 'paused';
-        if (remainingSeconds === 0) return 'finished';
-        return 'running';
-    }, [state, remainingSeconds]);
+    useEffect(() => {
+        if (
+            remainingSeconds === 0 &&
+            state?.sound_notification_enabled &&
+            getSoundEnabled() &&
+            !soundPlayedRef.current
+        ) {
+            beep(0.5, 440);
+            soundPlayedRef.current = true;
+        }
+        if (remainingSeconds !== 0) {
+            soundPlayedRef.current = false;
+        }
+    }, [remainingSeconds, state?.sound_notification_enabled]);
 
     if (isLoading) {
         return (
-            <Card view="outlined" className="participant-page__card">
-                <Text variant="header-2">Timer</Text>
-                <Text variant="body-1" color="secondary">Loading timer...</Text>
+            <Card view="outlined" className="participant-page__card participant-page__module-card participant-page__timer-stage">
+                <Text variant="header-2">Module: Timer</Text>
+                <Text variant="body-1" color="secondary">
+                    Loading timer...
+                </Text>
             </Card>
         );
     }
 
     if (error) {
         return (
-            <Card view="outlined" className="participant-page__card">
-                <Text variant="header-2">Timer</Text>
-                <Text variant="body-2" color="danger">{error}</Text>
+            <Card view="outlined" className="participant-page__card participant-page__module-card participant-page__timer-stage">
+                <Text variant="header-2">Module: Timer</Text>
+                <Text variant="body-2" color="danger">
+                    {error}
+                </Text>
             </Card>
         );
     }
 
-    if (!state || remainingSeconds === null) {
+    if (remainingSeconds === null) {
         return (
-            <Card view="outlined" className="participant-page__card">
-                <div className="participant-page__card-head">
-                    <Text variant="header-2">Timer</Text>
-                    <Label theme="normal" size="m">
-                        stopped
-                    </Label>
-                </div>
-                <Text variant="body-1" color="secondary">Timer not started</Text>
+            <Card view="outlined" className="participant-page__card participant-page__module-card participant-page__timer-stage">
+                <Text variant="header-2">Module: Timer</Text>
+                <Text variant="body-1" color="secondary">
+                    Timer is not started yet.
+                </Text>
             </Card>
         );
     }
 
     return (
-        <Card view="outlined" className="participant-page__card">
-            <div className="participant-page__card-head">
-                <Text variant="header-2">Timer</Text>
-                <Label
-                    theme={statusLabel === 'finished' ? 'warning' : statusLabel === 'running' ? 'success' : 'normal'}
-                    size="m"
-                >
-                    {statusLabel}
-                </Label>
-            </div>
-            <Text variant="display-3" className="participant-page__timer">
-                {displayTime}
-            </Text>
-            <Text variant="body-2" color="secondary">
-                {statusLabel === 'finished'
-                    ? 'Timer has finished'
-                    : statusLabel === 'paused'
-                      ? 'Timer is paused'
-                      : 'Countdown to the end of the timer'}
-            </Text>
+        <Card view="outlined" className="participant-page__card participant-page__module-card participant-page__timer-stage">
+            <Text className="participant-page__timer-hero">{formatDuration(remainingSeconds)}</Text>
         </Card>
     );
 }

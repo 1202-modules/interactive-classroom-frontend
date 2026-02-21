@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Card, Label, Loader, Text, TextInput } from '@gravity-ui/uikit';
+import { Button, Card, Label, Loader, SegmentedRadioGroup, Text, TextInput } from '@gravity-ui/uikit';
 import { useApi } from '@/shared/hooks/useApi';
 import { useAuth } from '@/features/auth/useAuth';
 import type { SessionByPasscodeResponse, ParticipantEntryMode } from '@/shared/types/sessionJoin';
@@ -17,6 +17,7 @@ import { setParticipantToken, setGuestToken, getParticipantToken, getGuestToken 
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 import { getModulesByPasscode } from '@/shared/api/sessionModules';
 import type { SessionModuleItem } from '@/shared/types/sessionModulesByPasscode';
+import { buildJoinFingerprint } from '@/shared/utils/joinFingerprint';
 import { AnonymousJoinForm } from './SessionJoin/AnonymousJoinForm';
 import { EmailCodeJoinForm } from './SessionJoin/EmailCodeJoinForm';
 import { EmailCodeVerifyForm } from './SessionJoin/EmailCodeVerifyForm';
@@ -29,7 +30,7 @@ type JoinState =
     | { type: 'loading' }
     | { type: 'session_info'; data: SessionByPasscodeResponse }
     | { type: 'email_request'; email: string; verificationCode?: string }
-    | { type: 'joined'; sessionId: number; participantId: number }
+    | { type: 'joined'; sessionId: number; participantId: number; entryMode: ParticipantEntryMode }
     | { type: 'error'; message: string };
 
 export default function ParticipantPage() {
@@ -56,10 +57,32 @@ export default function ParticipantPage() {
             try {
                 setError(null);
                 const sessionInfo = await getSessionByPasscode(api, code);
+
+                if (!sessionInfo.is_started) {
+                    setJoinState({ type: 'session_info', data: sessionInfo });
+                    return;
+                }
                 
-                // If guest is already authenticated, join immediately
+                // If guest is already authenticated (email_code), join immediately
                 if (sessionInfo.guest_authenticated) {
-                    await handleJoinGuest(sessionInfo);
+                    await handleJoinGuest(sessionInfo.participant_entry_mode);
+                    return;
+                }
+                
+                // If anonymous participant token is valid, restore joined state (return after refresh)
+                if (
+                    sessionInfo.participant_entry_mode === 'anonymous' &&
+                    sessionInfo.participant_authenticated &&
+                    sessionInfo.participant_id != null &&
+                    sessionInfo.id != null
+                ) {
+                    setJoinState({
+                        type: 'joined',
+                        sessionId: sessionInfo.id,
+                        participantId: sessionInfo.participant_id,
+                        entryMode: sessionInfo.participant_entry_mode,
+                    });
+                    startHeartbeat(sessionInfo.participant_entry_mode);
                     return;
                 }
                 
@@ -76,7 +99,7 @@ export default function ParticipantPage() {
         loadSessionInfo();
     }, [code, api]);
 
-    const startHeartbeat = useCallback(() => {
+    const startHeartbeat = useCallback((entryMode: ParticipantEntryMode) => {
         if (!code) return;
 
         // Clear existing interval
@@ -86,8 +109,7 @@ export default function ParticipantPage() {
 
         const sendHeartbeatRequest = async () => {
             try {
-                const participantToken = getParticipantToken();
-                await sendHeartbeat(api, code, participantToken);
+                await sendHeartbeat(api, code, entryMode, accessToken);
             } catch (err) {
                 // Silently fail - heartbeat errors shouldn't break the UI
                 console.error('Heartbeat failed:', err);
@@ -105,7 +127,7 @@ export default function ParticipantPage() {
         }, getInterval());
 
         heartbeatIntervalRef.current = intervalId;
-    }, [code, api]);
+    }, [code, api, accessToken]);
 
     const handleJoinRegistered = useCallback(async () => {
         if (!code || joinState.type !== 'session_info') return;
@@ -123,8 +145,9 @@ export default function ParticipantPage() {
                 type: 'joined',
                 sessionId: response.session_id,
                 participantId: response.participant_id,
+                entryMode: 'registered',
             });
-            startHeartbeat();
+            startHeartbeat('registered');
         } catch (err: unknown) {
             const message = parseBackendError(
                 (err as { response?: { data?: unknown } })?.response?.data,
@@ -142,7 +165,7 @@ export default function ParticipantPage() {
             isPageVisibleRef.current = !document.hidden;
             // Restart heartbeat with appropriate interval
             if (joinState.type === 'joined') {
-                startHeartbeat();
+                startHeartbeat(joinState.entryMode);
             }
         };
 
@@ -150,7 +173,7 @@ export default function ParticipantPage() {
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [joinState.type, startHeartbeat]);
+    }, [joinState, startHeartbeat]);
 
     // Auto-join for registered mode
     useEffect(() => {
@@ -173,14 +196,19 @@ export default function ParticipantPage() {
             setIsJoining(true);
             setError(null);
             try {
-                const response = await joinAnonymous(api, code, { display_name: displayName });
+                const fingerprint = await buildJoinFingerprint();
+                const response = await joinAnonymous(api, code, {
+                    display_name: displayName,
+                    fingerprint,
+                });
                 setParticipantToken(response.participant_token);
                 setJoinState({
                     type: 'joined',
                     sessionId: response.session_id,
                     participantId: response.participant_id,
+                    entryMode: 'anonymous',
                 });
-                startHeartbeat();
+                startHeartbeat('anonymous');
             } catch (err: unknown) {
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
@@ -195,19 +223,21 @@ export default function ParticipantPage() {
     );
 
     const handleJoinGuest = useCallback(
-        async (sessionInfo?: SessionByPasscodeResponse) => {
+        async (entryMode: ParticipantEntryMode = 'email_code') => {
             if (!code) return;
 
             setIsJoining(true);
             setError(null);
             try {
-                const response = await joinGuest(api, code);
+                const fingerprint = await buildJoinFingerprint();
+                const response = await joinGuest(api, code, { fingerprint });
                 setJoinState({
                     type: 'joined',
                     sessionId: response.session_id,
                     participantId: response.participant_id,
+                    entryMode,
                 });
-                startHeartbeat();
+                startHeartbeat(entryMode);
             } catch (err: unknown) {
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
@@ -260,7 +290,7 @@ export default function ParticipantPage() {
                     display_name: displayName,
                 });
                 setGuestToken(response.access_token);
-                await handleJoinGuest();
+                await handleJoinGuest('email_code');
             } catch (err: unknown) {
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
@@ -310,6 +340,7 @@ export default function ParticipantPage() {
                     <Button
                         view="action"
                         size="l"
+                        className="participant-page__retry-btn"
                         onClick={() => window.location.reload()}
                         style={{ marginTop: '16px' }}
                     >
@@ -323,6 +354,19 @@ export default function ParticipantPage() {
     if (joinState.type === 'session_info') {
         const { data: sessionInfo } = joinState;
         const mode: ParticipantEntryMode = sessionInfo.participant_entry_mode;
+
+        if (!sessionInfo.is_started) {
+            return (
+                <div className="participant-page">
+                    <Card view="outlined" className="participant-page__card participant-page__empty-card">
+                        <Text variant="header-2">Session Not Started</Text>
+                        <Text variant="body-1" color="secondary" style={{ marginTop: '16px' }}>
+                            You will be able to join when the lecturer starts this session.
+                        </Text>
+                    </Card>
+                </div>
+            );
+        }
 
         // Handle different entry modes
         if (mode === 'anonymous') {
@@ -399,7 +443,14 @@ export default function ParticipantPage() {
     }
 
     if (joinState.type === 'joined') {
-        return <JoinedSessionView code={code!} api={api} accessToken={accessToken} participantId={joinState.participantId} />;
+        return (
+            <JoinedSessionView
+                code={code!}
+                api={api}
+                participantId={joinState.participantId}
+                entryMode={joinState.entryMode}
+            />
+        );
     }
 
     return null;
@@ -408,23 +459,27 @@ export default function ParticipantPage() {
 interface JoinedSessionViewProps {
     code: string;
     api: ReturnType<typeof useApi>;
-    accessToken: string | null;
     participantId: number;
+    entryMode: ParticipantEntryMode;
 }
 
-function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSessionViewProps) {
+function JoinedSessionView({ code, api, participantId, entryMode }: JoinedSessionViewProps) {
     const [modules, setModules] = useState<SessionModuleItem[]>([]);
     const [activeModule, setActiveModule] = useState<SessionModuleItem | null>(null);
+    const [activeTab, setActiveTab] = useState<'module' | 'participants'>('module');
     const [isLoadingModules, setIsLoadingModules] = useState(true);
     const [modulesError, setModulesError] = useState<string | null>(null);
+    const initialModulesLoadRef = useRef(true);
     const { accessToken: userToken } = useAuth();
     const guestToken = getGuestToken();
     const participantToken = getParticipantToken();
 
-    // Get auth token: guest > user > participant
+    // Use only token type that matches entry mode.
     const authToken = useMemo(() => {
-        return guestToken || userToken || participantToken || null;
-    }, [guestToken, userToken, participantToken]);
+        if (entryMode === 'anonymous') return participantToken || null;
+        if (entryMode === 'email_code') return guestToken || null;
+        return userToken || null;
+    }, [entryMode, guestToken, userToken, participantToken]);
 
     useEffect(() => {
         if (!authToken) {
@@ -433,14 +488,21 @@ function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSess
             return;
         }
 
+        initialModulesLoadRef.current = true;
+
         const fetchModules = async () => {
-            setIsLoadingModules(true);
-            setModulesError(null);
+            const isInitial = initialModulesLoadRef.current;
+            if (isInitial) {
+                setIsLoadingModules(true);
+                setModulesError(null);
+            }
             try {
                 const response = await getModulesByPasscode(api, code, authToken);
+                initialModulesLoadRef.current = false;
                 setModules(response.modules || []);
                 setActiveModule(response.active_module || null);
             } catch (err: unknown) {
+                initialModulesLoadRef.current = false;
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
                     'Failed to load modules'
@@ -452,8 +514,8 @@ function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSess
         };
 
         fetchModules();
-        // Poll every 5 seconds for module updates
-        const interval = setInterval(fetchModules, 5000);
+        // Poll every 5 seconds for module updates (no full-page loading, only data refresh)
+        const interval = setInterval(fetchModules, 3000);
         return () => clearInterval(interval);
     }, [code, api, authToken]);
 
@@ -494,6 +556,7 @@ function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSess
                     <Button
                         view="action"
                         size="l"
+                        className="participant-page__retry-btn"
                         onClick={() => window.location.reload()}
                         style={{ marginTop: '16px' }}
                     >
@@ -504,10 +567,8 @@ function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSess
         );
     }
 
-    return (
-        <div className="participant-page">
-            <ParticipantsList api={api} passcode={code} authToken={authToken} />
-
+    const moduleContent = (
+        <>
             {activeModule && activeModule.module_type === 'questions' && (
                 <QuestionsModule
                     api={api}
@@ -523,13 +584,45 @@ function JoinedSessionView({ code, api, accessToken, participantId }: JoinedSess
             )}
 
             {!activeModule && (
-                <Card view="outlined" className="participant-page__card">
+                <Card view="outlined" className="participant-page__card participant-page__empty-card">
                     <Text variant="header-2">No Active Module</Text>
                     <Text variant="body-1" color="secondary" style={{ marginTop: '16px' }}>
                         Waiting for lecturer to activate a module...
                     </Text>
                 </Card>
             )}
+        </>
+    );
+
+    return (
+        <div className="participant-page">
+            <div className="participant-page__tabs-shell">
+                <div className="participant-page__switch">
+                    <SegmentedRadioGroup
+                        size="xl"
+                        value={activeTab}
+                        onUpdate={(value) => setActiveTab(value as 'module' | 'participants')}
+                        options={[
+                            { value: 'module', content: 'Module' },
+                            { value: 'participants', content: 'Participants' },
+                        ]}
+                    />
+                </div>
+            </div>
+
+            <div className={activeTab === 'module' ? 'participant-page__tab-panel' : 'participant-page__tab-panel participant-page__tab-panel_hidden'}>
+                {moduleContent}
+            </div>
+
+            <div className={activeTab === 'participants' ? 'participant-page__tab-panel' : 'participant-page__tab-panel participant-page__tab-panel_hidden'}>
+                <ParticipantsList
+                    api={api}
+                    passcode={code}
+                    authToken={authToken}
+                    participantId={participantId}
+                    entryMode={entryMode}
+                />
+            </div>
         </div>
     );
 }

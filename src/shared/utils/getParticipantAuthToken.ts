@@ -1,16 +1,19 @@
 /**
  * Get the appropriate auth token for participant API calls.
- * Priority: guest_token > participant_token
- * Note: For registered users, accessToken should be passed separately (from useAuth hook)
+ * Token is selected strictly by session entry mode.
  */
 import { getGuestToken, getParticipantToken } from './tokenStorage';
+import type { ParticipantEntryMode } from '@/shared/types/sessionJoin';
 
-export function getParticipantAuthToken(userAccessToken?: string | null): string | null {
-    const guestToken = getGuestToken();
-    if (guestToken) return guestToken;
-
-    if (userAccessToken) return userAccessToken;
-
-    const participantToken = getParticipantToken();
-    return participantToken;
+export function getParticipantAuthToken(
+    entryMode: ParticipantEntryMode,
+    userAccessToken?: string | null,
+): string | null {
+    if (entryMode === 'anonymous') {
+        return getParticipantToken();
+    }
+    if (entryMode === 'email_code') {
+        return getGuestToken();
+    }
+    return userAccessToken || null;
 }

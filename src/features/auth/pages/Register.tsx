@@ -87,6 +87,8 @@ export default function RegisterPage() {
             const res = await api.post('/auth/register', {
                 email: email.trim(),
                 password,
+                first_name: firstName.trim(),
+                last_name: lastName.trim() || null,
                 confirmPassword,
             });
             setRegError('');

@@ -26,14 +26,15 @@ export function WorkspaceModuleCard({
     addDisabled,
     isWip,
 }: WorkspaceModuleCardProps) {
-    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
+    const {attributes, listeners, setNodeRef, transform} = useDraggable({
         id: `workspace-${module.id}`,
         disabled: Boolean(disabled),
     });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
-        opacity: isDragging ? 0.6 : 1,
+        transform: CSS.Translate.toString(transform),
+        touchAction: 'none' as const,
+        userSelect: 'none' as const,
     };
 
     const ModuleIcon = getModuleIcon(module.type as SessionModule['type']);

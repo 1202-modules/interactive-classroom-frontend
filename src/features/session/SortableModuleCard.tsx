@@ -18,9 +18,10 @@ export function SortableModuleCard({module, onActivate, onRemove, onEdit}: Sorta
     });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? undefined : transition,
+        touchAction: 'none' as const,
+        userSelect: 'none' as const,
     };
 
     const ModuleIcon = getModuleIcon(module.type);

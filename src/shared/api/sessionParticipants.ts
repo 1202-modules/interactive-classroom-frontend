@@ -1,6 +1,10 @@
 import type {AxiosInstance} from 'axios';
 
-import type {SessionParticipantsResponse} from '@/shared/types/sessionParticipants';
+import type {
+    SessionParticipantItem,
+    SessionParticipantsResponse,
+    SessionParticipantSelfPatchRequest,
+} from '@/shared/types/sessionParticipants';
 
 export async function getParticipantsByPasscode(
     apiClient: AxiosInstance,
@@ -44,4 +48,20 @@ export async function kickParticipant(
     participantId: number,
 ): Promise<void> {
     await apiClient.delete(`/sessions/${sessionId}/participants/${participantId}`);
+}
+
+export async function patchOwnParticipantByPasscode(
+    apiClient: AxiosInstance,
+    passcode: string,
+    authToken: string,
+    body: SessionParticipantSelfPatchRequest,
+): Promise<SessionParticipantItem> {
+    const res = await apiClient.patch<SessionParticipantItem>(
+        `/sessions/by-passcode/${passcode}/participants/me`,
+        body,
+        {
+            headers: { Authorization: `Bearer ${authToken}` },
+        },
+    );
+    return res.data;
 }

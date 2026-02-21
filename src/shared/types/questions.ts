@@ -17,8 +17,10 @@ export interface QuestionMessageItem {
     parent_id: number | null;
     content: string;
     likes_count: number;
+    liked_by_me?: boolean;
     is_answered: boolean;
     created_at: string | null;
+    pinned_at?: string | null;
     children: QuestionMessageItem[];
 }
 
@@ -32,4 +34,3 @@ export interface CreateQuestionMessageRequest {
     parent_id?: number;
     is_anonymous?: boolean;
 }
-

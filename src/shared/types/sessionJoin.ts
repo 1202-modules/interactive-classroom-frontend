@@ -8,15 +8,19 @@ export interface SessionByPasscodeResponse {
     id: number;
     name: string;
     participant_entry_mode: ParticipantEntryMode;
+    is_started: boolean;
     email_code_domains_whitelist?: string[];
     sso_organization_id?: number | null;
     guest_authenticated?: boolean | null;
     email?: string | null;
     display_name?: string | null;
+    participant_authenticated?: boolean | null;
+    participant_id?: number | null;
 }
 
 export interface AnonymousJoinRequest {
     display_name?: string;
+    fingerprint: string;
 }
 
 export interface AnonymousJoinResponse {
@@ -37,6 +41,10 @@ export interface GuestJoinResponse {
     participant_id: number;
     session_id: number;
     display_name: string;
+}
+
+export interface GuestJoinRequest {
+    fingerprint: string;
 }
 
 export interface EmailCodeRequestRequest {

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Button, Card, Label, Text, TextInput} from '@gravity-ui/uikit';
 import type {Participant, SessionModule} from '@/shared/types/sessionPage';
 import type {QuestionMessageItem} from '@/shared/types/questions';
@@ -33,38 +33,67 @@ function InspectModuleContent({
     sessionPasscode,
     participants,
     onRefetchParticipants,
+    onParticipantSearchChange,
 }: {
     activeModule: SessionModule;
     sessionId: string;
     sessionPasscode?: string;
     participants: Participant[];
     onRefetchParticipants?: () => void;
+    onParticipantSearchChange?: (value: string) => void;
 }) {
     const api = useApi();
     const [messages, setMessages] = useState<QuestionMessageItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const initialLoadRef = useRef(true);
     const [pinningId, setPinningId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [banningId, setBanningId] = useState<number | null>(null);
     const sessionIdNum = Number(sessionId);
     const moduleIdNum = Number(activeModule.id);
     const bannedParticipantIds = new Set(participants.filter((p) => p.is_banned).map((p) => p.id));
+    const participantIds = new Set(participants.map((p) => p.id));
 
     const fetchMessages = useCallback(() => {
         if (activeModule.type !== 'questions' || !Number.isFinite(sessionIdNum) || !Number.isFinite(moduleIdNum)) {
             return;
         }
-        setLoading(true);
+        if (initialLoadRef.current) {
+            setLoading(true);
+        }
         getQuestionMessagesLecturer(api, sessionIdNum, moduleIdNum)
-            .then((res) => setMessages(res.messages ?? []))
-            .catch(() => setMessages([]))
+            .then((res) => {
+                initialLoadRef.current = false;
+                const newMessages = res.messages ?? [];
+                setMessages((prev) => {
+                    if (prev.length !== newMessages.length) return newMessages;
+                    const changed = newMessages.some(
+                        (m, i) => {
+                            const a = prev[i];
+                            return (
+                                !a ||
+                                a.id !== m.id ||
+                                a.likes_count !== m.likes_count ||
+                                a.is_answered !== m.is_answered ||
+                                (a.pinned_at ?? null) !== (m.pinned_at ?? null)
+                            );
+                        }
+                    );
+                    return changed ? newMessages : prev;
+                });
+            })
+            .catch(() => {
+                initialLoadRef.current = false;
+                setMessages([]);
+            })
             .finally(() => setLoading(false));
     }, [api, activeModule.type, sessionIdNum, moduleIdNum]);
 
     useEffect(() => {
         if (activeModule.type !== 'questions') return;
+        initialLoadRef.current = true;
         fetchMessages();
-        const interval = setInterval(fetchMessages, 1000);
+        const interval = setInterval(fetchMessages, 3000);
         return () => clearInterval(interval);
     }, [activeModule.type, activeModule.id, fetchMessages]);
 
@@ -73,6 +102,17 @@ function InspectModuleContent({
             if (!Number.isFinite(sessionIdNum) || !Number.isFinite(moduleIdNum)) return;
             setPinningId(msgId);
             patchQuestionMessageLecturer(api, sessionIdNum, moduleIdNum, msgId, { pin: true })
+                .then(() => fetchMessages())
+                .finally(() => setPinningId(null));
+        },
+        [api, sessionIdNum, moduleIdNum, fetchMessages],
+    );
+
+    const handleUnpin = useCallback(
+        (msgId: number) => {
+            if (!Number.isFinite(sessionIdNum) || !Number.isFinite(moduleIdNum)) return;
+            setPinningId(msgId);
+            patchQuestionMessageLecturer(api, sessionIdNum, moduleIdNum, msgId, { unpin: true })
                 .then(() => fetchMessages())
                 .finally(() => setPinningId(null));
         },
@@ -110,7 +150,7 @@ function InspectModuleContent({
                 <div className="session-page__inspect-questions-header">
                     <Text variant="subheader-1">{activeModule.name}</Text>
                 </div>
-                {loading ? (
+                {loading && messages.length === 0 ? (
                     <Text variant="body-2" color="secondary">Loading…</Text>
                 ) : messages.length === 0 ? (
                     <Text variant="body-2" color="secondary">No questions yet.</Text>
@@ -118,11 +158,12 @@ function InspectModuleContent({
                     <div className="session-page__inspect-messages-list">
                         {messages.map((msg) => {
                             const isBanned = bannedParticipantIds.has(msg.participant_id);
+                            const isParticipantPresent = participantIds.has(msg.participant_id);
                             return (
                                 <Card
                                     key={msg.id}
                                     view="outlined"
-                                    className="session-page__inspect-message-card"
+                                    className={`session-page__inspect-message-card${msg.pinned_at ? ' session-page__inspect-message-card_pinned' : ''}`}
                                 >
                                     <div className="session-page__inspect-message-row">
                                         <div className="session-page__inspect-message-body">
@@ -130,31 +171,58 @@ function InspectModuleContent({
                                                 {msg.content}
                                             </Text>
                                             <div className="session-page__inspect-message-meta">
-                                                <Text variant="caption-2" color="secondary">
+                                                <Text variant="body-2" color="secondary">
                                                     {msg.parent_id ? 'Reply' : 'Question'} by{' '}
-                                                    {msg.author_display_name ?? 'Unknown'}
+                                                    <button
+                                                        type="button"
+                                                        className="session-page__inspect-author-link"
+                                                        onClick={() =>
+                                                            onParticipantSearchChange?.(msg.author_display_name ?? 'Unknown')
+                                                        }
+                                                    >
+                                                        {msg.author_display_name ?? 'Unknown'}
+                                                    </button>
                                                 </Text>
                                                 {msg.parent_id && (
                                                     <Text variant="caption-2" color="secondary">
                                                         Reply to question #{msg.parent_id}
                                                     </Text>
                                                 )}
+                                                {msg.created_at && (
+                                                    <Text variant="caption-2" color="secondary">
+                                                        {formatShortDateTime(msg.created_at)}
+                                                    </Text>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="session-page__inspect-message-actions">
                                             {!msg.parent_id && (
-                                                <Button
-                                                    view="flat"
-                                                    size="xs"
-                                                    loading={pinningId === msg.id}
-                                                    onClick={() => handlePin(msg.id)}
-                                                    title="Pin to top"
-                                                >
-                                                    Pin
-                                                </Button>
+                                                msg.pinned_at ? (
+                                                    <Button
+                                                        view="outlined"
+                                                        size="xs"
+                                                        className="session-page__inspect-pin-btn session-page__inspect-pin-btn_unpin"
+                                                        loading={pinningId === msg.id}
+                                                        onClick={() => handleUnpin(msg.id)}
+                                                        title="Unpin"
+                                                    >
+                                                        Unpin
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        view="outlined"
+                                                        size="xs"
+                                                        className="session-page__inspect-pin-btn"
+                                                        loading={pinningId === msg.id}
+                                                        onClick={() => handlePin(msg.id)}
+                                                        title="Pin to top"
+                                                    >
+                                                        Pin
+                                                    </Button>
+                                                )
                                             )}
                                             <Button
-                                                view="flat"
+                                                view="outlined-danger"
                                                 size="xs"
                                                 loading={deletingId === msg.id}
                                                 onClick={() => handleDelete(msg.id)}
@@ -163,11 +231,16 @@ function InspectModuleContent({
                                                 Delete
                                             </Button>
                                             <Button
-                                                view="flat"
+                                                view="outlined-danger"
                                                 size="xs"
-                                                loading={banningId === msg.participant_id}
+                                                loading={isParticipantPresent && banningId === msg.participant_id}
+                                                disabled={!isParticipantPresent}
                                                 onClick={() => handleBanUnban(msg.participant_id, isBanned)}
-                                                title={isBanned ? 'Unban' : 'Ban this participant'}
+                                                title={
+                                                    isParticipantPresent
+                                                        ? (isBanned ? 'Unban' : 'Ban this participant')
+                                                        : 'Participant is no longer in session'
+                                                }
                                             >
                                                 {isBanned ? 'Unban' : 'Ban'}
                                             </Button>
@@ -284,7 +357,13 @@ function InspectTimer({
                             view="outlined"
                             size="m"
                             disabled={actionLoading}
-                            onClick={() => runAction(() => timerStart(api, sessionIdNum, moduleIdNum))}
+                            onClick={() =>
+                                runAction(() =>
+                                    timerState?.is_paused
+                                        ? timerResume(api, sessionIdNum, moduleIdNum)
+                                        : timerStart(api, sessionIdNum, moduleIdNum),
+                                )
+                            }
                         >
                             Start
                         </Button>
@@ -303,15 +382,20 @@ function InspectTimer({
                                 )
                             }
                         >
-                            Stop
+                            Pause
                         </Button>
                         <Button
                             view="outlined"
                             size="m"
-                            disabled={actionLoading || !timerState?.is_paused}
-                            onClick={() => runAction(() => timerResume(api, sessionIdNum, moduleIdNum))}
+                            disabled={actionLoading}
+                            onClick={() =>
+                                runAction(async () => {
+                                    await timerPause(api, sessionIdNum, moduleIdNum, 0);
+                                    return timerSet(api, sessionIdNum, moduleIdNum, 0);
+                                })
+                            }
                         >
-                            Resume
+                            Stop
                         </Button>
                         <Button
                             view="outlined"
@@ -459,7 +543,7 @@ export function SessionPreviewTab({
                                             Kick
                                         </Button>
                                         <Button
-                                            view="outlined"
+                                            view="outlined-danger"
                                             size="xs"
                                             loading={banningId === participant.id}
                                             onClick={() => handleBanUnban(participant.id, !!participant.is_banned)}
@@ -491,6 +575,7 @@ export function SessionPreviewTab({
                             sessionPasscode={sessionPasscode}
                             participants={participants}
                             onRefetchParticipants={onRefetchParticipants}
+                            onParticipantSearchChange={onParticipantSearchChange}
                         />
                     )}
                 </Card>

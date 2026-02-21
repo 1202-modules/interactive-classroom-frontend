@@ -217,13 +217,13 @@
 .session-page__active-zone {
   border: 2px dashed var(--g-color-line-generic);
   border-radius: var(--g-border-radius-l);
-  padding: var(--g-spacing-5);
+  padding: var(--g-spacing-4);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--g-spacing-2);
-  min-height: 150px;
+  gap: var(--g-spacing-3);
+  min-height: 160px;
   background: var(--g-color-base-float);
   transition: all 200ms ease;
 }
@@ -245,6 +245,7 @@
   align-items: center;
   gap: var(--g-spacing-2);
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .session-page__active-zone_filled .session-page__active-zone-actions {
@@ -258,6 +259,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-2);
+  width: 100%;
+  padding: var(--g-spacing-4);
 }
 
 .session-page__active-module-card:active {
@@ -275,7 +278,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-2);
-  padding: var(--g-spacing-2);
+  padding: var(--g-spacing-3);
+  min-height: 220px;
+  width: 100%;
   border-radius: var(--g-border-radius-m);
   transition: box-shadow 120ms ease, background 120ms ease;
 }
@@ -479,6 +484,11 @@
   padding: var(--g-spacing-3);
 }
 
+.session-page__inspect-message-card_pinned {
+  border-color: var(--g-color-line-brand);
+  background-color: var(--g-color-base-brand-light);
+}
+
 .session-page__inspect-message-row {
   display: flex;
   align-items: flex-start;
@@ -509,7 +519,22 @@
 .session-page__inspect-message-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--g-spacing-2);
+  flex-direction: column;
+  gap: var(--g-spacing-1);
+}
+
+.session-page__inspect-author-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--g-color-text-link);
+  text-decoration: none;
+}
+
+.session-page__inspect-author-link:hover {
+  text-decoration: underline;
 }
 
 .session-page__inspect-message-actions {
@@ -517,6 +542,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--g-spacing-2);
+}
+
+.session-page__inspect-pin-btn {
+  min-width: 58px;
+}
+
+.session-page__inspect-pin-btn_unpin {
+  border-color: rgba(20, 128, 69, 0.4);
+  color: #148045;
+  background-color: rgba(20, 128, 69, 0.1);
 }
 
 .session-page__inspect-timer {
@@ -713,4 +748,3 @@
     max-height: none;
   }
 }
-

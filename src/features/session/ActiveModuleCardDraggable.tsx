@@ -12,13 +12,14 @@ type ActiveModuleCardDraggableProps = {
 };
 
 export function ActiveModuleCardDraggable({module, onEdit, onMoveToQueue}: ActiveModuleCardDraggableProps) {
-    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
+    const {attributes, listeners, setNodeRef, transform} = useDraggable({
         id: module.id,
     });
 
     const style = {
-        transform: CSS.Transform.toString(transform),
-        opacity: isDragging ? 0.6 : 1,
+        transform: CSS.Translate.toString(transform),
+        touchAction: 'none' as const,
+        userSelect: 'none' as const,
     };
 
     const ModuleIcon = getModuleIcon(module.type);

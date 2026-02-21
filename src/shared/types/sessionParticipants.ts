@@ -15,3 +15,6 @@ export interface SessionParticipantsResponse {
     max_participants?: number | null;
 }
 
+export interface SessionParticipantSelfPatchRequest {
+    display_name: string;
+}

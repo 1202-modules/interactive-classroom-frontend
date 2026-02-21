@@ -12,9 +12,11 @@ import type {
     EmailCodeRequestResponse,
     EmailCodeVerifyRequest,
     EmailCodeVerifyResponse,
+    GuestJoinRequest,
     GuestJoinResponse,
     RegisteredJoinResponse,
     SessionByPasscodeResponse,
+    ParticipantEntryMode,
 } from '@/shared/types/sessionJoin';
 import {getGuestToken, getParticipantToken} from '@/shared/utils/tokenStorage';
 
@@ -23,17 +25,33 @@ export async function getSessionByPasscode(
     passcode: string,
 ): Promise<SessionByPasscodeResponse> {
     const guestToken = getGuestToken();
-    const headers: Record<string, string> = {};
+    const participantToken = getParticipantToken();
+    const baseRes = await apiClient.get<SessionByPasscodeResponse>(
+        `/sessions/by-passcode/${passcode}`,
+    );
+    const base = baseRes.data;
+    const mode = base.participant_entry_mode;
 
-    // Only guest token is supported by this public endpoint (for autologin in email_code mode)
-    if (guestToken) {
-        headers.Authorization = `Bearer ${guestToken}`;
+    let authToken: string | null = null;
+    if (mode === 'anonymous') {
+        authToken = participantToken || null;
+    } else if (mode === 'email_code') {
+        authToken = guestToken || null;
     }
 
-    const res = await apiClient.get<SessionByPasscodeResponse>(`/sessions/by-passcode/${passcode}`, {
-        headers,
-    });
-    return res.data;
+    if (!authToken) {
+        return base;
+    }
+
+    try {
+        const authRes = await apiClient.get<SessionByPasscodeResponse>(
+            `/sessions/by-passcode/${passcode}`,
+            { headers: { Authorization: `Bearer ${authToken}` } },
+        );
+        return authRes.data;
+    } catch {
+        return base;
+    }
 }
 
 export async function joinAnonymous(
@@ -59,13 +77,17 @@ export async function joinRegistered(
     return res.data;
 }
 
-export async function joinGuest(apiClient: AxiosInstance, passcode: string): Promise<GuestJoinResponse> {
+export async function joinGuest(
+    apiClient: AxiosInstance,
+    passcode: string,
+    data: GuestJoinRequest,
+): Promise<GuestJoinResponse> {
     const guestToken = getGuestToken();
     if (!guestToken) throw new Error('Guest token is required');
 
     const res = await apiClient.post<GuestJoinResponse>(
         `/sessions/by-passcode/${passcode}/join/guest`,
-        {},
+        data,
         {
             headers: {Authorization: `Bearer ${guestToken}`},
         },
@@ -100,19 +122,33 @@ export async function verifyEmailCode(
 export async function sendHeartbeat(
     apiClient: AxiosInstance,
     passcode: string,
-    participantTokenOverride?: string | null,
+    entryMode: ParticipantEntryMode,
+    userAccessToken?: string | null,
 ): Promise<void> {
-    const guestToken = getGuestToken();
-    const participantToken = participantTokenOverride ?? getParticipantToken();
-
-    // For registered users we rely on axios default Authorization header (user token)
     const headers: Record<string, string> = {};
-    if (guestToken) headers.Authorization = `Bearer ${guestToken}`;
-    else if (participantToken) headers.Authorization = `Bearer ${participantToken}`;
+
+    if (entryMode === 'anonymous') {
+        const participantToken = getParticipantToken();
+        if (!participantToken) {
+            throw new Error('Participant token is required');
+        }
+        headers.Authorization = `Bearer ${participantToken}`;
+    } else if (entryMode === 'email_code') {
+        const guestToken = getGuestToken();
+        if (!guestToken) {
+            throw new Error('Guest token is required');
+        }
+        headers.Authorization = `Bearer ${guestToken}`;
+    } else {
+        if (!userAccessToken) {
+            throw new Error('User token is required');
+        }
+        headers.Authorization = `Bearer ${userAccessToken}`;
+    }
 
     await apiClient.post(
         `/sessions/by-passcode/${passcode}/heartbeat`,
         {},
-        Object.keys(headers).length ? {headers} : undefined,
+        {headers},
     );
 }

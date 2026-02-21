@@ -28,17 +28,19 @@ export function EmailCodeVerifyForm({
 
     return (
         <form onSubmit={handleSubmit}>
-            <Text variant="header-2" style={{ marginBottom: '16px' }}>
-                Verify Email
-            </Text>
-            <Text variant="body-1" color="secondary" style={{ marginBottom: '8px' }}>
-                We sent a verification code to {email}
-            </Text>
-            {verificationCode && (
-                <Text variant="body-2" color="secondary" style={{ marginBottom: '16px' }}>
-                    Development mode: Your code is {verificationCode}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                <Text variant="header-2">
+                    Verify Email
                 </Text>
-            )}
+                <Text variant="body-1" color="secondary">
+                    {`We sent a verification code to ${email}`}
+                </Text>
+                {verificationCode && (
+                    <Text variant="body-2" color="secondary">
+                        {`Development mode: Your code is ${verificationCode}`}
+                    </Text>
+                )}
+            </div>
             {error && (
                 <Text variant="body-2" color="danger" style={{ marginBottom: '16px' }}>
                     {error}

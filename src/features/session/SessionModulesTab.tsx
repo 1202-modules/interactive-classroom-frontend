@@ -1,8 +1,8 @@
 import type {ComponentProps} from 'react';
 import {
     DndContext,
-    DragOverlay,
     closestCenter,
+    pointerWithin,
 } from '@dnd-kit/core';
 import type {DragEndEvent, DragStartEvent} from '@dnd-kit/core';
 import {SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
@@ -10,7 +10,6 @@ import {Button, Card, Divider, Icon, Text} from '@gravity-ui/uikit';
 import {Plus} from '@gravity-ui/icons';
 import type {SessionModule} from '@/shared/types/sessionPage';
 import type {WorkspaceActivityModule} from '@/shared/types/workspace';
-import {getModuleIcon} from '@/shared/utils/sessionModuleUtils';
 import {ActiveModuleDropZone} from './ActiveModuleDropZone';
 import {ModuleQueueDropZone} from './ModuleQueueDropZone';
 import {RemoveQueueDropZone} from './RemoveQueueDropZone';
@@ -25,8 +24,6 @@ type SessionModulesTabProps = {
     sessionModulesLoading: boolean;
     workspaceModules: { modules: WorkspaceActivityModule[] };
     isModuleSupported: (type: SessionModule['type']) => boolean;
-    activeId: string | null;
-    sessionModules: SessionModule[];
     onDragStart: (event: DragStartEvent) => void;
     onDragEnd: (event: DragEndEvent) => void;
     onActivateModule: (moduleId: string) => void;
@@ -46,8 +43,6 @@ export function SessionModulesTab({
     sessionModulesLoading,
     workspaceModules,
     isModuleSupported,
-    activeId,
-    sessionModules,
     onDragStart,
     onDragEnd,
     onActivateModule,
@@ -58,19 +53,14 @@ export function SessionModulesTab({
     onEditSessionModule,
     onCreateNewModule,
 }: SessionModulesTabProps) {
-    const overlayModule = activeId
-        ? sessionModules.find((m) => m.id === activeId)
-        : null;
-    const overlayWorkspaceModule = activeId?.startsWith('workspace-')
-        ? workspaceModules.modules.find((m) => `workspace-${m.id}` === activeId)
-        : null;
-    const overlayName = overlayModule?.name ?? overlayWorkspaceModule?.name;
-    const overlayType = overlayModule?.type ?? (overlayWorkspaceModule?.type as SessionModule['type']) ?? 'questions';
-
     return (
         <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={(args) => {
+                const pointerHits = pointerWithin(args);
+                if (pointerHits.length > 0) return pointerHits;
+                return closestCenter(args);
+            }}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
         >
@@ -148,15 +138,6 @@ export function SessionModulesTab({
                     </div>
                 </div>
             </div>
-
-            <DragOverlay>
-                {activeId ? (
-                    <Card view="raised" className="session-page__drag-overlay">
-                        <Icon data={getModuleIcon(overlayType)} size={18} />
-                        <Text variant="body-2">{overlayName}</Text>
-                    </Card>
-                ) : null}
-            </DragOverlay>
         </DndContext>
     );
 }

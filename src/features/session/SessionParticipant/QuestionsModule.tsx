@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, Checkbox, Label, Text, TextInput } from '@gravity-ui/uikit';
-import { Heart } from '@gravity-ui/icons';
-import type { QuestionMessageItem, QuestionsModuleSettings } from '@/shared/types/questions';
-import { getQuestionMessages, createQuestionMessage, likeQuestionMessage } from '@/shared/api/questions';
-import { parseBackendError } from '@/shared/utils/parseBackendError';
+import { KeyboardEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Button, Card, Icon, Label, Text, TextInput, Tooltip } from '@gravity-ui/uikit';
+import * as GravityIcons from '@gravity-ui/icons';
 import type { AxiosInstance } from 'axios';
+
+import type { QuestionMessageItem, QuestionsModuleSettings } from '@/shared/types/questions';
+import { createQuestionMessage, getQuestionMessages, likeQuestionMessage } from '@/shared/api/questions';
+import { parseBackendError } from '@/shared/utils/parseBackendError';
 
 interface QuestionsModuleProps {
     api: AxiosInstance;
@@ -14,47 +15,77 @@ interface QuestionsModuleProps {
     participantId: number;
 }
 
+const ANON_TOOLTIP =
+    'Send without public name. Session owner can still identify your account.';
+const REGULAR_TOOLTIP = 'Send with your current display name visible to participants.';
+const HeartIcon = (GravityIcons as Record<string, unknown>).Heart as unknown;
+const PinFillIcon = (GravityIcons as Record<string, unknown>).PinFill as unknown;
+const AnonymousReplyIcon =
+    ((GravityIcons as Record<string, unknown>).EyeSlash ??
+        (GravityIcons as Record<string, unknown>).Incognito ??
+        (GravityIcons as Record<string, unknown>).Bubble ??
+        (GravityIcons as Record<string, unknown>).Person) as unknown;
+const SendReplyIcon =
+    ((GravityIcons as Record<string, unknown>).PaperPlane ??
+        (GravityIcons as Record<string, unknown>).ArrowRight) as unknown;
+
 export function QuestionsModule({ api, passcode, moduleId, authToken, participantId }: QuestionsModuleProps) {
     const [messages, setMessages] = useState<QuestionMessageItem[]>([]);
     const [settings, setSettings] = useState<QuestionsModuleSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [questionText, setQuestionText] = useState('');
-    const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
+    const [replyText, setReplyText] = useState<Record<number, string>>({});
+    const [openReplyId, setOpenReplyId] = useState<number | null>(null);
+    const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
     const [likingIds, setLikingIds] = useState<Set<number>>(new Set());
-    const [postAsAnonymous, setPostAsAnonymous] = useState(false);
+    const initialLoadRef = useRef(true);
+    const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+    const prevRectsRef = useRef<Map<number, DOMRect>>(new Map());
+    const prevOrderRef = useRef<number[]>([]);
+    const reorderAnimationsRef = useRef<Map<number, Animation>>(new Map());
 
     const fetchMessages = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
         try {
             const response = await getQuestionMessages(api, passcode, moduleId, authToken, {
                 limit: 200,
                 offset: 0,
             });
-            setMessages(response.messages || []);
+            const nextMessages = response.messages || [];
+            setMessages(nextMessages);
             setSettings(response.settings || null);
-        } catch (err: unknown) {
-            const message = parseBackendError(
-                (err as { response?: { data?: unknown } })?.response?.data,
-                'Failed to load questions'
+            setLikingIds(
+                new Set(
+                    nextMessages
+                        .filter((message) => message.liked_by_me)
+                        .map((message) => message.id),
+                ),
             );
-            setError(message);
+            setError(null);
+        } catch (err: unknown) {
+            if (initialLoadRef.current) {
+                const message = parseBackendError(
+                    (err as { response?: { data?: unknown } })?.response?.data,
+                    'Failed to load questions',
+                );
+                setError(message);
+            }
         } finally {
-            setIsLoading(false);
+            if (initialLoadRef.current) {
+                initialLoadRef.current = false;
+                setIsLoading(false);
+            }
         }
     }, [api, passcode, moduleId, authToken]);
 
     useEffect(() => {
         fetchMessages();
-        // Poll for updates every 5 seconds
-        const interval = setInterval(fetchMessages, 5000);
+        const interval = setInterval(fetchMessages, 3000);
         return () => clearInterval(interval);
     }, [fetchMessages]);
 
-    // Check cooldown
     useEffect(() => {
         if (!cooldownUntil || cooldownUntil <= Date.now()) {
             return;
@@ -63,41 +94,138 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
         return () => clearTimeout(timer);
     }, [cooldownUntil]);
 
-    const handleSubmitQuestion = useCallback(async () => {
-        const trimmed = questionText.trim();
-        if (!trimmed || isSubmitting) return;
-        if (settings && trimmed.length > settings.max_length) {
-            setError(`Message exceeds maximum length (${settings.max_length} characters)`);
-            return;
+    const canReply = settings?.allow_participant_answers ?? true;
+    const canSendAnonymous = settings?.allow_anonymous ?? false;
+    const maxLength = settings?.max_length ?? null;
+    const questionLengthExceeded = maxLength !== null && questionText.length > maxLength;
+
+    const canCreateQuestion = useMemo(() => {
+        if (!settings) return true;
+        if (settings.max_questions_total === null || settings.max_questions_total === undefined) return true;
+        const topLevelCount = messages.filter((m) => m.parent_id === null).length;
+        return topLevelCount < settings.max_questions_total;
+    }, [settings, messages]);
+
+    const sortedMessages = useMemo(() => {
+        return [...messages].sort((a, b) => {
+            const pinA = a.pinned_at ? new Date(a.pinned_at).getTime() : 0;
+            const pinB = b.pinned_at ? new Date(b.pinned_at).getTime() : 0;
+            if (pinA !== pinB) return pinB - pinA;
+            if (a.likes_count !== b.likes_count) return b.likes_count - a.likes_count;
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return timeB - timeA;
+        });
+    }, [messages]);
+
+    useLayoutEffect(() => {
+        const currentRects = new Map<number, DOMRect>();
+        itemRefs.current.forEach((element, id) => {
+            currentRects.set(id, element.getBoundingClientRect());
+        });
+        const currentOrder = sortedMessages.map((message) => message.id);
+        const previousOrder = prevOrderRef.current;
+        const hasOrderChanged =
+            previousOrder.length > 0 &&
+            (previousOrder.length !== currentOrder.length ||
+                previousOrder.some((id, index) => id !== currentOrder[index]));
+
+        if (hasOrderChanged && prevRectsRef.current.size > 0) {
+            currentRects.forEach((currentRect, id) => {
+                const previousRect = prevRectsRef.current.get(id);
+                const element = itemRefs.current.get(id);
+                if (!previousRect || !element) return;
+                const deltaY = previousRect.top - currentRect.top;
+                if (Math.abs(deltaY) < 1) return;
+
+                const previousAnimation = reorderAnimationsRef.current.get(id);
+                if (previousAnimation) {
+                    previousAnimation.cancel();
+                    reorderAnimationsRef.current.delete(id);
+                }
+
+                const animation = element.animate(
+                    [
+                        { transform: `translateY(${deltaY}px)` },
+                        { transform: 'translate(0, 0)' },
+                    ],
+                    {
+                        duration: 420,
+                        easing: 'cubic-bezier(0.2, 0.85, 0.28, 1)',
+                    },
+                );
+                reorderAnimationsRef.current.set(id, animation);
+                animation.onfinish = () => {
+                    reorderAnimationsRef.current.delete(id);
+                };
+                animation.oncancel = () => {
+                    reorderAnimationsRef.current.delete(id);
+                };
+            });
         }
 
-        setIsSubmitting(true);
-        setError(null);
-        try {
-            await createQuestionMessage(api, passcode, moduleId, authToken, {
-                content: trimmed,
-                is_anonymous: settings?.allow_anonymous ? postAsAnonymous : false,
-            });
-            setQuestionText('');
-            if (settings?.cooldown_enabled && settings?.cooldown_seconds) {
-                setCooldownUntil(Date.now() + settings.cooldown_seconds * 1000);
+        prevRectsRef.current = currentRects;
+        prevOrderRef.current = currentOrder;
+    }, [sortedMessages]);
+
+    useEffect(() => {
+        return () => {
+            reorderAnimationsRef.current.forEach((animation) => animation.cancel());
+            reorderAnimationsRef.current.clear();
+        };
+    }, []);
+
+    const isCooldown = cooldownUntil !== null && cooldownUntil > Date.now();
+
+    const submitQuestion = useCallback(
+        async (anonymous: boolean) => {
+            const trimmed = questionText.trim();
+            if (!trimmed || isSubmitting || isCooldown) return;
+            if (settings && trimmed.length > settings.max_length) {
+                setError(`Message exceeds maximum length (${settings.max_length} characters)`);
+                return;
             }
-            await fetchMessages();
-        } catch (err: unknown) {
-            const message = parseBackendError(
-                (err as { response?: { data?: unknown } })?.response?.data,
-                'Failed to submit question'
-            );
-            setError(message);
-        } finally {
-            setIsSubmitting(false);
-        }
-    }, [questionText, api, passcode, moduleId, authToken, settings, isSubmitting, fetchMessages]);
+
+            setIsSubmitting(true);
+            setError(null);
+            try {
+                await createQuestionMessage(api, passcode, moduleId, authToken, {
+                    content: trimmed,
+                    is_anonymous: canSendAnonymous ? anonymous : false,
+                });
+                setQuestionText('');
+                if (settings?.cooldown_enabled && settings.cooldown_seconds) {
+                    setCooldownUntil(Date.now() + settings.cooldown_seconds * 1000);
+                }
+                await fetchMessages();
+            } catch (err: unknown) {
+                const message = parseBackendError(
+                    (err as { response?: { data?: unknown } })?.response?.data,
+                    'Failed to submit question',
+                );
+                setError(message);
+            } finally {
+                setIsSubmitting(false);
+            }
+        },
+        [
+            questionText,
+            isSubmitting,
+            isCooldown,
+            settings,
+            api,
+            passcode,
+            moduleId,
+            authToken,
+            canSendAnonymous,
+            fetchMessages,
+        ],
+    );
 
     const handleSubmitReply = useCallback(
-        async (parentId: number) => {
-            const trimmed = replyText[parentId]?.trim();
-            if (!trimmed || isSubmitting) return;
+        async (parentId: number, anonymous: boolean = false) => {
+            const trimmed = (replyText[parentId] || '').trim();
+            if (!trimmed || isSubmitting || isCooldown) return;
             if (settings && trimmed.length > settings.max_length) {
                 setError(`Message exceeds maximum length (${settings.max_length} characters)`);
                 return;
@@ -109,72 +237,126 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                 await createQuestionMessage(api, passcode, moduleId, authToken, {
                     content: trimmed,
                     parent_id: parentId,
+                    is_anonymous: anonymous,
                 });
                 setReplyText((prev) => ({ ...prev, [parentId]: '' }));
-                if (settings?.cooldown_enabled && settings?.cooldown_seconds) {
+                setOpenReplyId(null);
+                setExpandedReplies((prev) => new Set(prev).add(parentId));
+                if (settings?.cooldown_enabled && settings.cooldown_seconds) {
                     setCooldownUntil(Date.now() + settings.cooldown_seconds * 1000);
                 }
                 await fetchMessages();
             } catch (err: unknown) {
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
-                    'Failed to submit reply'
+                    'Failed to submit reply',
                 );
                 setError(message);
             } finally {
                 setIsSubmitting(false);
             }
         },
-        [replyText, api, passcode, moduleId, authToken, settings, isSubmitting, fetchMessages],
+        [
+            replyText,
+            isSubmitting,
+            isCooldown,
+            settings,
+            api,
+            passcode,
+            moduleId,
+            authToken,
+            fetchMessages,
+        ],
     );
 
     const handleLike = useCallback(
         async (msgId: number) => {
-            if (likingIds.has(msgId)) return;
-
-            setLikingIds((prev) => new Set(prev).add(msgId));
             try {
-                await likeQuestionMessage(api, passcode, moduleId, msgId, authToken);
-                await fetchMessages();
-            } catch (_err: unknown) {
-                // Silently fail - like errors shouldn't break the UI
-            } finally {
+                const response = await likeQuestionMessage(
+                    api,
+                    passcode,
+                    moduleId,
+                    msgId,
+                    authToken,
+                );
                 setLikingIds((prev) => {
                     const next = new Set(prev);
-                    next.delete(msgId);
+                    if (response.liked_by_me) {
+                        next.add(msgId);
+                    } else {
+                        next.delete(msgId);
+                    }
                     return next;
                 });
+                setMessages((prev) =>
+                    prev.map((message) =>
+                        message.id === msgId
+                            ? {
+                                  ...message,
+                                  likes_count: response.likes_count,
+                                  liked_by_me: response.liked_by_me,
+                              }
+                            : message,
+                    ),
+                );
+            } finally {
+                // no-op
             }
         },
-        [api, passcode, moduleId, authToken, likingIds, fetchMessages],
+        [api, passcode, moduleId, authToken],
     );
 
-    const sortedMessages = useMemo(() => {
-        return [...messages].sort((a, b) => b.likes_count - a.likes_count);
-    }, [messages]);
+    const toggleReplies = (messageId: number) => {
+        setExpandedReplies((prev) => {
+            const next = new Set(prev);
+            if (next.has(messageId)) {
+                next.delete(messageId);
+            } else {
+                next.add(messageId);
+            }
+            return next;
+        });
+    };
 
-    const canCreateQuestion = useMemo(() => {
-        if (!settings) return true;
-        if (settings.max_questions_total === null || settings.max_questions_total === undefined) return true;
-        const topLevelCount = messages.filter((m) => m.parent_id === null).length;
-        return topLevelCount < settings.max_questions_total;
-    }, [settings, messages]);
+    const getAuthorLabel = (name: string | null) => {
+        const value = (name || '').trim();
+        return value || 'Anonymous';
+    };
 
-    const getDisplayName = (name: string | null) => name || 'Participant';
+    const handleQuestionKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            void submitQuestion(false);
+        }
+    };
+
+    const handleReplyKeyDown = (event: KeyboardEvent<HTMLInputElement>, messageId: number) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            void handleSubmitReply(messageId, false);
+        }
+    };
+    const isReplyLengthExceeded = (messageId: number) =>
+        maxLength !== null && (replyText[messageId] || '').length > maxLength;
 
     if (isLoading) {
         return (
-            <Card view="outlined" className="participant-page__card">
-                <Text variant="header-2">Questions</Text>
-                <Text variant="body-1" color="secondary">Loading questions...</Text>
+            <Card view="outlined" className="participant-page__card participant-page__module-card">
+                <Text variant="header-2">Module: Questions</Text>
+                <Text variant="body-1" color="secondary">
+                    Loading questions...
+                </Text>
             </Card>
         );
     }
 
     return (
-        <Card view="outlined" className="participant-page__card">
-            <div className="participant-page__card-head">
-                <Text variant="header-2">Questions</Text>
+        <Card view="outlined" className="participant-page__card participant-page__module-card">
+            <div className="participant-page__module-head">
+                <Text variant="display-3">Questions</Text>
+                <Text variant="body-1" color="secondary">
+                    Here you can ask any questions you have.
+                </Text>
             </div>
 
             {error && (
@@ -183,51 +365,54 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                 </Text>
             )}
 
-            {canCreateQuestion && (
-                <div>
-                    <div className="participant-page__question-form">
-                        <TextInput
-                            placeholder="Ask a question"
-                            size="l"
-                            value={questionText}
-                            onUpdate={(value) => {
-                                if (!settings || value.length <= settings.max_length) {
-                                    setQuestionText(value);
-                                }
-                            }}
-                            disabled={isSubmitting || (cooldownUntil !== null && cooldownUntil > Date.now())}
-                        />
+            {canCreateQuestion ? (
+                <div className="participant-page__question-compose">
+                    <TextInput
+                        value={questionText}
+                        onUpdate={(value) => setQuestionText(value)}
+                        placeholder="Ask a question"
+                        size="l"
+                        disabled={isSubmitting || isCooldown}
+                        onKeyDown={handleQuestionKeyDown}
+                    />
+                    {canSendAnonymous && (
+                        <Tooltip content={ANON_TOOLTIP}>
+                            <Button
+                                view="outlined"
+                                size="l"
+                                onClick={() => submitQuestion(true)}
+                                disabled={isSubmitting || !questionText.trim() || isCooldown || questionLengthExceeded}
+                            >
+                                Send anonymously
+                            </Button>
+                        </Tooltip>
+                    )}
+                    <Tooltip content={REGULAR_TOOLTIP}>
                         <Button
                             view="action"
                             size="l"
-                            onClick={handleSubmitQuestion}
-                            disabled={isSubmitting || !questionText.trim() || (cooldownUntil !== null && cooldownUntil > Date.now())}
+                            onClick={() => submitQuestion(false)}
+                            disabled={isSubmitting || !questionText.trim() || isCooldown || questionLengthExceeded}
                         >
                             Send
                         </Button>
-                    </div>
-                    {settings?.allow_anonymous && (
-                        <div style={{ marginTop: 'var(--g-spacing-2)' }}>
-                            <Checkbox
-                                checked={postAsAnonymous}
-                                onUpdate={setPostAsAnonymous}
-                                content="Post as anonymous (others won't see your name)"
-                                size="l"
-                            />
-                        </div>
-                    )}
+                    </Tooltip>
                 </div>
-            )}
-
-            {cooldownUntil !== null && cooldownUntil > Date.now() && (
-                <Text variant="body-2" color="secondary">
-                    Please wait {Math.ceil((cooldownUntil - Date.now()) / 1000)} seconds before sending another message
+            ) : (
+                <Text variant="body-1" color="secondary">
+                    Maximum number of questions reached.
                 </Text>
             )}
 
-            {!canCreateQuestion && (
+            {questionLengthExceeded && maxLength !== null && (
+                <Text variant="body-2" color="danger">
+                    Maximum length exceeded ({questionText.length}/{maxLength})
+                </Text>
+            )}
+
+            {isCooldown && (
                 <Text variant="body-2" color="secondary">
-                    Maximum number of questions reached
+                    Please wait {Math.ceil((cooldownUntil! - Date.now()) / 1000)} seconds before sending another message.
                 </Text>
             )}
 
@@ -239,81 +424,146 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                         </Text>
                     </div>
                 ) : (
-                    sortedMessages.map((message) => (
-                        <div key={message.id} className="participant-page__question-item">
-                            <div className="participant-page__question-text">
-                                <Text variant="body-2" color="secondary">
-                                    {getDisplayName(message.author_display_name)}
-                                </Text>
-                                <Text variant="body-1">{message.content}</Text>
-                                {message.is_answered && (
-                                    <div style={{ marginTop: '4px' }}>
-                                        <Label theme="success" size="s">
-                                            Answered
-                                        </Label>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="participant-page__question-actions">
-                                {settings?.likes_enabled && (
+                    sortedMessages.map((message) => {
+                        const isReplyOpen = openReplyId === message.id;
+                        const isRepliesExpanded = expandedReplies.has(message.id);
+                        const canShowReplies = (message.children || []).length > 0;
+                        const showEdgeReplyButton = canReply && (!canShowReplies || isRepliesExpanded);
+                        const isPinned = Boolean(message.pinned_at);
+                        const isOwnMessage = message.participant_id === participantId;
+
+                        return (
+                            <div
+                                key={message.id}
+                                ref={(el) => {
+                                    if (el) {
+                                        itemRefs.current.set(message.id, el);
+                                    } else {
+                                        itemRefs.current.delete(message.id);
+                                    }
+                                }}
+                                className={`participant-page__question-item${isPinned ? ' participant-page__question-item_pinned' : ''}`}
+                            >
+                                <div className="participant-page__question-main">
+                                    {settings?.likes_enabled && (
+                                        <Button
+                                            className={`participant-page__like-rail-btn${likingIds.has(message.id) ? ' participant-page__like-rail-btn_active' : ''}`}
+                                            view="flat"
+                                            size="xl"
+                                            onClick={() => handleLike(message.id)}
+                                        >
+                                            <Icon data={HeartIcon as never} size={16} className="participant-page__like-icon" />
+                                            <span className="participant-page__like-count">{message.likes_count}</span>
+                                        </Button>
+                                    )}
+
+                                    <Text variant="body-1" className="participant-page__question-content">
+                                        {message.content}
+                                    </Text>
+                                    <Text variant="body-2" color="secondary" className="participant-page__question-author">
+                                        {getAuthorLabel(message.author_display_name)}{isOwnMessage ? ' (Yours)' : ''}
+                                    </Text>
+
+                                    {(isPinned || message.is_answered) && (
+                                        <div className="participant-page__question-badges">
+                                            {isPinned && (
+                                                <span className="participant-page__pin-corner" aria-label="Pinned message">
+                                                    <Icon data={PinFillIcon as never} size={13} />
+                                                </span>
+                                            )}
+                                            {message.is_answered && (
+                                                <Label theme="success" size="s" className="participant-page__answered-label">
+                                                    Answered
+                                                </Label>
+                                            )}
+                                        </div>
+                                    )}
+
+                                </div>
+
+                                {showEdgeReplyButton && (
                                     <Button
-                                        view="flat"
-                                        size="s"
-                                        onClick={() => handleLike(message.id)}
-                                        disabled={likingIds.has(message.id)}
+                                        className="participant-page__reply-edge-btn"
+                                        view="outlined"
+                                        size="m"
+                                        onClick={() => setOpenReplyId(isReplyOpen ? null : message.id)}
                                     >
-                                        <Heart />
-                                        {message.likes_count}
+                                        {isReplyOpen ? 'Cancel' : 'Reply'}
                                     </Button>
                                 )}
-                            </div>
 
-                            {/* Replies */}
-                            {message.children && message.children.length > 0 && (
-                                <div style={{ marginTop: '12px', paddingLeft: '16px', borderLeft: '2px solid var(--g-color-line-generic)' }}>
-                                    {message.children.map((child) => (
-                                        <div key={child.id} style={{ marginTop: '8px' }}>
-                                            <Text variant="body-2" color="secondary">
-                                                {getDisplayName(child.author_display_name)}
-                                            </Text>
-                                            <Text variant="body-2">{child.content}</Text>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                {canShowReplies && (
+                                    <div className="participant-page__replies-block">
+                                        <Button view="flat" size="m" className="participant-page__replies-toggle" onClick={() => toggleReplies(message.id)}>
+                                            {isRepliesExpanded ? 'Hide replies' : `Show replies (${message.children.length})`}
+                                        </Button>
+                                        {isRepliesExpanded && (
+                                            <div className="participant-page__replies-list">
+                                                {message.children.map((child) => {
+                                                    const isOwnReply = child.participant_id === participantId;
+                                                    return (
+                                                        <div key={child.id} className="participant-page__reply-item">
+                                                            <Text variant="body-2" className="participant-page__reply-content">
+                                                                {child.content}
+                                                            </Text>
+                                                            <Text variant="body-1" color="secondary" className="participant-page__reply-author">
+                                                                {getAuthorLabel(child.author_display_name)}{isOwnReply ? ' (Yours)' : ''}
+                                                            </Text>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
-                            {/* Reply form */}
-                            {settings?.allow_participant_answers && (
-                                <div style={{ marginTop: '8px' }}>
-                                    <div className="participant-page__question-form">
+                                {isReplyOpen && canReply && (
+                                    <div className="participant-page__reply-form-wrap">
                                         <TextInput
-                                            placeholder="Reply..."
-                                            size="m"
                                             value={replyText[message.id] || ''}
                                             onUpdate={(value) => {
-                                                if (!settings || value.length <= settings.max_length) {
-                                                    setReplyText((prev) => ({ ...prev, [message.id]: value }));
-                                                }
+                                                setReplyText((prev) => ({ ...prev, [message.id]: value }));
                                             }}
-                                            disabled={isSubmitting || (cooldownUntil !== null && cooldownUntil > Date.now())}
-                                        />
-                                        <Button
-                                            view="flat"
-                                            size="m"
-                                            onClick={() => handleSubmitReply(message.id)}
-                                            disabled={
-                                                isSubmitting ||
-                                                !replyText[message.id]?.trim() ||
-                                                (cooldownUntil !== null && cooldownUntil > Date.now())
+                                            placeholder="Write your reply"
+                                            size="l"
+                                            disabled={isSubmitting || isCooldown}
+                                            onKeyDown={(event) => handleReplyKeyDown(event, message.id)}
+                                            className="participant-page__reply-input"
+                                            endContent={
+                                                <div className="participant-page__reply-input-actions">
+                                                    <Button
+                                                        view="flat"
+                                                        size="l"
+                                                        className="participant-page__reply-action-btn"
+                                                        onClick={() => handleSubmitReply(message.id, true)}
+                                                        disabled={isSubmitting || !(replyText[message.id] || '').trim() || isCooldown || isReplyLengthExceeded(message.id)}
+                                                        title="Send anonymously"
+                                                    >
+                                                        <Icon data={AnonymousReplyIcon as never} size={18} />
+                                                    </Button>
+                                                    <Button
+                                                        view="flat"
+                                                        size="l"
+                                                        className="participant-page__reply-action-btn"
+                                                        onClick={() => handleSubmitReply(message.id, false)}
+                                                        disabled={isSubmitting || !(replyText[message.id] || '').trim() || isCooldown || isReplyLengthExceeded(message.id)}
+                                                        title="Send"
+                                                    >
+                                                        <Icon data={SendReplyIcon as never} size={18} />
+                                                    </Button>
+                                                </div>
                                             }
-                                        >
-                                            Reply
-                                        </Button>
+                                        />
+                                        {isReplyLengthExceeded(message.id) && maxLength !== null && (
+                                            <Text variant="body-2" color="danger">
+                                                Maximum length exceeded ({(replyText[message.id] || '').length}/{maxLength})
+                                            </Text>
+                                        )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    ))
+                                )}
+                            </div>
+                        );
+                    })
                 )}
             </div>
         </Card>

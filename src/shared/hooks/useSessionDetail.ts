@@ -108,9 +108,7 @@ export function useSessionDetail() {
             setActiveParticipantsCount(res.active_count ?? items.filter((p) => p.is_active).length);
             setMaxParticipants(res.max_participants ?? null);
         } catch {
-            setParticipants([]);
-            setActiveParticipantsCount(0);
-            setMaxParticipants(null);
+            // Keep last successful participants snapshot to avoid abrupt UI reset on transient API errors.
         }
     }, [api, isSessionIdValid, sessionIdNumber]);
 

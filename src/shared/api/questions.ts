@@ -75,11 +75,11 @@ export async function likeQuestionMessage(
     moduleId: number,
     msgId: number,
     authToken: string,
-): Promise<{ likes_count?: number } | Record<string, unknown>> {
+): Promise<{ likes_count: number; liked_by_me: boolean }> {
     const res = await apiClient.post(
         `/sessions/by-passcode/${passcode}/modules/questions/${moduleId}/messages/${msgId}/like`,
         {},
         { headers: { Authorization: `Bearer ${authToken}` } },
     );
-    return res.data;
+    return res.data as { likes_count: number; liked_by_me: boolean };
 }
