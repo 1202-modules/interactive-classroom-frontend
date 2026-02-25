@@ -81,6 +81,13 @@ const getAllMessages = (messages: QuestionMessageItem[]): QuestionMessageItem[] 
     return flat;
 };
 
+const getPresentationAuthor = (message: QuestionMessageItem): string => {
+    if (message.is_anonymous) {
+        return 'Anonymous';
+    }
+    return message.author_display_name ?? 'Anonymous';
+};
+
 const formatTimer = (seconds: number) => {
     const safe = Math.max(0, seconds);
     const mins = Math.floor(safe / 60);
@@ -187,7 +194,7 @@ function PresentationQuestions({api, sessionId, moduleId}: PresentationQuestions
                             <div className="presentation-page__question-meta">
                                 <Text variant="body-1" color="secondary">
                                     {message.parent_id ? 'Reply by ' : 'Question by '}
-                                    {message.author_display_name ?? 'Anonymous'}
+                                    {getPresentationAuthor(message)}
                                 </Text>
                                 {!message.parent_id && (
                                     <Label theme="unknown" size="s">
@@ -239,7 +246,7 @@ function PresentationQuestions({api, sessionId, moduleId}: PresentationQuestions
                             </Text>
                             <Text variant="header-1" color="secondary">
                                 {expandedMessage.parent_id ? 'Reply by ' : 'Question by '}
-                                {expandedMessage.author_display_name ?? 'Anonymous'}
+                                {getPresentationAuthor(expandedMessage)}
                             </Text>
                         </div>
                     </Card>

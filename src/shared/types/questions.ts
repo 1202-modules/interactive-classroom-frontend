@@ -14,6 +14,7 @@ export interface QuestionMessageItem {
     session_module_id: number;
     participant_id: number;
     author_display_name: string | null;
+    is_anonymous?: boolean;
     parent_id: number | null;
     content: string;
     likes_count: number;

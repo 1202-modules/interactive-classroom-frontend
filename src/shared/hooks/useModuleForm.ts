@@ -22,6 +22,16 @@ function getNextModuleName(
     existingNames: string[],
 ): string {
     const prefix = DEFAULT_PREFIX_BY_TYPE[type];
+    const normalizedExisting = new Set(
+        existingNames.map((name) => name.trim().toLowerCase()),
+    );
+    const baseNormalized = prefix.toLowerCase();
+
+    // First module keeps base name without suffix.
+    if (!normalizedExisting.has(baseNormalized)) {
+        return prefix;
+    }
+
     const usedNumbers = new Set<number>();
     const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (const name of existingNames) {
