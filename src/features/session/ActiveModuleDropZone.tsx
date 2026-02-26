@@ -8,9 +8,10 @@ type ActiveModuleDropZoneProps = {
     activeModule: SessionModule | undefined;
     onEdit?: () => void;
     onMoveToQueue?: () => void;
+    onRemove?: () => void;
 };
 
-export function ActiveModuleDropZone({activeModule, onEdit, onMoveToQueue}: ActiveModuleDropZoneProps) {
+export function ActiveModuleDropZone({activeModule, onEdit, onMoveToQueue, onRemove}: ActiveModuleDropZoneProps) {
     const {setNodeRef, isOver} = useDroppable({
         id: 'active-module-zone',
     });
@@ -27,6 +28,7 @@ export function ActiveModuleDropZone({activeModule, onEdit, onMoveToQueue}: Acti
                     module={activeModule}
                     onEdit={onEdit}
                     onMoveToQueue={onMoveToQueue}
+                    onRemove={onRemove}
                 />
             ) : (
                 <>

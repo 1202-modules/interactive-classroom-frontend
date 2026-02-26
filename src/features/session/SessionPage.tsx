@@ -38,6 +38,8 @@ export default function SessionPage() {
         setMainTab,
         participantSearch,
         setParticipantSearch,
+        activeId,
+        activeDragSize,
         sessionSettings,
         workspaceModules,
         sensors,
@@ -230,6 +232,8 @@ export default function SessionPage() {
                             sensors={sensors}
                             activeModule={activeModule}
                             queueModules={queueModules}
+                            activeId={activeId}
+                            activeDragSize={activeDragSize}
                             sessionModulesLoading={sessionModulesLoading}
                             workspaceModules={workspaceModules}
                             isModuleSupported={isModuleSupported}

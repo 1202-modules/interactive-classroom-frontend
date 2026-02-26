@@ -17,8 +17,15 @@ export function SortableModuleCard({module, onActivate, onRemove, onEdit}: Sorta
         id: module.id,
     });
 
+    const verticalTransform = transform
+        ? {
+              ...transform,
+              x: 0,
+          }
+        : null;
+
     const style = {
-        transform: CSS.Translate.toString(transform),
+        transform: isDragging ? undefined : CSS.Translate.toString(verticalTransform),
         transition: isDragging ? undefined : transition,
         touchAction: 'none' as const,
         userSelect: 'none' as const,
@@ -31,7 +38,7 @@ export function SortableModuleCard({module, onActivate, onRemove, onEdit}: Sorta
             ref={setNodeRef}
             style={style}
             view="outlined"
-            className="session-page__module-card"
+            className={`session-page__module-card${isDragging ? ' session-page__module-card_dragging' : ''}`}
             {...attributes}
             {...listeners}
         >

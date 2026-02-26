@@ -29,6 +29,112 @@ const SendReplyIcon =
     ((GravityIcons as Record<string, unknown>).PaperPlane ??
         (GravityIcons as Record<string, unknown>).ArrowRight) as unknown;
 
+type CooldownErrorPayload = {
+    detail?: string;
+    retry_after?: number | string;
+    retry_after_seconds?: number | string;
+    cooldown_seconds?: number | string;
+    cooldown_until?: number | string;
+};
+
+function parsePositiveSeconds(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        return Math.ceil(value);
+    }
+    if (typeof value === 'string') {
+        const numeric = Number(value);
+        if (Number.isFinite(numeric) && numeric > 0) {
+            return Math.ceil(numeric);
+        }
+    }
+    return null;
+}
+
+function parseRetryAfterHeader(value: unknown): number | null {
+    const headerValue = Array.isArray(value) ? value[0] : value;
+    const directSeconds = parsePositiveSeconds(headerValue);
+    if (directSeconds !== null) {
+        return directSeconds;
+    }
+
+    if (typeof headerValue === 'string') {
+        const retryDateMs = Date.parse(headerValue);
+        if (Number.isFinite(retryDateMs)) {
+            const msLeft = retryDateMs - Date.now();
+            if (msLeft > 0) {
+                return Math.ceil(msLeft / 1000);
+            }
+        }
+    }
+
+    return null;
+}
+
+function parseCooldownUntil(value: unknown): number | null {
+    const raw = parsePositiveSeconds(value);
+    if (raw === null) {
+        return null;
+    }
+
+    if (raw > 1_000_000_000_000) {
+        const msLeft = raw - Date.now();
+        return msLeft > 0 ? Math.ceil(msLeft / 1000) : null;
+    }
+
+    if (raw > 1_000_000_000) {
+        const msLeft = raw * 1000 - Date.now();
+        return msLeft > 0 ? Math.ceil(msLeft / 1000) : null;
+    }
+
+    return raw;
+}
+
+function extractCooldownSecondsFromError(err: unknown, fallbackSeconds: number | null): number | null {
+    const response = (err as {
+        response?: {
+            status?: number;
+            headers?: Record<string, unknown>;
+            data?: unknown;
+        };
+    })?.response;
+
+    if (response?.status !== 429) {
+        return null;
+    }
+
+    const retryAfterFromHeader = parseRetryAfterHeader(
+        response.headers?.['retry-after'] ?? response.headers?.['Retry-After'],
+    );
+    if (retryAfterFromHeader !== null) {
+        return retryAfterFromHeader;
+    }
+
+    const data = (response.data || {}) as CooldownErrorPayload;
+    const cooldownUntil = parseCooldownUntil(data.cooldown_until);
+    if (cooldownUntil !== null) {
+        return cooldownUntil;
+    }
+    const retryAfter =
+        parsePositiveSeconds(data.retry_after) ??
+        parsePositiveSeconds(data.retry_after_seconds) ??
+        parsePositiveSeconds(data.cooldown_seconds);
+    if (retryAfter !== null) {
+        return retryAfter;
+    }
+
+    if (typeof data.detail === 'string') {
+        const match = data.detail.match(/(\d+)\s*(?:seconds?|secs?|s|сек(?:унд[аы]?)?)/i);
+        if (match?.[1]) {
+            const parsed = parsePositiveSeconds(match[1]);
+            if (parsed !== null) {
+                return parsed;
+            }
+        }
+    }
+
+    return fallbackSeconds;
+}
+
 export function QuestionsModule({ api, passcode, moduleId, authToken, participantId }: QuestionsModuleProps) {
     const [messages, setMessages] = useState<QuestionMessageItem[]>([]);
     const [settings, setSettings] = useState<QuestionsModuleSettings | null>(null);
@@ -40,6 +146,7 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
     const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+    const [lastKnownCooldownSeconds, setLastKnownCooldownSeconds] = useState<number | null>(null);
     const [likingIds, setLikingIds] = useState<Set<number>>(new Set());
     const initialLoadRef = useRef(true);
     const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -194,11 +301,21 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                     is_anonymous: canSendAnonymous ? anonymous : false,
                 });
                 setQuestionText('');
-                if (settings?.cooldown_enabled && settings.cooldown_seconds) {
-                    setCooldownUntil(Date.now() + settings.cooldown_seconds * 1000);
+                const cooldownSeconds =
+                    settings?.cooldown_enabled && settings.cooldown_seconds
+                        ? settings.cooldown_seconds
+                        : lastKnownCooldownSeconds;
+                if (cooldownSeconds && cooldownSeconds > 0) {
+                    setCooldownUntil(Date.now() + cooldownSeconds * 1000);
                 }
                 await fetchMessages();
             } catch (err: unknown) {
+                const fallbackSeconds = settings?.cooldown_seconds ?? lastKnownCooldownSeconds;
+                const cooldownSeconds = extractCooldownSecondsFromError(err, fallbackSeconds ?? null);
+                if (cooldownSeconds && cooldownSeconds > 0) {
+                    setLastKnownCooldownSeconds(cooldownSeconds);
+                    setCooldownUntil(Date.now() + cooldownSeconds * 1000);
+                }
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
                     'Failed to submit question',
@@ -219,6 +336,7 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
             authToken,
             canSendAnonymous,
             fetchMessages,
+            lastKnownCooldownSeconds,
         ],
     );
 
@@ -242,11 +360,21 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
                 setReplyText((prev) => ({ ...prev, [parentId]: '' }));
                 setOpenReplyId(null);
                 setExpandedReplies((prev) => new Set(prev).add(parentId));
-                if (settings?.cooldown_enabled && settings.cooldown_seconds) {
-                    setCooldownUntil(Date.now() + settings.cooldown_seconds * 1000);
+                const cooldownSeconds =
+                    settings?.cooldown_enabled && settings.cooldown_seconds
+                        ? settings.cooldown_seconds
+                        : lastKnownCooldownSeconds;
+                if (cooldownSeconds && cooldownSeconds > 0) {
+                    setCooldownUntil(Date.now() + cooldownSeconds * 1000);
                 }
                 await fetchMessages();
             } catch (err: unknown) {
+                const fallbackSeconds = settings?.cooldown_seconds ?? lastKnownCooldownSeconds;
+                const cooldownSeconds = extractCooldownSecondsFromError(err, fallbackSeconds ?? null);
+                if (cooldownSeconds && cooldownSeconds > 0) {
+                    setLastKnownCooldownSeconds(cooldownSeconds);
+                    setCooldownUntil(Date.now() + cooldownSeconds * 1000);
+                }
                 const message = parseBackendError(
                     (err as { response?: { data?: unknown } })?.response?.data,
                     'Failed to submit reply',
@@ -266,6 +394,7 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
             moduleId,
             authToken,
             fetchMessages,
+            lastKnownCooldownSeconds,
         ],
     );
 

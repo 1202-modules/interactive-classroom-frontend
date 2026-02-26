@@ -99,6 +99,15 @@
   min-height: 0;
 }
 
+.presentation-page__module-content_questions-empty {
+  justify-content: center;
+  align-self: center;
+}
+
+.presentation-page__module-content_questions-list {
+  justify-content: flex-start;
+}
+
 .presentation-page__module-icon {
   animation: iconPulse 3.5s ease-in-out infinite;
 }
@@ -118,7 +127,16 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   flex: 1;
+}
+
+.presentation-page__questions-wrap_empty {
+  justify-content: center;
+}
+
+.presentation-page__questions-wrap_with-list {
+  justify-content: flex-start;
 }
 
 .presentation-page__questions-list {

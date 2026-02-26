@@ -34,6 +34,7 @@ type PresentationQuestionsProps = {
     api: ReturnType<typeof useApi>;
     sessionId: number;
     moduleId: number;
+    onHasQuestionsChange?: (hasQuestions: boolean) => void;
 };
 
 type PresentationTimerProps = {
@@ -102,7 +103,7 @@ const getTimerConfiguredSeconds = (config: Record<string, unknown>) => {
     return Math.max(0, Math.min(86400, Math.floor(parsed)));
 };
 
-function PresentationQuestions({api, sessionId, moduleId}: PresentationQuestionsProps) {
+function PresentationQuestions({api, sessionId, moduleId, onHasQuestionsChange}: PresentationQuestionsProps) {
     const [messages, setMessages] = useState<QuestionMessageItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [expandedMessageId, setExpandedMessageId] = useState<number | null>(null);
@@ -127,6 +128,12 @@ function PresentationQuestions({api, sessionId, moduleId}: PresentationQuestions
     }, [fetchMessages]);
 
     const allMessages = useMemo(() => getAllMessages(messages), [messages]);
+    const hasQuestions = messages.length > 0;
+
+    useEffect(() => {
+        onHasQuestionsChange?.(hasQuestions);
+    }, [hasQuestions, onHasQuestionsChange]);
+
     const expandedMessage =
         expandedMessageId == null
             ? null
@@ -222,9 +229,13 @@ function PresentationQuestions({api, sessionId, moduleId}: PresentationQuestions
     };
 
     return (
-        <div className="presentation-page__questions-wrap">
+        <div
+            className={`presentation-page__questions-wrap${
+                hasQuestions ? ' presentation-page__questions-wrap_with-list' : ' presentation-page__questions-wrap_empty'
+            }`}
+        >
             {loading && messages.length === 0 ? (
-                <Text variant="body-2" color="secondary">Loading questions…</Text>
+                <Text variant="body-2" color="secondary">No questions yet</Text>
             ) : messages.length === 0 ? (
                 <Text variant="body-2" color="secondary">No questions yet</Text>
             ) : (
@@ -440,6 +451,7 @@ export default function PresentationPage() {
     const [sessionModules, setSessionModules] = useState<SessionModule[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [questionsHasMessages, setQuestionsHasMessages] = useState(false);
 
     const fetchSessionInfo = useCallback(async () => {
         if (!isSessionIdValid) return;
@@ -503,6 +515,12 @@ export default function PresentationPage() {
         [sessionModules],
     );
 
+    useEffect(() => {
+        if (activeModule?.type === 'questions') {
+            setQuestionsHasMessages(false);
+        }
+    }, [activeModule?.id, activeModule?.type]);
+
 
     const handleToggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -534,12 +552,8 @@ export default function PresentationPage() {
             {/* Control buttons (hidden in fullscreen) */}
             {!isFullscreen && (
                 <div className="presentation-page__controls">
-                    <Button view="flat" size="s" onClick={handleRefresh}>
-                        <Icon data={ArrowsRotateLeftIcon} size={16} />
-                        Refresh
-                    </Button>
-                    <Button view="flat" size="s" onClick={handleToggleFullscreen}>
-                        <Icon data={ArrowsExpandIcon} size={16} />
+                    <Button view="action" size="xl" onClick={handleToggleFullscreen}>
+                        <Icon data={ArrowsExpandIcon} size={20} />
                         Fullscreen
                     </Button>
                 </div>
@@ -579,7 +593,15 @@ export default function PresentationPage() {
                 <div className="presentation-page__with-module">
                     {/* LEFT 3/4: Active Module */}
                     <div className="presentation-page__module-area">
-                        <div className="presentation-page__module-content">
+                        <div
+                            className={`presentation-page__module-content${
+                                activeModule.type === 'questions'
+                                    ? questionsHasMessages
+                                        ? ' presentation-page__module-content_questions-list'
+                                        : ' presentation-page__module-content_questions-empty'
+                                    : ''
+                            }`}
+                        >
                             <Icon
                                 data={getModuleIcon(activeModule.type)}
                                 size={80}
@@ -593,6 +615,7 @@ export default function PresentationPage() {
                                     api={api}
                                     sessionId={sessionIdNumber}
                                     moduleId={Number(activeModule.id)}
+                                    onHasQuestionsChange={setQuestionsHasMessages}
                                 />
                             )}
 
@@ -671,30 +694,19 @@ export default function PresentationPage() {
                         {/* Small QR Code */}
                         <div className="presentation-page__qr-small">
                             <Text variant="display-2">Join Session</Text>
-                            <Text variant="header-1" color="secondary">
-                                {passcode || '—'}
-                            </Text>
                             <div className="presentation-page__qr-code-small">
                                 {qrCodeUrl ? (
-                                    <QRCodeSVG value={qrCodeUrl} size={1000} level="M" />
+                                    <QRCodeSVG value={qrCodeUrl} size={300} level="L" />
                                 ) : (
                                     <div className="presentation-page__qr-placeholder" />
                                 )}
                             </div>
-                        </div>
-                        <div className="presentation-page__module-list">
-                            <Text variant="subheader-2">Modules</Text>
-                            <div className="presentation-page__module-list-items">
-                                {moduleTypeLabels.map((module) => (
-                                    <Label
-                                        key={module.id}
-                                        theme={activeModule?.id === module.id ? 'success' : 'unknown'}
-                                        size="m"
-                                    >
-                                        {module.type}
-                                    </Label>
-                                ))}
-                            </div>
+                            <Text variant="body-3" color="secondary">
+                                Join at: {window.location.origin}/s/
+                            </Text>
+                            <Text variant="display-2">
+                                {passcode || '—'}
+                            </Text>
                         </div>
                     </div>
                 </div>

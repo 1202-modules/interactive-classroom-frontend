@@ -10,6 +10,7 @@ import PresentationPage from '@/features/session/PresentationPage';
 import ParticipantPage from '@/features/session/ParticipantPage';
 import ProfilePage from '@/features/profile/Profile';
 import SettingsPage from '@/features/settings/Settings';
+import SupportPage from '@/features/support/Support';
 import HomePage from '@/features/home/HomePage';
 import LoginPage from '@/features/auth/pages/Login';
 import RegisterPage from '@/features/auth/pages/Register';
@@ -88,7 +89,7 @@ function AppLayout() {
                     />
                     <Route path="/terms" element={<Oops />} />
                     <Route path="/privacy" element={<Oops />} />
-                    <Route path="/support" element={<Oops />} />
+                    <Route path="/support" element={<SupportPage />} />
                 </Routes>
             </Layout>
         </ThemeProvider>

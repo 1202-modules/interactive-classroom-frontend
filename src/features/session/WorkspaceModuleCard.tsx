@@ -26,13 +26,13 @@ export function WorkspaceModuleCard({
     addDisabled,
     isWip,
 }: WorkspaceModuleCardProps) {
-    const {attributes, listeners, setNodeRef, transform} = useDraggable({
+    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
         id: `workspace-${module.id}`,
         disabled: Boolean(disabled),
     });
 
     const style = {
-        transform: CSS.Translate.toString(transform),
+        transform: isDragging ? undefined : CSS.Translate.toString(transform),
         touchAction: 'none' as const,
         userSelect: 'none' as const,
     };
@@ -43,7 +43,7 @@ export function WorkspaceModuleCard({
         <Card
             ref={setNodeRef}
             view="outlined"
-            className="session-page__workspace-module-card"
+            className={`session-page__workspace-module-card${isDragging ? ' session-page__workspace-module-card_dragging' : ''}`}
             style={style}
             {...attributes}
             {...listeners}

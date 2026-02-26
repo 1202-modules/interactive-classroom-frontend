@@ -42,12 +42,15 @@ export function useSessionDetail() {
     const [mainTab, setMainTab] = useState<MainTab>('modules');
     const [participantSearch, setParticipantSearch] = useState('');
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [activeDragSize, setActiveDragSize] = useState<{width: number; height: number} | null>(null);
 
     const workspaceModules = useWorkspaceModules(workspaceIdNumber);
 
-    const fetchSessionInfo = useCallback(async () => {
+    const fetchSessionInfo = useCallback(async (options?: {silent?: boolean}) => {
         if (!isSessionIdValid) return;
-        setSessionLoading(true);
+        if (!options?.silent) {
+            setSessionLoading(true);
+        }
         try {
             const res = await api.get<SessionInfo>(`/sessions/${sessionIdNumber}`, {
                 params: {fields: fieldsToString(SESSION_FIELDS.DETAILS)},
@@ -56,7 +59,9 @@ export function useSessionDetail() {
         } catch {
             setSessionInfo(null);
         } finally {
-            setSessionLoading(false);
+            if (!options?.silent) {
+                setSessionLoading(false);
+            }
         }
     }, [api, isSessionIdValid, sessionIdNumber]);
 
@@ -145,9 +150,9 @@ export function useSessionDetail() {
             } else {
                 await api.post(`/sessions/${sessionIdNumber}/stop`);
             }
-            await fetchSessionInfo();
+            await fetchSessionInfo({silent: true});
         } catch {
-            await fetchSessionInfo();
+            await fetchSessionInfo({silent: true});
         }
     }, [api, isSessionIdValid, sessionIdNumber, sessionInfo, fetchSessionInfo]);
 
@@ -252,11 +257,19 @@ export function useSessionDetail() {
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         setActiveId(event.active.id as string);
+        const width = event.active.rect.current.initial?.width;
+        const height = event.active.rect.current.initial?.height;
+        if (width && height) {
+            setActiveDragSize({width, height});
+        } else {
+            setActiveDragSize(null);
+        }
     }, []);
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         const {active, over} = event;
         setActiveId(null);
+        setActiveDragSize(null);
         if (!over) return;
 
         const activeIdStr = String(active.id);
@@ -359,6 +372,7 @@ export function useSessionDetail() {
         participantSearch,
         setParticipantSearch,
         activeId,
+        activeDragSize,
         sessionSettings,
         workspaceModules,
         sensors,
