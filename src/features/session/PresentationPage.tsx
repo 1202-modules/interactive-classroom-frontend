@@ -195,18 +195,18 @@ function PresentationQuestions({api, sessionId, moduleId, onHasQuestionsChange}:
                         onClick={() => void togglePinExpand(message.id)}
                     >
                         <div className="presentation-page__question-main">
-                            <Text variant="subheader-2" className="presentation-page__question-content">
-                                {message.content}
+                            <Text variant={message.parent_id ? "header-2" : "display-3"} className="presentation-page__question-content">
+                                {message.parent_id ? <><Icon data={GravityIcons.ArrowUturnCwRight} size={24} className='presentation-page__reply-icon'/> {message.content}</> : message.content}
                             </Text>
                             <div className="presentation-page__question-meta">
-                                <Text variant="body-1" color="secondary">
+                                <Text variant="body-3" color="secondary" style={{fontSize: "135%"}}>
                                     {message.parent_id ? 'Reply by ' : 'Question by '}
                                     {getPresentationAuthor(message)}
                                 </Text>
                                 {!message.parent_id && (
-                                    <Label theme="unknown" size="s">
-                                        {message.likes_count} likes
-                                    </Label>
+                                    <Text variant='header-2'>
+                                        <span style={{display: "flex", alignItems: "center", gap: "5px"}}>{message.likes_count} <span style={{color: "red", marginTop: "3px"}}><Icon data={GravityIcons.Heart} size={24} /></span></span>
+                                    </Text>
                                 )}
                             </div>
                         </div>
@@ -575,7 +575,7 @@ export default function PresentationPage() {
                         </div>
                         <div className="presentation-page__passcode-container">
                             <Text variant="header-1" color="secondary">
-                                Join at: {window.location.origin}/s/
+                                Join at: {window.location.origin.replace('https://', '').replace('http://', '')}/s/
                             </Text>
                             <Text variant="display-2" className="presentation-page__passcode">
                                 {passcode || '—'}
@@ -702,7 +702,7 @@ export default function PresentationPage() {
                                 )}
                             </div>
                             <Text variant="body-3" color="secondary">
-                                Join at: {window.location.origin}/s/
+                                Join at: {window.location.origin.replace('https://', '').replace('http://', '')}/s/
                             </Text>
                             <Text variant="display-2">
                                 {passcode || '—'}

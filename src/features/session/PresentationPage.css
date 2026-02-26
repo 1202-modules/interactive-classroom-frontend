@@ -137,29 +137,34 @@
 
 .presentation-page__questions-wrap_with-list {
   justify-content: flex-start;
+  padding: var(--g-spacing-3) 10%;
+  box-sizing: border-box;
+  /* margin-top: 10px; */
 }
 
 .presentation-page__questions-list {
   width: 100%;
   min-height: 0;
   overflow: auto;
-  padding-right: var(--g-spacing-2);
+  /* padding-right: var(--g-spacing-2); */
   display: flex;
   flex-direction: column;
-  gap: var(--g-spacing-2);
+  gap: var(--g-spacing-4);
 }
 
 .presentation-page__question-thread {
   display: flex;
   flex-direction: column;
-  gap: var(--g-spacing-2);
+  gap: var(--g-spacing-4);
+  margin-top: 10px;
 }
 
 .presentation-page__question-children {
   display: flex;
   flex-direction: column;
   gap: var(--g-spacing-2);
-  margin-left: var(--g-spacing-4);
+  margin-left: 10%;
+  margin-top: -10px;
 }
 
 .presentation-page__question-card {
@@ -177,7 +182,7 @@
   text-align: left;
   border: 0;
   background: transparent;
-  padding: var(--g-spacing-3);
+  padding: var(--g-spacing-3) var(--g-spacing-8);
   border-radius: inherit;
   cursor: pointer;
 }
@@ -195,7 +200,11 @@
 .presentation-page__question-content {
   white-space: pre-wrap;
   word-break: break-word;
+  display: flex;
+  align-items: center;
+  gap: 0px;
 }
+
 
 .presentation-page__question-meta {
   display: flex;
