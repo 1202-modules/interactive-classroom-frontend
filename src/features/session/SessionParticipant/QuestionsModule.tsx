@@ -4,6 +4,7 @@ import * as GravityIcons from '@gravity-ui/icons';
 import type { AxiosInstance } from 'axios';
 
 import type { QuestionMessageItem, QuestionsModuleSettings } from '@/shared/types/questions';
+import type { ParticipantEntryMode } from '@/shared/types/sessionJoin';
 import { createQuestionMessage, getQuestionMessages, likeQuestionMessage } from '@/shared/api/questions';
 import { parseBackendError } from '@/shared/utils/parseBackendError';
 
@@ -13,6 +14,7 @@ interface QuestionsModuleProps {
     moduleId: number;
     authToken: string;
     participantId: number;
+    entryMode: ParticipantEntryMode;
 }
 
 const ANON_TOOLTIP =
@@ -135,7 +137,7 @@ function extractCooldownSecondsFromError(err: unknown, fallbackSeconds: number |
     return fallbackSeconds;
 }
 
-export function QuestionsModule({ api, passcode, moduleId, authToken, participantId }: QuestionsModuleProps) {
+export function QuestionsModule({ api, passcode, moduleId, authToken, participantId, entryMode }: QuestionsModuleProps) {
     const [messages, setMessages] = useState<QuestionMessageItem[]>([]);
     const [settings, setSettings] = useState<QuestionsModuleSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -202,7 +204,7 @@ export function QuestionsModule({ api, passcode, moduleId, authToken, participan
     }, [cooldownUntil]);
 
     const canReply = settings?.allow_participant_answers ?? true;
-    const canSendAnonymous = settings?.allow_anonymous ?? false;
+    const canSendAnonymous = entryMode === 'anonymous' || (settings?.allow_anonymous ?? false);
     const maxLength = settings?.max_length ?? null;
     const questionLengthExceeded = maxLength !== null && questionText.length > maxLength;
 

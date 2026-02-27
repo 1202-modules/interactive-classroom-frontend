@@ -576,6 +576,7 @@ function JoinedSessionView({ code, api, participantId, entryMode }: JoinedSessio
                     moduleId={activeModule.id}
                     authToken={authToken}
                     participantId={participantId}
+                    entryMode={entryMode}
                 />
             )}
 
