@@ -67,6 +67,14 @@
   color: var(--g-color-text-positive);
 }
 
+.presentation-page__join-link {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--g-color-text-positive);
+  text-align: center;
+  word-break: break-all;
+}
+
 /* With Module View: 3/4 + 1/4 layout */
 .presentation-page__with-module {
   width: 100%;

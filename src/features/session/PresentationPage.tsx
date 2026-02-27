@@ -508,6 +508,9 @@ export default function PresentationPage() {
 
     const passcode = sessionInfo?.passcode ?? '';
     const qrCodeUrl = passcode ? `${window.location.origin}/s/${passcode}` : '';
+    const joinUrlNoProtocol = passcode
+        ? `${window.location.host}/s/${passcode}`
+        : `${window.location.host}/s/`;
     const activeModule = sessionModules.find((m) => m.is_active);
     const moduleType = activeModule ? moduleTypeLabel(activeModule.type) : '';
     const moduleTypeLabels = useMemo(
@@ -563,9 +566,6 @@ export default function PresentationPage() {
             {!activeModule && (
                 <div className="presentation-page__qr-fullscreen">
                     <div className="presentation-page__qr-container">
-                        <Text variant="display-3" className="presentation-page__title">
-                            {isLoading ? 'Loading…' : sessionInfo?.name || 'Session'}
-                        </Text>
                         <div className="presentation-page__qr-code-large">
                             {qrCodeUrl ? (
                                 <QRCodeSVG value={qrCodeUrl} size={400} level="M" />
@@ -575,10 +575,10 @@ export default function PresentationPage() {
                         </div>
                         <div className="presentation-page__passcode-container">
                             <Text variant="header-1" color="secondary">
-                                Join at: {window.location.origin.replace('https://', '').replace('http://', '')}/s/
+                                Join at:
                             </Text>
-                            <Text variant="display-2" className="presentation-page__passcode">
-                                {passcode || '—'}
+                            <Text variant="header-1" className="presentation-page__join-link">
+                                {joinUrlNoProtocol}
                             </Text>
                         </div>
                         <Text variant="subheader-1" color="secondary">
@@ -702,10 +702,10 @@ export default function PresentationPage() {
                                 )}
                             </div>
                             <Text variant="body-3" color="secondary">
-                                Join at: {window.location.origin.replace('https://', '').replace('http://', '')}/s/
+                                Join at:
                             </Text>
-                            <Text variant="display-2">
-                                {passcode || '—'}
+                            <Text variant="body-2" className="presentation-page__join-link">
+                                {joinUrlNoProtocol}
                             </Text>
                         </div>
                     </div>
